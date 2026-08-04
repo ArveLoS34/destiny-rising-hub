@@ -5,3 +5,5 @@ export * from "./build";
 export * from "./team";
 export * from "./user";
 export * from "./material";
+export * from "./artifact";
+export * from "./combat";
