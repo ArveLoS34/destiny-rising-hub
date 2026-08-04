@@ -1,17 +1,28 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import { logger } from '@/lib/logger';
 
 /**
  * Database Service
  * Manages database connections and operations
+ * Compatible with Prisma 7.x (uses pg adapter for PostgreSQL connection)
  */
 
 class DatabaseService {
   private prisma: PrismaClient;
+  private pool: Pool | null = null;
   private isConnected: boolean = false;
 
   constructor() {
+    const databaseUrl = process.env.DATABASE_URL || 'postgresql://localhost:5432/destiny_rising_hub';
+
+    // Prisma 7.x: Use pg adapter for PostgreSQL connection
+    this.pool = new Pool({ connectionString: databaseUrl });
+    const adapter = new PrismaPg(this.pool);
+
     this.prisma = new PrismaClient({
+      adapter,
       log: [
         { level: 'query', emit: 'event' },
         { level: 'error', emit: 'stdout' },
@@ -35,6 +46,7 @@ class DatabaseService {
    */
   async connect(): Promise<void> {
     try {
+      // Test the connection
       await this.prisma.$connect();
       this.isConnected = true;
       logger.info('Database', 'Connected to database');
@@ -50,6 +62,9 @@ class DatabaseService {
   async disconnect(): Promise<void> {
     try {
       await this.prisma.$disconnect();
+      if (this.pool) {
+        await this.pool.end();
+      }
       this.isConnected = false;
       logger.info('Database', 'Disconnected from database');
     } catch (error) {
@@ -75,9 +90,9 @@ class DatabaseService {
    * Execute transaction
    */
   async transaction<T>(
-    fn: (prisma: PrismaClient) => Promise<T>
+    fn: (tx: any) => Promise<T>
   ): Promise<T> {
-    return this.prisma.$transaction(fn);
+    return this.prisma.$transaction(fn as any) as Promise<T>;
   }
 
   /**

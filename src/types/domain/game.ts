@@ -108,4 +108,6 @@ export interface BaseEntity {
   name: string;
   gameId: string;
   verification: DataVerification;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

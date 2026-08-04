@@ -17,7 +17,7 @@ class CharacterRepository {
       const characters = await prisma.character.findMany({
         orderBy: { popularity: 'desc' },
       });
-      return characters as Character[];
+      return characters as unknown as Character[];
     } catch (error) {
       logger.error('CharacterRepository', 'Failed to fetch characters', { error });
       throw error;
@@ -33,7 +33,7 @@ class CharacterRepository {
       const character = await prisma.character.findUnique({
         where: { id },
       });
-      return character as Character | null;
+      return character as unknown as Character | null;
     } catch (error) {
       logger.error('CharacterRepository', 'Failed to fetch character', { id, error });
       throw error;
@@ -49,7 +49,7 @@ class CharacterRepository {
       const character = await prisma.character.findUnique({
         where: { slug },
       });
-      return character as Character | null;
+      return character as unknown as Character | null;
     } catch (error) {
       logger.error('CharacterRepository', 'Failed to fetch character by slug', { slug, error });
       throw error;
@@ -63,28 +63,10 @@ class CharacterRepository {
     try {
       const prisma = databaseService.getClient();
       const character = await prisma.character.create({
-        data: {
-          ...data,
-          stats: data.stats as any,
-          skills: data.skills as any,
-          talents: data.talents as any,
-          ascensionMaterials: data.ascensionMaterials as any,
-          skillMaterials: data.skillMaterials as any,
-          recommendedWeapons: data.recommendedWeapons,
-          recommendedArtifacts: data.recommendedArtifacts,
-          synergies: data.synergies,
-          counters: data.counters,
-          popularBuilds: data.popularBuilds as any,
-          strengths: data.strengths as any,
-          weaknesses: data.weaknesses as any,
-          voiceActors: data.voiceActors as any,
-          factionRelation: data.factionRelation as any,
-          tierListPlacement: data.tierListPlacement as any,
-          verification: data.verification as any,
-        },
+        data: data as any,
       });
       logger.info('CharacterRepository', 'Character created', { id: character.id });
-      return character as Character;
+      return character as unknown as Character;
     } catch (error) {
       logger.error('CharacterRepository', 'Failed to create character', { error });
       throw error;
@@ -118,7 +100,7 @@ class CharacterRepository {
         data: updateData,
       });
       logger.info('CharacterRepository', 'Character updated', { id });
-      return character as Character;
+      return character as unknown as Character;
     } catch (error) {
       logger.error('CharacterRepository', 'Failed to update character', { id, error });
       throw error;
@@ -158,7 +140,7 @@ class CharacterRepository {
         take: limit,
         orderBy: { popularity: 'desc' },
       });
-      return characters as Character[];
+      return characters as unknown as Character[];
     } catch (error) {
       logger.error('CharacterRepository', 'Failed to search characters', { query, error });
       throw error;
@@ -189,7 +171,7 @@ class CharacterRepository {
         where,
         orderBy: { popularity: 'desc' },
       });
-      return characters as Character[];
+      return characters as unknown as Character[];
     } catch (error) {
       logger.error('CharacterRepository', 'Failed to fetch characters by filter', { filter, error });
       throw error;

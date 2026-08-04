@@ -86,6 +86,7 @@ export interface CharacterFactionRelation {
 export interface Character extends BaseEntity {
   // Core Identity
   title: string;
+  description?: string;
   rarity: Rarity;
   element: Element;
   role: Role;
@@ -150,6 +151,7 @@ export interface Character extends BaseEntity {
   };
 
   // User Engagement
+  views?: number;
   popularity: number;
   pickRate: number;
   banRate?: number;

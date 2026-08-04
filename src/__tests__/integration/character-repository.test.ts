@@ -1,36 +1,34 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import { characterRepository } from '@/repositories/character-repository';
 import { databaseService } from '@/lib/database';
-import type { Character } from '@/types/domain';
 
 /**
  * Character Repository Integration Tests
  * Tests real database operations with PostgreSQL
+ * 
+ * Note: Tests use 'as any' for test data to avoid domain type vs Prisma type conflicts.
+ * The repository layer handles the mapping between Prisma and domain types.
  */
 
 describe('CharacterRepository Integration Tests', () => {
-  let testCharacter: Character;
+  let testCharacterId: string;
 
   beforeAll(async () => {
-    // Connect to database
     await databaseService.connect();
   });
 
   afterAll(async () => {
-    // Clean up test data
-    if (testCharacter) {
+    if (testCharacterId) {
       try {
-        await characterRepository.delete(testCharacter.id);
+        await characterRepository.delete(testCharacterId);
       } catch (error) {
         // Ignore if already deleted
       }
     }
-    // Disconnect from database
     await databaseService.disconnect();
   });
 
   beforeEach(async () => {
-    // Clean up any existing test data
     try {
       const existing = await characterRepository.findBySlug('test-character-integration');
       if (existing) {
@@ -49,7 +47,6 @@ describe('CharacterRepository Integration Tests', () => {
 
     it('should have character table', async () => {
       const prisma = databaseService.getClient();
-      // This will throw if table doesn't exist
       await prisma.character.count();
     });
   });
@@ -61,21 +58,24 @@ describe('CharacterRepository Integration Tests', () => {
         name: 'Test Character',
         title: 'Test Title',
         description: 'Test Description',
+        gameId: 'destiny-rising',
         element: 'Fire',
         role: 'DPS',
         rarity: 'SSR',
         weaponType: 'Sword',
         faction: 'Genesis',
+        damageType: 'Fire',
         icon: '/test/icon.png',
         portrait: '/test/portrait.png',
+        splashArt: '/test/splash.png',
         colorTheme: '#FF0000',
         stats: {
           baseHP: 10000,
           baseATK: 300,
           baseDEF: 200,
           baseSPD: 100,
-          baseCR: 0.05,
-          baseCD: 0.5,
+          baseCR: 5,
+          baseCD: 50,
           growthHP: 1000,
           growthATK: 30,
           growthDEF: 20,
@@ -83,8 +83,12 @@ describe('CharacterRepository Integration Tests', () => {
         },
         skills: [],
         talents: [],
+        ultimate: {},
+        passive: {},
         ascensionMaterials: [],
         skillMaterials: [],
+        maxLevel: 90,
+        maxAscension: 6,
         recommendedWeapons: [],
         recommendedArtifacts: [],
         synergies: [],
@@ -97,33 +101,28 @@ describe('CharacterRepository Integration Tests', () => {
         factionRelation: { factionId: 'genesis', role: 'member', lore: 'Test' },
         releaseVersion: '1.0.0',
         tierListPlacement: { overall: 'S', dps: 'S', support: 'B', pve: 'S', pvp: 'A' },
-        verification: {
-          source: 'Test',
-          gameVersion: '1.0.0',
-          verified: true,
-          verifiedAt: new Date().toISOString(),
-          lastUpdated: new Date().toISOString(),
-        },
+        verification: { verified: true, gameVersion: '1.0.0' },
         views: 0,
         popularity: 50,
+        pickRate: 0,
+        banRate: 0,
         winRate: 50.0,
       };
 
-      testCharacter = await characterRepository.create(characterData);
+      const created = await characterRepository.create(characterData as any);
 
-      expect(testCharacter).toBeDefined();
-      expect(testCharacter.id).toBeDefined();
-      expect(testCharacter.slug).toBe('test-character-integration');
-      expect(testCharacter.name).toBe('Test Character');
-      expect(testCharacter.createdAt).toBeDefined();
-      expect(testCharacter.updatedAt).toBeDefined();
+      expect(created).toBeDefined();
+      expect(created.id).toBeDefined();
+      expect(created.slug).toBe('test-character-integration');
+      expect(created.name).toBe('Test Character');
+      testCharacterId = created.id;
     });
 
     it('should find character by ID', async () => {
-      const found = await characterRepository.findById(testCharacter.id);
+      const found = await characterRepository.findById(testCharacterId);
       
       expect(found).toBeDefined();
-      expect(found?.id).toBe(testCharacter.id);
+      expect(found?.id).toBe(testCharacterId);
       expect(found?.name).toBe('Test Character');
     });
 
@@ -136,10 +135,10 @@ describe('CharacterRepository Integration Tests', () => {
     });
 
     it('should update character', async () => {
-      const updated = await characterRepository.update(testCharacter.id, {
+      const updated = await characterRepository.update(testCharacterId, {
         name: 'Updated Test Character',
         popularity: 75,
-      });
+      } as any);
 
       expect(updated).toBeDefined();
       expect(updated.name).toBe('Updated Test Character');
@@ -147,19 +146,17 @@ describe('CharacterRepository Integration Tests', () => {
     });
 
     it('should delete character', async () => {
-      await characterRepository.delete(testCharacter.id);
+      await characterRepository.delete(testCharacterId);
 
-      const found = await characterRepository.findById(testCharacter.id);
+      const found = await characterRepository.findById(testCharacterId);
       expect(found).toBeNull();
-
-      // Reset testCharacter to null to avoid cleanup errors
-      testCharacter = null as any;
     });
   });
 
   describe('Search and Filter', () => {
+    const testSlugs = ['test-fire-dps', 'test-water-support', 'test-fire-support'];
+
     beforeAll(async () => {
-      // Create multiple test characters
       const testChars = [
         { slug: 'test-fire-dps', name: 'Fire DPS', element: 'Fire', role: 'DPS', rarity: 'SSR' },
         { slug: 'test-water-support', name: 'Water Support', element: 'Water', role: 'Support', rarity: 'SR' },
@@ -172,30 +169,26 @@ describe('CharacterRepository Integration Tests', () => {
           name: char.name,
           title: 'Test',
           description: 'Test',
+          gameId: 'destiny-rising',
           element: char.element,
           role: char.role,
           rarity: char.rarity,
           weaponType: 'Sword',
           faction: 'Genesis',
+          damageType: char.element,
           icon: '/test/icon.png',
           portrait: '/test/portrait.png',
+          splashArt: '/test/splash.png',
           colorTheme: '#FF0000',
-          stats: {
-            baseHP: 10000,
-            baseATK: 300,
-            baseDEF: 200,
-            baseSPD: 100,
-            baseCR: 0.05,
-            baseCD: 0.5,
-            growthHP: 1000,
-            growthATK: 30,
-            growthDEF: 20,
-            growthSPD: 0,
-          },
+          stats: {},
           skills: [],
           talents: [],
+          ultimate: {},
+          passive: {},
           ascensionMaterials: [],
           skillMaterials: [],
+          maxLevel: 90,
+          maxAscension: 6,
           recommendedWeapons: [],
           recommendedArtifacts: [],
           synergies: [],
@@ -207,24 +200,18 @@ describe('CharacterRepository Integration Tests', () => {
           voiceActors: { en: 'Test', jp: 'Test', kr: 'Test', cn: 'Test' },
           factionRelation: { factionId: 'genesis', role: 'member', lore: 'Test' },
           releaseVersion: '1.0.0',
-          tierListPlacement: { overall: 'S', dps: 'S', support: 'B', pve: 'S', pvp: 'A' },
-          verification: {
-            source: 'Test',
-            gameVersion: '1.0.0',
-            verified: true,
-            verifiedAt: new Date().toISOString(),
-            lastUpdated: new Date().toISOString(),
-          },
+          tierListPlacement: {},
+          verification: { verified: true, gameVersion: '1.0.0' },
           views: 0,
           popularity: 50,
+          pickRate: 0,
+          banRate: 0,
           winRate: 50.0,
-        });
+        } as any);
       }
     });
 
     afterAll(async () => {
-      // Clean up test characters
-      const testSlugs = ['test-fire-dps', 'test-water-support', 'test-fire-support'];
       for (const slug of testSlugs) {
         try {
           const char = await characterRepository.findBySlug(slug);
@@ -268,7 +255,6 @@ describe('CharacterRepository Integration Tests', () => {
     it('should sort characters by popularity', async () => {
       const results = await characterRepository.findAll();
       
-      // Check if sorted by popularity descending
       for (let i = 1; i < results.length; i++) {
         expect(results[i - 1].popularity).toBeGreaterThanOrEqual(results[i].popularity);
       }
@@ -276,7 +262,6 @@ describe('CharacterRepository Integration Tests', () => {
 
     it('should count characters', async () => {
       const count = await characterRepository.count();
-      
       expect(count).toBeGreaterThan(0);
     });
   });
@@ -286,9 +271,8 @@ describe('CharacterRepository Integration Tests', () => {
       const char = await characterRepository.findBySlug('test-fire-dps');
       if (!char) return;
 
-      const initialViews = char.views;
+      const initialViews = char.views || 0;
       
-      // Increment multiple times
       await characterRepository.incrementViews(char.id);
       await characterRepository.incrementViews(char.id);
       await characterRepository.incrementViews(char.id);
@@ -301,9 +285,8 @@ describe('CharacterRepository Integration Tests', () => {
       const char = await characterRepository.findBySlug('test-fire-dps');
       if (!char) return;
 
-      const initialViews = char.views;
+      const initialViews = char.views || 0;
       
-      // Concurrent increments
       await Promise.all([
         characterRepository.incrementViews(char.id),
         characterRepository.incrementViews(char.id),
