@@ -4,3 +4,4 @@ export * from "./weapon";
 export * from "./build";
 export * from "./team";
 export * from "./user";
+export * from "./material";
