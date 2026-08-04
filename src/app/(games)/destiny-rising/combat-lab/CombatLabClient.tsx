@@ -53,7 +53,7 @@ export function CombatLabClient() {
     const input: DamageCalculationInput = {
       characterId,
       characterLevel,
-      characterStats: {} as CombatStats,
+      characterStats: {} as any,
       weaponId,
       weaponLevel,
       weaponRefinement: 1,
