@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import { type HTMLAttributes, forwardRef } from "react";
 import { type VariantProps, cva } from "class-variance-authority";
-import { type LucideIcon } from "lucide-react";
 
 const chipVariants = cva(
   "inline-flex items-center gap-1.5 rounded-full text-xs font-medium transition-colors duration-200",
@@ -33,7 +32,7 @@ const chipVariants = cva(
 interface ChipProps
   extends HTMLAttributes<HTMLSpanElement>,
     VariantProps<typeof chipVariants> {
-  icon?: LucideIcon;
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 const Chip = forwardRef<HTMLSpanElement, ChipProps>(
