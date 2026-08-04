@@ -24,8 +24,37 @@ import {
   CheckSquare
 } from 'lucide-react';
 
+interface ReleaseStep {
+  id: string;
+  name: string;
+  status: string;
+  duration: number | null;
+  error?: string;
+}
+
+interface Release {
+  id: string;
+  version: string;
+  name: string;
+  status: string;
+  currentStep: string;
+  progress: number;
+  createdAt: string;
+  createdBy: string;
+  completedAt?: string;
+  failedAt?: string;
+  steps: ReleaseStep[];
+  changes: {
+    characters: number;
+    weapons: number;
+    artifacts: number;
+    materials: number;
+    builds: number;
+  };
+}
+
 // Mock data - will be replaced with API calls
-const releases = [
+const releases: Release[] = [
   {
     id: 'release-1.5.0',
     version: '1.5.0',
