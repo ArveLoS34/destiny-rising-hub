@@ -4,19 +4,24 @@ import { searchService } from '@/features/discovery/services/search/search-servi
 describe('SearchService', () => {
   describe('search', () => {
     it('should return search results for valid query', () => {
-      const results = searchService.search({ query: 'Nova' });
-      expect(results).toBeDefined();
-      expect(Array.isArray(results)).toBe(true);
+      const response = searchService.search({ query: 'Nova' });
+      expect(response).toBeDefined();
+      expect(response.results).toBeDefined();
+      expect(Array.isArray(response.results)).toBe(true);
+      expect(response.results.length).toBeGreaterThan(0);
     });
 
-    it('should return empty array for empty query', () => {
-      const results = searchService.search({ query: '' });
-      expect(results).toEqual([]);
+    it('should return all results for empty query', () => {
+      const response = searchService.search({ query: '' });
+      expect(response).toBeDefined();
+      expect(response.results).toBeDefined();
+      expect(response.total).toBeGreaterThan(0);
     });
 
     it('should handle fuzzy matching', () => {
-      const results = searchService.search({ query: 'Novva' });
-      expect(results).toBeDefined();
+      const response = searchService.search({ query: 'Novva' });
+      expect(response).toBeDefined();
+      expect(response.results).toBeDefined();
     });
   });
 
