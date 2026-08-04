@@ -12,6 +12,83 @@ datasource db {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// CHARACTER MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════
+
+model Character {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  title           String
+  description     String   @db.Text
+  element         String
+  role            String
+  rarity          String
+  weaponType      String
+  faction         String
+  icon            String
+  portrait        String
+  colorTheme      String
+  
+  // Stats (JSON)
+  stats           Json
+  
+  // Skills (JSON array)
+  skills          Json
+  
+  // Talents (JSON array)
+  talents         Json
+  
+  // Materials
+  ascensionMaterials Json
+  skillMaterials     Json
+  
+  // Recommendations
+  recommendedWeapons   String[]
+  recommendedArtifacts String[]
+  synergies            String[]
+  counters             String[]
+  
+  // Builds (JSON array)
+  popularBuilds   Json
+  
+  // Analysis
+  strengths       Json
+  weaknesses      Json
+  
+  // Lore
+  lore            String   @db.Text
+  voiceActors     Json
+  
+  // Faction
+  factionRelation Json
+  
+  // Meta
+  releaseVersion  String
+  tierListPlacement Json
+  
+  // Metrics
+  views           Int      @default(0)
+  popularity      Int      @default(0)
+  winRate         Float    @default(0)
+  
+  // Verification
+  verification    Json
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Indexes
+  @@index([element])
+  @@index([role])
+  @@index([rarity])
+  @@index([faction])
+  @@index([popularity])
+  @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // USER MANAGEMENT
 // ═══════════════════════════════════════════════════════════════════
 

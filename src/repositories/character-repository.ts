@@ -1,0 +1,233 @@
+import { databaseService } from '@/lib/database';
+import { logger } from '@/lib/logger';
+import type { Character } from '@/types/domain';
+
+/**
+ * Character Repository
+ * Handles all database operations for characters
+ */
+
+class CharacterRepository {
+  /**
+   * Get all characters
+   */
+  async findAll(): Promise<Character[]> {
+    try {
+      const prisma = databaseService.getClient();
+      const characters = await prisma.character.findMany({
+        orderBy: { popularity: 'desc' },
+      });
+      return characters as Character[];
+    } catch (error) {
+      logger.error('CharacterRepository', 'Failed to fetch characters', { error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get character by ID
+   */
+  async findById(id: string): Promise<Character | null> {
+    try {
+      const prisma = databaseService.getClient();
+      const character = await prisma.character.findUnique({
+        where: { id },
+      });
+      return character as Character | null;
+    } catch (error) {
+      logger.error('CharacterRepository', 'Failed to fetch character', { id, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get character by slug
+   */
+  async findBySlug(slug: string): Promise<Character | null> {
+    try {
+      const prisma = databaseService.getClient();
+      const character = await prisma.character.findUnique({
+        where: { slug },
+      });
+      return character as Character | null;
+    } catch (error) {
+      logger.error('CharacterRepository', 'Failed to fetch character by slug', { slug, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Create new character
+   */
+  async create(data: Omit<Character, 'id' | 'createdAt' | 'updatedAt'>): Promise<Character> {
+    try {
+      const prisma = databaseService.getClient();
+      const character = await prisma.character.create({
+        data: {
+          ...data,
+          stats: data.stats as any,
+          skills: data.skills as any,
+          talents: data.talents as any,
+          ascensionMaterials: data.ascensionMaterials as any,
+          skillMaterials: data.skillMaterials as any,
+          recommendedWeapons: data.recommendedWeapons,
+          recommendedArtifacts: data.recommendedArtifacts,
+          synergies: data.synergies,
+          counters: data.counters,
+          popularBuilds: data.popularBuilds as any,
+          strengths: data.strengths as any,
+          weaknesses: data.weaknesses as any,
+          voiceActors: data.voiceActors as any,
+          factionRelation: data.factionRelation as any,
+          tierListPlacement: data.tierListPlacement as any,
+          verification: data.verification as any,
+        },
+      });
+      logger.info('CharacterRepository', 'Character created', { id: character.id });
+      return character as Character;
+    } catch (error) {
+      logger.error('CharacterRepository', 'Failed to create character', { error });
+      throw error;
+    }
+  }
+
+  /**
+   * Update character
+   */
+  async update(id: string, data: Partial<Character>): Promise<Character> {
+    try {
+      const prisma = databaseService.getClient();
+      const updateData: any = { ...data };
+      
+      // Handle JSON fields
+      if (data.stats) updateData.stats = data.stats as any;
+      if (data.skills) updateData.skills = data.skills as any;
+      if (data.talents) updateData.talents = data.talents as any;
+      if (data.ascensionMaterials) updateData.ascensionMaterials = data.ascensionMaterials as any;
+      if (data.skillMaterials) updateData.skillMaterials = data.skillMaterials as any;
+      if (data.popularBuilds) updateData.popularBuilds = data.popularBuilds as any;
+      if (data.strengths) updateData.strengths = data.strengths as any;
+      if (data.weaknesses) updateData.weaknesses = data.weaknesses as any;
+      if (data.voiceActors) updateData.voiceActors = data.voiceActors as any;
+      if (data.factionRelation) updateData.factionRelation = data.factionRelation as any;
+      if (data.tierListPlacement) updateData.tierListPlacement = data.tierListPlacement as any;
+      if (data.verification) updateData.verification = data.verification as any;
+
+      const character = await prisma.character.update({
+        where: { id },
+        data: updateData,
+      });
+      logger.info('CharacterRepository', 'Character updated', { id });
+      return character as Character;
+    } catch (error) {
+      logger.error('CharacterRepository', 'Failed to update character', { id, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Delete character
+   */
+  async delete(id: string): Promise<void> {
+    try {
+      const prisma = databaseService.getClient();
+      await prisma.character.delete({
+        where: { id },
+      });
+      logger.info('CharacterRepository', 'Character deleted', { id });
+    } catch (error) {
+      logger.error('CharacterRepository', 'Failed to delete character', { id, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Search characters
+   */
+  async search(query: string, limit: number = 20): Promise<Character[]> {
+    try {
+      const prisma = databaseService.getClient();
+      const characters = await prisma.character.findMany({
+        where: {
+          OR: [
+            { name: { contains: query, mode: 'insensitive' } },
+            { title: { contains: query, mode: 'insensitive' } },
+            { description: { contains: query, mode: 'insensitive' } },
+          ],
+        },
+        take: limit,
+        orderBy: { popularity: 'desc' },
+      });
+      return characters as Character[];
+    } catch (error) {
+      logger.error('CharacterRepository', 'Failed to search characters', { query, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get characters by filter
+   */
+  async findByFilter(filter: {
+    element?: string;
+    role?: string;
+    rarity?: string;
+    weaponType?: string;
+    faction?: string;
+  }): Promise<Character[]> {
+    try {
+      const prisma = databaseService.getClient();
+      const where: any = {};
+      
+      if (filter.element) where.element = filter.element;
+      if (filter.role) where.role = filter.role;
+      if (filter.rarity) where.rarity = filter.rarity;
+      if (filter.weaponType) where.weaponType = filter.weaponType;
+      if (filter.faction) where.faction = filter.faction;
+
+      const characters = await prisma.character.findMany({
+        where,
+        orderBy: { popularity: 'desc' },
+      });
+      return characters as Character[];
+    } catch (error) {
+      logger.error('CharacterRepository', 'Failed to fetch characters by filter', { filter, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Increment character views
+   */
+  async incrementViews(id: string): Promise<void> {
+    try {
+      const prisma = databaseService.getClient();
+      await prisma.character.update({
+        where: { id },
+        data: {
+          views: {
+            increment: 1,
+          },
+        },
+      });
+    } catch (error) {
+      logger.error('CharacterRepository', 'Failed to increment views', { id, error });
+    }
+  }
+
+  /**
+   * Get character count
+   */
+  async count(): Promise<number> {
+    try {
+      const prisma = databaseService.getClient();
+      return await prisma.character.count();
+    } catch (error) {
+      logger.error('CharacterRepository', 'Failed to count characters', { error });
+      throw error;
+    }
+  }
+}
+
+// Singleton instance
+export const characterRepository = new CharacterRepository();
