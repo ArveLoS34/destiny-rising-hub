@@ -16,7 +16,7 @@ import {
   getOptimalMainStats,
   getOptimalSubStats,
 } from "@/features/artifacts/services/artifact-service";
-import type { DamageCalculationInput, TeamBuff } from "@/types/domain";
+import type { DamageCalculationInput, TeamBuff, CombatStats } from "@/types/domain";
 import {
   Sword,
   Shield,
@@ -53,7 +53,7 @@ export function CombatLabClient() {
     const input: DamageCalculationInput = {
       characterId,
       characterLevel,
-      characterStats: {} as any,
+      characterStats: {} as CombatStats,
       weaponId,
       weaponLevel,
       weaponRefinement: 1,

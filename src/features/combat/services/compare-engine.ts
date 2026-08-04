@@ -7,6 +7,12 @@ import type { ComparisonResult, ComparisonInput } from "@/types/domain";
  * Uses a unified comparison infrastructure.
  */
 
+interface ItemWithStats {
+  id: string;
+  name: string;
+  stats: Record<string, number>;
+}
+
 export function compareItems(input: ComparisonInput): ComparisonResult {
   const items = input.items.map((item) => getItemStats(item, input.comparisonType));
   
@@ -36,7 +42,7 @@ export function compareItems(input: ComparisonInput): ComparisonResult {
   };
 }
 
-function getItemStats(item: { id: string; name: string; type: string }, comparisonType: string): any {
+function getItemStats(item: { id: string; name: string; type: string }, comparisonType: string): ItemWithStats {
   // In production, fetch actual data from services
   // For now, return mock stats
   const mockStats: Record<string, Record<string, Record<string, number>>> = {
@@ -64,7 +70,7 @@ function getItemStats(item: { id: string; name: string; type: string }, comparis
   };
 }
 
-function determineWinner(items: any[], comparisonType: string): string {
+function determineWinner(items: ItemWithStats[], comparisonType: string): string {
   if (items.length === 0) return "";
 
   // Determine winner based on comparison type
@@ -87,11 +93,11 @@ function determineWinner(items: any[], comparisonType: string): string {
   return winner.id;
 }
 
-function calculateDifferences(items: any[], comparisonType: string): any[] {
+function calculateDifferences(items: ItemWithStats[], comparisonType: string): { category: string; values: Record<string, number>; winner: string }[] {
   if (items.length < 2) return [];
 
   const categories = Object.keys(items[0].stats);
-  const differences: any[] = [];
+  const differences: { category: string; values: Record<string, number>; winner: string }[] = [];
 
   categories.forEach((category) => {
     const values: Record<string, number> = {};
@@ -112,7 +118,7 @@ function calculateDifferences(items: any[], comparisonType: string): any[] {
   return differences;
 }
 
-function generateComparisonReasoning(items: any[], winner: string, comparisonType: string): string[] {
+function generateComparisonReasoning(items: ItemWithStats[], winner: string, comparisonType: string): string[] {
   const reasoning: string[] = [];
   const winnerItem = items.find((i) => i.id === winner);
 

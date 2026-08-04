@@ -70,9 +70,17 @@ function createTimelineEvent(skillId: string, timestamp: number, index: number):
   };
 }
 
-function getSkillData(skillId: string): any {
+interface SkillData {
+  type: "basic" | "skill" | "ultimate";
+  character: string;
+  damage: number;
+  duration: number;
+  description: string;
+}
+
+function getSkillData(skillId: string): SkillData {
   // Mock skill data - in production, fetch from character data
-  const skills: Record<string, any> = {
+  const skills: Record<string, SkillData> = {
     "nova-basic": {
       type: "basic",
       character: "Nova",

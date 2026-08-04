@@ -35,7 +35,6 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const loadProfileData = async () => {
-    setIsLoading(true);
     try {
       const currentUser = await authService.getCurrentUser();
       if (!currentUser) {
@@ -103,7 +102,10 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-    loadProfileData();
+    const loadData = async () => {
+      await loadProfileData();
+    };
+    loadData();
   }, []);
 
   if (isLoading) {

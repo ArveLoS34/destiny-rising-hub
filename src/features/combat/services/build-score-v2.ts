@@ -3,7 +3,7 @@ import { weapons } from "@/data/games/destiny-rising/weapons";
 import { builds } from "@/data/games/destiny-rising/builds";
 import { teams } from "@/data/games/destiny-rising/teams";
 import { artifacts, artifactSets } from "@/data/games/destiny-rising/artifacts";
-import type { BuildScoreV2 } from "@/types/domain";
+import type { BuildScoreV2, CharacterSummary, WeaponSummary, BuildSummary, TeamSummary } from "@/types/domain";
 
 /**
  * Build Score v2 — Advanced Build Scoring System
@@ -104,7 +104,7 @@ export function calculateBuildScoreV2(input: BuildScoreInput): BuildScoreV2 {
   };
 }
 
-function calculateDamageScore(character: any, weapon: any, build: any): number {
+function calculateDamageScore(character: CharacterSummary, weapon: WeaponSummary, build: BuildSummary): number {
   let score = 50;
 
   // Character tier
@@ -126,7 +126,7 @@ function calculateDamageScore(character: any, weapon: any, build: any): number {
   return Math.min(100, score);
 }
 
-function calculateSurvivabilityScore(character: any, build: any): number {
+function calculateSurvivabilityScore(character: CharacterSummary, build: BuildSummary): number {
   let score = 50;
 
   // Character base stats
@@ -138,12 +138,12 @@ function calculateSurvivabilityScore(character: any, build: any): number {
   if (build.tags?.includes("Healer")) score += 15;
 
   // Team composition
-  if (build.teammates?.some((t: any) => t.role === "Healer")) score += 10;
+  if (build.teammates?.some((t) => t.role === "Healer")) score += 10;
 
   return Math.min(100, score);
 }
 
-function calculateEnergyScore(character: any, weapon: any, build: any): number {
+function calculateEnergyScore(character: CharacterSummary, weapon: WeaponSummary, build: BuildSummary): number {
   let score = 60;
 
   // Energy recharge
@@ -158,7 +158,7 @@ function calculateEnergyScore(character: any, weapon: any, build: any): number {
   return Math.min(100, score);
 }
 
-function calculateConsistencyScore(build: any): number {
+function calculateConsistencyScore(build: BuildSummary): number {
   let score = 70;
 
   // Build rating and votes
@@ -172,7 +172,7 @@ function calculateConsistencyScore(build: any): number {
   return Math.min(100, score);
 }
 
-function calculateAccessibilityScore(build: any): number {
+function calculateAccessibilityScore(build: BuildSummary): number {
   let score = 60;
 
   // F2P friendly
@@ -189,27 +189,27 @@ function calculateAccessibilityScore(build: any): number {
   return Math.min(100, Math.max(0, score));
 }
 
-function calculateTeamSynergyScore(character: any, teamMembers: any[]): number {
+function calculateTeamSynergyScore(character: CharacterSummary, teamMembers: TeamSummary[]): number {
   if (teamMembers.length === 0) return 50;
 
   let score = 60;
 
   // Element coverage
-  const elements = new Set([character.element, ...teamMembers.map((t: any) => t.element)]);
+  const elements = new Set([character.element, ...teamMembers.map((t) => t.element)]);
   if (elements.size >= 3) score += 15;
 
   // Role coverage
-  const roles = new Set(teamMembers.map((t: any) => t.role));
+  const roles = new Set(teamMembers.map((t) => t.role));
   if (roles.has("Support") && roles.has("Healer")) score += 20;
 
   // Faction bonus
-  const factions = teamMembers.filter((t: any) => t.faction === character.faction);
+  const factions = teamMembers.filter((t) => t.faction === character.faction);
   if (factions.length >= 2) score += 10;
 
   return Math.min(100, score);
 }
 
-function calculateWeaponEfficiencyScore(character: any, weapon: any): number {
+function calculateWeaponEfficiencyScore(character: CharacterSummary, weapon: WeaponSummary): number {
   let score = 60;
 
   // Element match
@@ -228,7 +228,7 @@ function calculateWeaponEfficiencyScore(character: any, weapon: any): number {
   return Math.min(100, score);
 }
 
-function calculateFutureScalingScore(character: any, build: any): number {
+function calculateFutureScalingScore(character: CharacterSummary, build: BuildSummary): number {
   let score = 70;
 
   // Character popularity (indicates long-term relevance)
