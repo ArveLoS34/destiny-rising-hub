@@ -10,3 +10,4 @@ export * from "./combat";
 export * from "./world";
 export * from "./community";
 export * from "./admin";
+export * from "./content";

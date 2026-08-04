@@ -1,181 +1,559 @@
-// Prisma Schema for Destiny Rising Hub
-// Database: SQLite (development) / PostgreSQL (production)
+// Destiny Rising Hub - Production Database Schema
+// Database: PostgreSQL
+// Provider: prisma-client-js
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// ─── Better Auth Models ───
+// ═══════════════════════════════════════════════════════════════════
+// USER MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════
 
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
-  emailVerified Boolean   @default(false)
   username      String    @unique
   displayName   String
   avatar        String?
-  provider      String
-  providerAccountId String
-  role          String    @default("user")
+  
+  // Authentication
+  passwordHash  String?   // For email/password auth
+  emailVerified Boolean   @default(false)
+  
+  // OAuth
+  oauthProvider String?   // google, github, discord
+  oauthId       String?   // OAuth provider user ID
+  oauthToken    String?   // Encrypted OAuth token
+  
+  // Profile
+  bio           String?
+  website       String?
+  location      String?
+  
+  // Roles & Permissions
+  role          UserRole  @default(MEMBER)
+  isBanned      Boolean   @default(false)
+  isSuspended   Boolean   @default(false)
+  suspensionEnd DateTime?
+  suspensionReason String?
+  
+  // Reputation
+  reputation    Int       @default(0)
+  level         Int       @default(1)
+  
+  // Settings
   locale        String    @default("en")
   theme         String    @default("dark")
-  bio           String?
+  notifications Json      @default("{}")
+  
+  // Timestamps
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  lastLoginAt   DateTime  @default(now())
-
+  lastLoginAt   DateTime?
+  lastActiveAt  DateTime?
+  
   // Relations
+  sessions      Session[]
+  accounts      Account[]
   favorites     Favorite[]
   savedBuilds   SavedBuild[]
   savedTeams    SavedTeam[]
   collections   Collection[]
+  guides        Guide[]
+  comments      Comment[]
+  ratings       Rating[]
+  reactions     Reaction[]
   activities    Activity[]
-  sessions      Session[]
-  accounts      Account[]
+  follows       Follow[]      @relation("Following")
+  followers     Follow[]      @relation("Followers")
+  notifications Notification[]
+  reports       Report[]      @relation("Reporter")
+  
+  @@index([email])
+  @@index([username])
+  @@index([role])
+  @@index([createdAt])
+}
 
-  @@map("users")
+enum UserRole {
+  MEMBER
+  CONTRIBUTOR
+  VERIFIED_CREATOR
+  MODERATOR
+  ADMIN
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("sessions")
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique
+  expiresAt    DateTime
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
 }
 
 model Account {
-  id                String   @id @default(cuid())
-  userId            String
-  accountId         String
-  providerId        String
-  accessToken       String?
-  refreshToken      String?
-  accessTokenExpiresAt DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope             String?
-  idToken           String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("accounts")
+  id                    String   @id @default(cuid())
+  userId                String
+  type                  String   // oauth, credentials
+  provider              String   // google, github, discord, email
+  providerAccountId     String
+  refresh_token         String?  @db.Text
+  access_token          String?  @db.Text
+  expires_at            Int?
+  token_type            String?
+  scope                 String?
+  id_token              String?  @db.Text
+  session_state         String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
-model Verification {
-  id         String   @id @default(cuid())
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+// ═══════════════════════════════════════════════════════════════════
+// CONTENT: GUIDES
+// ═══════════════════════════════════════════════════════════════════
 
-  @@map("verifications")
+model Guide {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  authorId      String
+  title         String
+  summary       String        @db.Text
+  content       String        @db.Text // Markdown
+  coverImage    String?
+  
+  // Classification
+  category      GuideCategory @default(OTHER)
+  tags          String[]
+  gameVersion   String
+  
+  // Status
+  status        ContentStatus @default(DRAFT)
+  language      String        @default("en")
+  
+  // Metrics
+  views         Int           @default(0)
+  likes         Int           @default(0)
+  helpfulCount  Int           @default(0)
+  commentCount  Int           @default(0)
+  
+  // Verification
+  isVerified    Boolean       @default(false)
+  verifiedAt    DateTime?
+  verifiedBy    String?
+  
+  // Timestamps
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  publishedAt   DateTime?
+  
+  // Relations
+  author        User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments      Comment[]
+  ratings       Rating[]
+  reactions     Reaction[]
+  
+  @@index([slug])
+  @@index([authorId])
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+  @@index([views])
 }
 
-// ─── User Platform Models ───
-
-model Favorite {
-  id         String   @id @default(cuid())
-  userId     String
-  type       String   // character, weapon, build, team
-  itemId     String
-  itemName   String
-  itemSlug   String
-  itemIcon   String
-  itemColor  String
-  createdAt  DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, type, itemId])
-  @@index([userId, type])
-  @@map("favorites")
+enum GuideCategory {
+  BEGINNER
+  ADVANCED
+  TIER_LIST
+  FARMING
+  BUILD_GUIDE
+  TEAM_COMPOSITION
+  MECHANICS
+  OTHER
 }
+
+enum ContentStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CONTENT: BUILDS & TEAMS
+// ═══════════════════════════════════════════════════════════════════
 
 model SavedBuild {
-  id            String   @id @default(cuid())
-  userId        String
-  title         String
-  description   String?
-  characterId   String
-  characterName String
-  weaponId      String
-  weaponName    String
-  artifactSetIds String  // JSON array stored as string
-  tags          String   // JSON array stored as string
-  notes         String?
-  isPublic      Boolean  @default(false)
-  version       Int      @default(1)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("saved_builds")
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  authorId        String
+  characterId     String
+  title           String
+  description     String   @db.Text
+  gameplayNotes   String?  @db.Text
+  difficulty      String   // easy, medium, hard, expert
+  
+  // Build Data
+  weaponId        String
+  artifactSetId   String
+  mainStats       Json     // { sands, goblet, crown }
+  subStats        Json     // { critRate, critDamage, atkPercent, ... }
+  
+  // Media
+  videoUrl        String?
+  screenshots     String[]
+  
+  // Metrics
+  views           Int      @default(0)
+  likes           Int      @default(0)
+  helpfulCount    Int      @default(0)
+  commentCount    Int      @default(0)
+  usageCount      Int      @default(0)
+  
+  // Verification
+  isVerified      Boolean  @default(false)
+  verifiedAt      DateTime?
+  verifiedBy      String?
+  
+  // Status
+  status          ContentStatus @default(DRAFT)
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  publishedAt     DateTime?
+  
+  // Relations
+  author          User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments        Comment[]
+  ratings         Rating[]
+  reactions       Reaction[]
+  
+  @@index([slug])
+  @@index([authorId])
+  @@index([characterId])
+  @@index([status])
+  @@index([views])
 }
 
 model SavedTeam {
-  id          String   @id @default(cuid())
-  userId      String
-  title       String
-  description String?
-  memberIds   String   // JSON array stored as string
-  template    String?
-  tags        String   // JSON array stored as string
-  notes       String?
-  isPublic    Boolean  @default(false)
-  version     Int      @default(1)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("saved_teams")
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  authorId        String
+  title           String
+  description     String   @db.Text
+  purpose         String   @db.Text
+  
+  // Team Data
+  memberIds       String[]
+  
+  // Analysis
+  strengths       String[] @db.Text
+  weaknesses      String[] @db.Text
+  recommendedUsage String[] @db.Text
+  
+  // Media
+  videoUrl        String?
+  screenshots     String[]
+  
+  // Metrics
+  views           Int      @default(0)
+  likes           Int      @default(0)
+  helpfulCount    Int      @default(0)
+  commentCount    Int      @default(0)
+  usageCount      Int      @default(0)
+  
+  // Verification
+  isVerified      Boolean  @default(false)
+  verifiedAt      DateTime?
+  verifiedBy      String?
+  
+  // Status
+  status          ContentStatus @default(DRAFT)
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  publishedAt     DateTime?
+  
+  // Relations
+  author          User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments        Comment[]
+  ratings         Rating[]
+  reactions       Reaction[]
+  
+  @@index([slug])
+  @@index([authorId])
+  @@index([status])
+  @@index([views])
 }
 
-model Collection {
-  id          String   @id @default(cuid())
-  userId      String
-  title       String
-  description String?
-  icon        String?
-  items       String   // JSON array stored as string
-  isPublic    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// ═══════════════════════════════════════════════════════════════════
+// SOCIAL: COMMENTS, RATINGS, REACTIONS
+// ═══════════════════════════════════════════════════════════════════
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Comment {
+  id            String   @id @default(cuid())
+  authorId      String
+  contentType   String   // guide, build, team
+  contentId     String
+  parentId      String?  // For replies
+  content       String   @db.Text // Markdown
+  mentions      String[] // User IDs mentioned
+  
+  // Metrics
+  likes         Int      @default(0)
+  replyCount    Int      @default(0)
+  
+  // Moderation
+  isApproved    Boolean  @default(true)
+  isEdited      Boolean  @default(false)
+  editHistory   Json     @default("[]")
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent        Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies       Comment[] @relation("CommentReplies")
+  
+  @@index([authorId])
+  @@index([contentType, contentId])
+  @@index([parentId])
+  @@index([createdAt])
+}
 
-  @@index([userId])
-  @@map("collections")
+model Rating {
+  id            String   @id @default(cuid())
+  userId        String
+  contentType   String   // guide, build, team, comment
+  contentId     String
+  rating        Int      // 1-5
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, contentType, contentId])
+  @@index([contentType, contentId])
+  @@index([rating])
+}
+
+model Reaction {
+  id            String   @id @default(cuid())
+  userId        String
+  contentType   String   // guide, build, team, comment
+  contentId     String
+  type          String   // like, helpful, favorite
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, contentType, contentId, type])
+  @@index([contentType, contentId, type])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SOCIAL: FOLLOWS, ACTIVITIES, NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════════
+
+model Follow {
+  id            String   @id @default(cuid())
+  followerId    String
+  followingId   String
+  createdAt     DateTime @default(now())
+  
+  follower      User     @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  following     User     @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+  
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
 }
 
 model Activity {
-  id          String   @id @default(cuid())
-  userId      String
-  type        String
-  title       String
-  description String?
-  link        String?
-  metadata    String?  // JSON object stored as string
-  createdAt   DateTime @default(now())
+  id            String   @id @default(cuid())
+  userId        String
+  type          String   // search, view, action
+  itemId        String?
+  itemType      String?
+  query         String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Notification {
+  id            String   @id @default(cuid())
+  userId        String
+  type          String   // new_follower, comment, like, guide_approved, etc.
+  title         String
+  message       String   @db.Text
+  link          String?
+  isRead        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
 
-  @@index([userId, createdAt])
-  @@map("activities")
+// ═══════════════════════════════════════════════════════════════════
+// USER CONTENT: FAVORITES, COLLECTIONS
+// ═══════════════════════════════════════════════════════════════════
+
+model Favorite {
+  id            String   @id @default(cuid())
+  userId        String
+  type          String   // character, weapon, build, team, guide
+  itemId        String
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, type, itemId])
+  @@index([userId])
+  @@index([type])
+}
+
+model Collection {
+  id            String   @id @default(cuid())
+  userId        String
+  title         String
+  description   String?  @db.Text
+  items         Json     @default("[]") // Array of { type, itemId }
+  isPublic      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([isPublic])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MODERATION: REPORTS
+// ═══════════════════════════════════════════════════════════════════
+
+model Report {
+  id            String         @id @default(cuid())
+  reporterId    String
+  contentType   String         // guide, build, team, comment
+  contentId     String
+  reason        ReportReason
+  description   String         @db.Text
+  status        ReportStatus   @default(PENDING)
+  reviewedBy    String?
+  resolution    String?        @db.Text
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  reporter      User           @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  
+  @@index([status])
+  @@index([contentType, contentId])
+  @@index([createdAt])
+}
+
+enum ReportReason {
+  SPAM
+  INAPPROPRIATE
+  MISINFORMATION
+  DUPLICATE
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ADMIN: AUDIT LOGS, FEATURE FLAGS
+// ═══════════════════════════════════════════════════════════════════
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  userId        String
+  action        String
+  entityType    String
+  entityId      String
+  changes       Json?
+  metadata      Json?
+  ipAddress     String
+  userAgent     String
+  createdAt     DateTime @default(now())
+  
+  @@index([userId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model FeatureFlag {
+  id                String   @id @default(cuid())
+  key               String   @unique
+  name              String
+  description       String?
+  enabled           Boolean  @default(false)
+  rolloutPercentage Int      @default(0) // 0-100
+  targetUserIds     String[]
+  targetUserRoles   String[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdBy         String
+  
+  @@index([key])
+  @@index([enabled])
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MEDIA ASSETS
+// ═══════════════════════════════════════════════════════════════════
+
+model MediaAsset {
+  id            String   @id @default(cuid())
+  type          String   // image, video, icon, document
+  filename      String
+  url           String
+  size          Int
+  mimeType      String
+  dimensions    Json?    // { width, height }
+  tags          String[]
+  uploadedBy    String
+  usageCount    Int      @default(0)
+  createdAt     DateTime @default(now())
+  
+  @@index([type])
+  @@index([uploadedBy])
+  @@index([createdAt])
 }
