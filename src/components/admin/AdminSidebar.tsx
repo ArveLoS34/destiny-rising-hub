@@ -6,54 +6,65 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   Users,
-  FileText,
-  Shield,
-  Settings,
-  BookOpen,
   Sword,
   Package,
   Gem,
   Map,
-  Flag,
+  Download,
+  CheckSquare,
+  GitCompare,
+  GitBranch,
+  Calendar,
+  Image,
+  Search,
+  ListChecks,
   Activity,
-  Database,
-  HardDrive,
+  ToggleLeft,
+  Workflow,
+  Code,
+  Monitor,
+  Rocket,
 } from 'lucide-react';
 
-const menuItems = [
+const navigation = [
   {
     title: 'Overview',
     items: [
-      { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-      { label: 'Activity', href: '/admin/activity', icon: Activity },
+      { title: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+      { title: 'Activity Feed', href: '/admin/activity', icon: Activity },
     ],
   },
   {
-    title: 'Management',
+    title: 'Content Editors',
     items: [
-      { label: 'Users', href: '/admin/users', icon: Users },
-      { label: 'Content', href: '/admin/content', icon: FileText },
-      { label: 'Moderation', href: '/admin/moderation', icon: Shield },
+      { title: 'Characters', href: '/admin/characters', icon: Users },
+      { title: 'Weapons', href: '/admin/weapons', icon: Sword },
+      { title: 'Materials', href: '/admin/materials', icon: Package },
+      { title: 'Artifacts', href: '/admin/artifacts', icon: Gem },
+      { title: 'World Map', href: '/admin/world', icon: Map },
     ],
   },
   {
-    title: 'Content',
+    title: 'Operations',
     items: [
-      { label: 'Characters', href: '/admin/content/characters', icon: Users },
-      { label: 'Weapons', href: '/admin/content/weapons', icon: Sword },
-      { label: 'Materials', href: '/admin/content/materials', icon: Package },
-      { label: 'Artifacts', href: '/admin/content/artifacts', icon: Gem },
-      { label: 'Guides', href: '/admin/content/guides', icon: BookOpen },
-      { label: 'World Map', href: '/admin/content/world', icon: Map },
+      { title: 'Import Center', href: '/admin/imports', icon: Download },
+      { title: 'Review Queue', href: '/admin/reviews', icon: CheckSquare },
+      { title: 'Diff Viewer', href: '/admin/diffs', icon: GitCompare },
+      { title: 'Patch Manager', href: '/admin/patches', icon: GitBranch },
+      { title: 'Scheduler', href: '/admin/scheduler', icon: Calendar },
+      { title: 'Media Library', href: '/admin/media', icon: Image },
     ],
   },
   {
     title: 'System',
     items: [
-      { label: 'Feature Flags', href: '/admin/features', icon: Flag },
-      { label: 'Settings', href: '/admin/settings', icon: Settings },
-      { label: 'Database', href: '/admin/database', icon: Database },
-      { label: 'Backups', href: '/admin/backups', icon: HardDrive },
+      { title: 'Search', href: '/admin/search', icon: Search },
+      { title: 'Bulk Operations', href: '/admin/bulk', icon: ListChecks },
+      { title: 'Feature Flags', href: '/admin/flags', icon: ToggleLeft },
+      { title: 'Background Jobs', href: '/admin/jobs', icon: Workflow },
+      { title: 'API Explorer', href: '/admin/api', icon: Code },
+      { title: 'System Monitor', href: '/admin/monitor', icon: Monitor },
+      { title: 'Release Manager', href: '/admin/release', icon: Rocket },
     ],
   },
 ];
@@ -62,60 +73,53 @@ export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">
-      {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b border-[rgb(var(--color-border))] px-6">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[rgb(var(--color-primary))] to-[rgb(var(--color-accent))]">
-          <span className="text-sm font-bold text-white">DR</span>
-        </div>
-        <div>
-          <div className="text-sm font-semibold">Admin Panel</div>
-          <div className="text-xs text-[rgb(var(--color-text-tertiary))]">Operations</div>
-        </div>
+    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+      <div className="p-6 border-b border-gray-200">
+        <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
+        <p className="text-sm text-gray-500 mt-1">Operations Center</p>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-4">
-        {menuItems.map((section) => (
+        {navigation.map((section) => (
           <div key={section.title} className="mb-6">
-            <div className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-[rgb(var(--color-text-tertiary))]">
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">
               {section.title}
-            </div>
-            <div className="space-y-1">
+            </h2>
+            <ul className="space-y-1">
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
 
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
-                      isActive
-                        ? 'bg-[rgb(var(--color-primary)/0.1)] text-[rgb(var(--color-primary))]'
-                        : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-surface-elevated))] hover:text-[rgb(var(--color-text-primary))]'
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                        isActive
+                          ? 'bg-blue-50 text-blue-600'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                      {item.title}
+                    </Link>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </div>
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="border-t border-[rgb(var(--color-border))] p-4">
+      <div className="p-4 border-t border-gray-200">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgb(var(--color-surface-elevated))]">
-            <span className="text-xs font-medium">A</span>
+          <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
+            A
           </div>
           <div className="flex-1">
-            <div className="text-sm font-medium">Admin User</div>
-            <div className="text-xs text-[rgb(var(--color-text-tertiary))]">admin@destinyrisinghub.com</div>
+            <p className="text-sm font-medium text-gray-900">Admin User</p>
+            <p className="text-xs text-gray-500">admin@drhub.com</p>
           </div>
         </div>
       </div>
