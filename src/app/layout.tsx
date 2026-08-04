@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/providers";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 import { AppShell } from "@/components/layout/AppShell";
+import { CommandPaletteProvider } from "@/components/providers/CommandPaletteProvider";
 import { siteConfig } from "@/config/site";
 import "./globals.css";
 
@@ -88,6 +89,7 @@ export default function RootLayout({
         <Providers>
           <ErrorBoundary>
             <AppShell>{children}</AppShell>
+            <CommandPaletteProvider />
           </ErrorBoundary>
         </Providers>
       </body>
