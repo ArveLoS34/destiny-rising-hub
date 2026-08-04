@@ -126,12 +126,13 @@ export default function HomePage() {
       {/* ─── Quick Stats ─── */}
       <section className="py-8">
         <Container>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
             {[
-              { label: "Characters", value: "40+", icon: Users },
-              { label: "Weapons", value: "60+", icon: Sword },
-              { label: "Builds", value: "500+", icon: FlaskConical },
-              { label: "Active Users", value: "10K+", icon: Map },
+              { label: "Characters", value: "20", icon: Users },
+              { label: "Weapons", value: "25", icon: Sword },
+              { label: "Elements", value: "9", icon: FlaskConical },
+              { label: "Factions", value: "6", icon: Shield },
+              { label: "Manufacturers", value: "5", icon: Trophy },
             ].map((stat) => (
               <Card
                 key={stat.label}
