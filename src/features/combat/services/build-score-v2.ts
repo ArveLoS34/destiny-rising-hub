@@ -1,9 +1,8 @@
-import { characters } from "@/data/games/destiny-rising/characters";
+import { charactersDetail } from "@/data/games/destiny-rising/characters-detail";
 import { weapons } from "@/data/games/destiny-rising/weapons";
 import { builds } from "@/data/games/destiny-rising/builds";
 import { teams } from "@/data/games/destiny-rising/teams";
-import { artifacts, artifactSets } from "@/data/games/destiny-rising/artifacts";
-import type { BuildScoreV2, CharacterSummary, WeaponSummary, BuildSummary, TeamSummary } from "@/types/domain";
+import type { BuildScoreV2, Character, WeaponSummary, BuildSummary, TeamSummary } from "@/types/domain";
 
 /**
  * Build Score v2 — Advanced Build Scoring System
@@ -23,10 +22,10 @@ export interface BuildScoreInput {
 }
 
 export function calculateBuildScoreV2(input: BuildScoreInput): BuildScoreV2 {
-  const character = characters.find((c) => c.id === input.characterId);
+  const character = charactersDetail.find((c) => c.id === input.characterId);
   const weapon = weapons.find((w) => w.id === input.weaponId);
   const build = builds.find((b) => b.id === input.buildId);
-  const teamMembers = input.teamIds.map((id) => teams.find((t) => t.id === id)).filter(Boolean);
+  const teamMembers = input.teamIds.map((id) => teams.find((t) => t.id === id)).filter(Boolean) as TeamSummary[];
 
   if (!character || !weapon || !build) {
     return createDefaultScore();
@@ -104,7 +103,7 @@ export function calculateBuildScoreV2(input: BuildScoreInput): BuildScoreV2 {
   };
 }
 
-function calculateDamageScore(character: CharacterSummary, weapon: WeaponSummary, build: BuildSummary): number {
+function calculateDamageScore(character: Character, weapon: WeaponSummary, build: BuildSummary): number {
   let score = 50;
 
   // Character tier
@@ -126,7 +125,7 @@ function calculateDamageScore(character: CharacterSummary, weapon: WeaponSummary
   return Math.min(100, score);
 }
 
-function calculateSurvivabilityScore(character: CharacterSummary, build: BuildSummary): number {
+function calculateSurvivabilityScore(character: Character, build: BuildSummary): number {
   let score = 50;
 
   // Character base stats
@@ -137,17 +136,11 @@ function calculateSurvivabilityScore(character: CharacterSummary, build: BuildSu
   if (build.tags?.includes("Tank")) score += 20;
   if (build.tags?.includes("Healer")) score += 15;
 
-  // Team composition
-  if (build.teammates?.some((t) => t.role === "Healer")) score += 10;
-
   return Math.min(100, score);
 }
 
-function calculateEnergyScore(character: CharacterSummary, weapon: WeaponSummary, build: BuildSummary): number {
+function calculateEnergyScore(character: Character, weapon: WeaponSummary, build: BuildSummary): number {
   let score = 60;
-
-  // Energy recharge
-  if (character.stats?.baseER > 1.2) score += 15;
 
   // Weapon energy generation
   if (weapon.element === "Lightning") score += 10;
@@ -183,33 +176,23 @@ function calculateAccessibilityScore(build: BuildSummary): number {
   else if (build.weapon?.rarity === "SR") score += 10;
   else if (build.weapon?.rarity === "SSR") score -= 10;
 
-  // Character rarity
-  if (build.characterRarity === "SR") score += 10;
-
   return Math.min(100, Math.max(0, score));
 }
 
-function calculateTeamSynergyScore(character: CharacterSummary, teamMembers: TeamSummary[]): number {
+function calculateTeamSynergyScore(character: Character, teamMembers: TeamSummary[]): number {
   if (teamMembers.length === 0) return 50;
 
   let score = 60;
 
-  // Element coverage
-  const elements = new Set([character.element, ...teamMembers.map((t) => t.element)]);
-  if (elements.size >= 3) score += 15;
-
-  // Role coverage
-  const roles = new Set(teamMembers.map((t) => t.role));
-  if (roles.has("Support") && roles.has("Healer")) score += 20;
-
-  // Faction bonus
-  const factions = teamMembers.filter((t) => t.faction === character.faction);
-  if (factions.length >= 2) score += 10;
+  // Team score
+  const avgTeamScore = teamMembers.reduce((sum, t) => sum + t.score.overall, 0) / teamMembers.length;
+  if (avgTeamScore > 80) score += 20;
+  else if (avgTeamScore > 60) score += 10;
 
   return Math.min(100, score);
 }
 
-function calculateWeaponEfficiencyScore(character: CharacterSummary, weapon: WeaponSummary): number {
+function calculateWeaponEfficiencyScore(character: Character, weapon: WeaponSummary): number {
   let score = 60;
 
   // Element match
@@ -228,17 +211,14 @@ function calculateWeaponEfficiencyScore(character: CharacterSummary, weapon: Wea
   return Math.min(100, score);
 }
 
-function calculateFutureScalingScore(character: CharacterSummary, build: BuildSummary): number {
+function calculateFutureScalingScore(character: Character, build: BuildSummary): number {
   let score = 70;
 
   // Character popularity (indicates long-term relevance)
   if (character.popularity > 80) score += 15;
 
-  // Build flexibility
-  if (build.alternatives?.length > 2) score += 10;
-
-  // Version recency
-  if (build.releaseVersion >= "1.3.0") score += 10;
+  // Build popularity
+  if (build.popularity > 80) score += 10;
 
   return Math.min(100, score);
 }

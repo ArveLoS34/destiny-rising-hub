@@ -7,3 +7,4 @@ export * from "./user";
 export * from "./material";
 export * from "./artifact";
 export * from "./combat";
+export * from "./world";
