@@ -52,7 +52,7 @@ export type SkillType = "basic" | "skill" | "ultimate" | "passive" | "leader";
 
 export type MaterialPurpose = "ascension" | "skill" | "awakening" | "breakthrough";
 
-export type BuildDifficulty = "easy" | "medium" | "hard";
+export type BuildDifficulty = "easy" | "medium" | "hard" | "expert";
 
 export type StrengthCategory = "damage" | "utility" | "survivability" | "synergy" | "ease";
 
