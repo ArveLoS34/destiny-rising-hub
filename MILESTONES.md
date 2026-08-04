@@ -1,8 +1,7 @@
-# Destiny Rising Hub — Milestone Roadmap
+# Destiny Rising Hub — Milestone & Release Roadmap
 
-> Wave yerine Milestone terminolojisine geçilmiştir. Her milestone, belirli bir teslim
-> odaklı grubu temsil eder. "Kod yazıldı" ≠ "Production'da doğrulandı" ayrımı
-> her milestone için geçerlidir.
+> **Terminoloji:** Milestone (kapsam) + RC (Release Candidate — doğrulama)
+> **Ana Prensip:** "Kod yazıldı" ≠ "Production'da doğrulandı"
 
 ---
 
@@ -14,214 +13,329 @@
 | 🔨 | Kod yazıldı, production doğrulaması bekleniyor |
 | ⏳ | Planlanmış, başlanmadı |
 | ❌ | Blokeli / bağımlılık var |
+| 🎯 | RC hedefi |
 
 ---
 
-## M1 — Database & Repository Layer
+## Milestone Overview
 
-> Karakter verisinin kalıcı depolanması, sorgulanması ve erişim katmanı.
-
-| Bileşen | Durum | Not |
-|---------|-------|-----|
-| Prisma Schema (Character) | 🔨 | Migration production'da uygulanmadı |
-| Repository Layer | 🔨 | Gerçek DB üzerinde test edilmedi |
-| Service Layer | 🔨 | Business logic yazıldı, production'da doğrulanmadı |
-| Database Service | 🔨 | Connection pool, health check implement edildi |
-| Integration Tests | 🔨 | Yazıldı, production PostgreSQL üzerinde koşulmadı |
-| Seed Script | 🔨 | 20 karakter hazır, production'da çalıştırılmadı |
-| Index'ler | 🔨 | Tanımlandı, EXPLAIN ANALYZIS production'da yapılmadı |
-
-### Exit Criteria (M1)
-- [ ] PostgreSQL production instance ayakta
-- [ ] `prisma migrate deploy` başarılı
-- [ ] Seed data yüklendi (20 karakter)
-- [ ] Integration testleri `PASS` — 20/20
-- [ ] Transaction testleri `PASS` — 4/4
-- [ ] Connection pool doğrulandı
-- [ ] Slow query log aktif
-- [ ] Index'ler EXPLAIN ile doğrulandı
-
-### Progress: **75%** (Development) → Production doğrulaması bekleniyor
+| Milestone | Kapsam | RC'ler | Durum |
+|-----------|--------|--------|-------|
+| **M1** | Database + Repository + Service | RC-1, RC-2 | 🔨 Dev complete |
+| **M2** | Identity + OAuth + RBAC | RC-3 | ⏳ Schema ready |
+| **M3** | Infrastructure (Redis + Queue + Storage + SMTP) | RC-4, RC-5 | ⏳ Planned |
+| **M4** | Production Validation + E2E + Beta | RC-6 | 🔨 Partially started |
 
 ---
 
-## M2 — Identity & OAuth
+## Release Candidates
 
-> Kullanıcı kimlik doğrulama, yetkilendirme ve oturum yönetimi.
+### 🎯 RC-1 — Infrastructure Validation
 
-| Bileşen | Durum | Not |
-|---------|-------|-----|
-| User Schema (Prisma) | 🔨 | Model tanımlandı, production'da create edilmedi |
-| Session Model | 🔨 | Token-based session schema hazır |
-| Account Model (OAuth) | 🔨 | Multi-provider schema hazır |
-| RBAC (Role-based Access) | ⏳ | Schema'da enum var, middleware yazılmadı |
-| NextAuth.js / Better-Auth Integration | ⏳ | Kurulum başlanmadı |
-| Google OAuth | ⏳ | Client ID/Secret bekleniyor |
-| GitHub OAuth | ⏳ | Client ID/Secret bekleniyor |
-| Discord OAuth | ⏳ | Client ID/Secret bekleniyor |
-| Auth Middleware | ⏳ | Route protection yazılmadı |
-| Session Management | ⏳ | Token refresh, expiry, revocation |
+**Amaç:** Docker Compose ile tam ortam ayağa kalkıyor mu?
 
-### Exit Criteria (M2)
-- [ ] En az 1 OAuth provider ile gerçek giriş yapılıyor
-- [ ] Session token oluşturuluyor ve doğrulanıyor
-- [ ] RBAC middleware korumalı route'ları koruyor
-- [ ] Token refresh çalışıyor
+```
+docker compose up
+  ↓
+PostgreSQL  → healthy
+  ↓
+Redis       → healthy
+  ↓
+MinIO       → healthy
+  ↓
+Mailpit     → healthy
+  ↓
+Next.js     → healthy
+  ↓
+/api/health → PASS
+  ↓
+✅ RC-1 TAMAM
+```
+
+| Kontrol | Durum | Komut |
+|---------|-------|-------|
+| Docker Compose dosyaları | 🔨 Yazıldı | `docker compose up -d` |
+| PostgreSQL healthy | ⏳ Doğrulanmadı | `docker compose ps` |
+| Redis healthy | ⏳ Doğrulanmadı | `redis-cli ping` |
+| MinIO healthy | ⏳ Doğrulanmadı | `curl localhost:9000/minio/health/live` |
+| Mailpit healthy | ⏳ Doğrulanmadı | `curl localhost:8025` |
+| Application running | ⏳ Doğrulanmadı | `curl localhost:3000` |
+| Health endpoint | 🔨 Yazıldı | `curl localhost:3000/api/health` |
+
+**Exit Criteria:**
+- [ ] `docker compose up -d` → Tüm servisler Up (healthy)
+- [ ] `docker compose ps` → 5 servis running
+- [ ] `curl localhost:3000/api/health` → `{"status": "healthy"}`
+- [ ] Yeni geliştirici 10 dk içinde ortamı ayağa kaldırabiliyor
+
+---
+
+### 🎯 RC-2 — Database Validation
+
+**Amaç:** Veritabanı operasyonları gerçek PostgreSQL üzerinde çalışıyor mu?
+
+```
+prisma migrate deploy
+  ↓
+prisma db seed
+  ↓
+20 Character loaded
+  ↓
+Repository CRUD
+  ↓
+API responses
+  ↓
+Frontend renders
+  ↓
+✅ RC-2 TAMAM
+```
+
+| Kontrol | Durum | Beklenen |
+|---------|-------|----------|
+| Migration applied | 🔨 Yazıldı | 0 error |
+| Seed data loaded | 🔨 Yazıldı | 20 karakter |
+| Integration tests | 🔨 Yazıldı | 15+ PASS |
+| Transaction tests | 🔨 Yazıldı | 4+ PASS |
+| API /api/characters | 🔨 Yazıldı | 20 karakter JSON |
+| Frontend renders | ✅ Tamamlandı | Karakter listesi görünür |
+
+**Exit Criteria:**
+- [ ] `npx prisma migrate deploy` → Success
+- [ ] `npm run db:seed` → 20 characters seeded
+- [ ] `npm test` → PASS (tüm testler)
+- [ ] `curl localhost:3000/api/characters` → 20 karakter JSON response
+- [ ] `curl localhost:3000/characters` → HTML response (karakter listesi)
+- [ ] Character detail sayfası açılıyor
+- [ ] Search fonksiyonu çalışıyor
+- [ ] Filter (element, role, rarity) çalışıyor
+
+---
+
+### 🎯 RC-3 — Identity Validation
+
+**Amaç:** OAuth ve session yönetimi gerçek çalışıyor mu?
+
+| Kontrol | Durum | Beklenen |
+|---------|-------|----------|
+| Google OAuth | ⏳ İmplementasyon | Login → callback → session |
+| GitHub OAuth | ⏳ İmplementasyon | Login → callback → session |
+| Discord OAuth | ⏳ İmplementasyon | Login → callback → session |
+| Session → Redis | ⏳ İmplementasyon | Token Redis'te |
+| Logout | ⏳ İmplementasyon | Session siliniyor |
+| RBAC middleware | ⏳ İmplementasyon | Koruma aktif |
+
+**Exit Criteria:**
+- [ ] Google OAuth ile giriş yapılıyor
+- [ ] Session token oluşturuluyor
+- [ ] Session Redis'te saklanıyor
 - [ ] Logout session'ı sonlandırıyor
+- [ ] RBAC korumalı route'ları koruyor
 - [ ] Auth integration testleri PASS
 
-### Progress: **30%** (Schema) → Implementasyon bekleniyor
+---
+
+### 🎯 RC-4 — Storage Validation
+
+**Amaç:** Dosya yükleme/indirme/transformasyon çalışıyor mu?
+
+| Kontrol | Durum | Beklenen |
+|---------|-------|----------|
+| MinIO upload | ⏳ İmplementasyon | Dosya yüklendi |
+| MinIO download | ⏳ İmplementasyon | Dosya indirildi |
+| Image resize | ⏳ İmplementasyon | Boyutlandırıldı |
+| WebP conversion | ⏳ İmplementasyon | Dönüştürüldü |
+| AVIF conversion | ⏳ İmplementasyon | Dönüştürüldü |
+| Thumbnail generation | ⏳ İmplementasyon | Thumbnail oluşturuldu |
+
+**Exit Criteria:**
+- [ ] MinIO'ya dosya yükleme → 200 OK
+- [ ] Yüklenen dosya indirme → correct content
+- [ ] Image resize → correct dimensions
+- [ ] WebP/AVIF conversion → valid image
+- [ ] Thumbnail → 150x150 veya belirlenen boyut
 
 ---
 
-## M3 — Infrastructure & Services
+### 🎯 RC-5 — Queue Validation
 
-> Cache, job queue, object storage, email altyapısı.
+**Amaç:** BullMQ job queue end-to-end çalışıyor mu?
 
-| Bileşen | Durum | Not |
-|---------|-------|-----|
-| Redis Connection | ⏳ | URL config var, implementasyon yok |
-| Redis Cache Layer | ⏳ | Karakter cache, TTL yönetimi |
-| BullMQ Setup | ⏳ | Job queue kurulumu |
-| Background Jobs | ⏳ | Email gönderimi, image processing |
-| MinIO / S3 Storage | ⏳ | Object storage entegrasyonu |
-| Image Upload Pipeline | ⏳ | Upload, resize, CDN |
-| SMTP / Email Service | ⏳ | Template engine, queue |
-| Rate Limiting | ⏳ | Redis-based rate limiter |
-
-### Exit Criteria (M3)
-- [ ] Redis ayakta, health check geçiyor
-- [ ] Cache hit/miss oranı izleniyor
-- [ ] BullMQ worker çalışıyor, job success rate > 99%
-- [ ] MinIO'ya dosya yükleme/indirme çalışıyor
-- [ ] Email gönderimi Mailpit'te doğrulanıyor
-- [ ] Rate limiter aktif
-
-### Progress: **5%** (Config) → Implementasyon bekleniyor
-
----
-
-## M4 — Production Validation & Beta
-
-> Gerçek ortam doğrulaması, monitoring, CI/CD ve kapalı beta.
-
-| Bileşen | Durum | Not |
-|---------|-------|-----|
-| Docker Compose (dev) | 🔨 | Yazıldı, `docker compose up` ile doğrulanmadı |
-| Docker Compose (prod) | ⏳ | Production compose ayrı |
-| CI/CD Pipeline | ⏳ | GitHub Actions: lint, test, build, deploy |
-| E2E Tests | ⏳ | Playwright / Cypress |
-| Monitoring (Sentry) | ⏳ | Error tracking |
-| Logging (Structured) | ⏳ | Centralized logging |
-| Backup Strategy | ⏳ | Automated DB backup |
-| Performance Baseline | ⏳ | Lighthouse, k6 load test |
-| Closed Beta Deployment | ⏳ | Vercel / Railway / Hetzner |
-| Beta User Onboarding | ⏳ | Invite system |
-
-### Exit Criteria (M4)
-- [ ] `docker compose up` ile 10 dk içinde tam ortam ayağa kalkıyor
-- [ ] CI/CD: push → lint → test → build → deploy otomatik
-- [ ] Sentry'de gerçek error takibi aktif
-- [ ] DB backup: günlük otomatik, restore test edildi
-- [ ] Lighthouse score: Performance > 90, Accessibility > 95
-- [ ] k6 load test: 100 concurrent user, p95 < 500ms
-- [ ] Kapalı beta: 10-50 kullanıcı aktif
-- [ ] Fatal error rate < 0.1%
-
-### Progress: **15%** (Docker Compose dev yazıldı) → Devamı bekleniyor
-
----
-
-## Docker Compose — Geliştirme Ortamı
-
-Tüm servisler tek komutla ayağa kalkar:
-
-```bash
-# 1. Environment dosyasını kopyala
-cp .env.docker .env
-
-# 2. Tüm servisleri başlat
-docker compose up -d
-
-# 3. (Alternatif) Redis GUI ile başlat
-docker compose --profile tools up -d
-
-# 4. Logları takip et
-docker compose logs -f app
+```
+Import Job → Queue → Worker → Process → Complete
+                ↓
+          Retry on failure
 ```
 
-### Servis Portları
+| Kontrol | Durum | Beklenen |
+|---------|-------|----------|
+| BullMQ setup | ⏳ İmplementasyon | Worker running |
+| Job enqueue | ⏳ İmplementasyon | Job added |
+| Job processing | ⏳ İmplementasyon | Job completed |
+| Retry mechanism | ⏳ İmplementasyon | Failed → retry → success |
+| Dead letter queue | ⏳ İmplementasyon | Permanent failures captured |
+| Job monitoring UI | ⏳ İmplementasyon | Bull Board accessible |
 
-| Servis | Port | URL |
-|--------|------|-----|
-| Application | 3000 | http://localhost:3000 |
-| PostgreSQL | 5432 | localhost:5432 |
-| Redis | 6379 | localhost:6379 |
-| MinIO API | 9000 | http://localhost:9000 |
-| MinIO Console | 9001 | http://localhost:9001 |
-| Mailpit UI | 8025 | http://localhost:8025 |
-| Redis Commander | 8081 | http://localhost:8081 |
+**Exit Criteria:**
+- [ ] Job enqueue → Worker receives → completes
+- [ ] Failed job → automatic retry (3 attempts)
+- [ ] Permanent failure → dead letter queue
+- [ ] Bull Board dashboard accessible
+- [ ] Concurrent jobs processed correctly
 
-### Yeni Geliştirici Kurulumu
+---
 
-```bash
-git clone https://github.com/ArveLoS34/destiny-rising-hub.git
-cd destiny-rising-hub
-cp .env.docker .env
-docker compose up -d
+### 🎯 RC-6 — Full Workflow Validation
 
-# ~10 dakika sonra:
-# ✅ PostgreSQL: migration applied, seed data loaded
-# ✅ Redis: running
-# ✅ MinIO: running
-# ✅ Mailpit: running
-# ✅ Application: http://localhost:3000
+**Amaç:** Uçtan uca iş akışı — CMS'den frontend'e, hiçbir manuel müdahale olmadan.
+
 ```
+New Character (CMS)
+  ↓
+Validation (Zod schema)
+  ↓
+Review (Admin approval)
+  ↓
+Publish (Status change)
+  ↓
+Queue (Background processing)
+  ↓
+Search Index (Update)
+  ↓
+AI Refresh (Suggestions)
+  ↓
+Notification (Subscribers)
+  ↓
+Frontend (Visible to users)
+```
+
+**Exit Criteria:**
+- [ ] CMS'den yeni karakter oluşturuluyor
+- [ ] Zod validation geçiyor
+- [ ] Admin review → approve
+- [ ] Publish → background job tetikleniyor
+- [ ] Queue → search index güncelleniyor
+- [ ] AI önerileri hesaplanıyor
+- [ ] Notification gönderiliyor
+- [ ] Frontend'de yeni karakter görünür
+- [ ] **Sıfır manuel müdahale**
 
 ---
 
 ## Doğrulama Matrisi
-
-Her bileşen için iki aşamalı doğrulama:
 
 ```
 ┌─────────────────────┬───────────────────┬───────────────────────┐
 │ Bileşen             │ Development       │ Production            │
 │                     │ (kod yazıldı)     │ (doğrulandı)          │
 ├─────────────────────┼───────────────────┼───────────────────────┤
-│ Prisma Schema       │ ✅ Tamamlandı     │ ⏳ Migration bekleniyor│
-│ Repository          │ ✅ Tamamlandı     │ ⏳ DB testi bekleniyor │
-│ Service Layer       │ ✅ Tamamlandı     │ ⏳ Integration bekleniyor│
-│ Integration Tests   │ ✅ Yazıldı        │ ⏳ npm test bekleniyor  │
-│ Transaction Tests   │ ✅ Yazıldı        │ ⏳ npm test bekleniyor  │
-│ Docker Compose      │ ✅ Yazıldı        │ ⏳ docker compose up    │
-│ OAuth               │ ⏳ Schema hazır   │ ⏳ İmplementasyon       │
-│ Redis               │ ⏳ Config var     │ ⏳ İmplementasyon       │
-│ CI/CD               │ ⏳ Planlandı      │ ⏳ Kurulum              │
-│ Monitoring          │ ⏳ Planlandı      │ ⏳ Kurulum              │
-│ E2E Tests           │ ⏳ Planlandı      │ ⏳ Kurulum              │
-│ Beta                │ ⏳ Planlandı      │ ⏳ Deployment           │
+│ Prisma Schema       │ ✅ Tamamlandı     │ ⏳ RC-2 bekleniyor     │
+│ Repository          │ ✅ Tamamlandı     │ ⏳ RC-2 bekleniyor     │
+│ Service Layer       │ ✅ Tamamlandı     │ ⏳ RC-2 bekleniyor     │
+│ Integration Tests   │ ✅ Yazıldı        │ ⏳ RC-2 bekleniyor     │
+│ Transaction Tests   │ ✅ Yazıldı        │ ⏳ RC-2 bekleniyor     │
+│ Docker Compose      │ ✅ Yazıldı        │ ⏳ RC-1 bekleniyor     │
+│ Health Check API    │ ✅ Yazıldı        │ ⏳ RC-1 bekleniyor     │
+│ CI/CD Pipeline      │ ✅ Yazıldı        │ ⏳ RC-6 bekleniyor     │
+│ OAuth               │ 🔨 Schema hazır   │ ⏳ RC-3 bekleniyor     │
+│ Redis Cache         │ 🔨 Config var     │ ⏳ RC-3 bekleniyor     │
+│ BullMQ              │ ⏳ Planlandı      │ ⏳ RC-5 bekleniyor     │
+│ MinIO/S3            │ 🔨 Config var     │ ⏳ RC-4 bekleniyor     │
+│ SMTP                │ 🔨 Config var     │ ⏳ RC-4 bekleniyor     │
+│ E2E Tests           │ ⏳ Planlandı      │ ⏳ RC-6 bekleniyor     │
+│ Monitoring          │ ⏳ Planlandı      │ ⏳ RC-6 bekleniyor     │
+│ Closed Beta         │ ⏳ Planlandı      │ ⏳ RC-6 sonrası        │
 └─────────────────────┴───────────────────┴───────────────────────┘
 ```
 
 ---
 
-## Öncelik Sırası
+## Kapalı Beta Hedefleri
 
-1. **Docker Compose doğrulaması** — `docker compose up` ile tam ortam
-2. **Gerçek PostgreSQL doğrulaması** — Migration + Seed + Test
-3. **CI/CD** — Otomatik lint, test, build, deploy
-4. **M2 (Identity)** — OAuth entegrasyonu
-5. **M3 (Infrastructure)** — Redis + BullMQ + Storage
-6. **M4 (Validation)** — E2E + Monitoring + Beta
+RC-6 tamamlandıktan sonra kapalı beta başlar.
+
+### Beta Metrikleri
+
+| Metrik | Hedef | Ölçüm |
+|--------|-------|-------|
+| Crash Rate | < 0.1% | Sentry error tracking |
+| Error Rate | < 1% | API error responses |
+| Search Success | > 90% | Search with results / total searches |
+| AI Accuracy | > 80% | User accepted suggestions / total |
+| Slow Requests | < 5% | p95 > 1000ms |
+| Memory Usage | < 512MB | Docker container metrics |
+
+### Beta Kullanıcı Hedefi
+- **Minimum:** 25 aktif kullanıcı
+- **İdeal:** 50 aktif kullanıcı
+- **Toplanacaklar:** Crash reports, user feedback, performance data
 
 ---
 
-## Değişiklik Günlüğü
+## CI/CD Pipeline
 
-| Tarih | Değişiklik |
-|-------|-----------|
-| 2026-08-05 | Wave terminolojisinden Milestone terminolojisine geçiş |
-| 2026-08-05 | Docker Compose dev ortamı eklendi |
-| 2026-08-05 | "Kod yazıldı" vs "Production doğrulandı" ayrımı netleştirildi |
-| 2026-08-05 | Doğrulama matrisi eklendi |
+```
+Push / PR
+  ↓
+┌──────────────────────────────────────────────┐
+│ Stage 1: Quality Gates                       │
+│  🔍 Lint + TypeCheck                         │
+│  🔒 Security Audit (npm audit)               │
+│  📦 Dependency Review (PR'larda)             │
+├──────────────────────────────────────────────┤
+│ Stage 2: Tests                               │
+│  🧪 Unit Tests                               │
+│  🔗 Integration Tests (PostgreSQL)           │
+├──────────────────────────────────────────────┤
+│ Stage 3: Build                               │
+│  🏗️ Next.js Build                            │
+├──────────────────────────────────────────────┤
+│ Stage 4: Docker                              │
+│  🐳 Docker Build + Test                      │
+├──────────────────────────────────────────────┤
+│ Stage 5: Deploy                              │
+│  🚀 Staging (develop branch)                 │
+│  🚀 Production (main branch)                 │
+│     - Pre-deploy backup                      │
+│     - Deploy                                 │
+│     - Post-deploy smoke tests                │
+│     - Release tag                            │
+└──────────────────────────────────────────────┘
+```
+
+---
+
+## Mimari Karar Kayıtları
+
+Tüm mimari kararlar `docs/adr/` klasöründe belgelenmiştir:
+
+| ADR | Başlık |
+|-----|--------|
+| ADR-001 | Repository Pattern |
+| ADR-002 | Prisma ORM |
+| ADR-003 | BullMQ Job Queue |
+| ADR-004 | Redis Cache Strategy |
+| ADR-005 | Next.js Standalone Output |
+| ADR-006 | Docker Compose Geliştirme Ortamı |
+| ADR-007 | Milestone + RC Release Workflow |
+
+---
+
+## Öncelik Sırası
+
+1. **RC-1** — Docker Compose doğrulaması (1-2 saat)
+2. **RC-2** — Database validation (30 dk + fix)
+3. **RC-3** — Identity/OAuth implementasyonu (1-2 hafta)
+4. **RC-4** — Storage validation (3-5 gün)
+5. **RC-5** — Queue validation (3-5 gün)
+6. **RC-6** — Full workflow end-to-end (1 hafta)
+7. **Closed Beta** — 25 kullanıcı (2 hafta)
+
+---
+
+## Son Söz
+
+> Başarı ölçütü **"kaç satır kod yazıldı?"** değil:
+>
+> **"Boş bir sunucuda `docker compose up` çalıştırıldıktan sonra
+> sistem gerçekten ayağa kalkıyor mu ve bir içerik oluşturulup
+> uçtan uca yayınlanabiliyor mu?"**
