@@ -9,3 +9,4 @@ export * from "./artifact";
 export * from "./combat";
 export * from "./world";
 export * from "./community";
+export * from "./admin";
