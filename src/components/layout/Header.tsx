@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Search, Menu, Bell, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Search as SearchInput } from "@/components/ui/Search";

@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { type HTMLAttributes, forwardRef } from "react";
-import { type VariantProps, cva } from "class-variance-authority";
+import { cva } from "class-variance-authority";
 
 const loadingStateVariants = cva("flex flex-col items-center justify-center", {
   variants: {

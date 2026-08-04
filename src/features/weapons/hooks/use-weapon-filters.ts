@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
-import type { WeaponSummary, WeaponFilters, WeaponSortField } from "@/types/domain";
+import type { WeaponSummary, WeaponFilters, WeaponSortField, WeaponType, Rarity, Element, DamageType } from "@/types/domain";
 import { defaultWeaponFilters } from "@/types/domain";
 import { filterWeapons } from "../services/weapon-service";
 
@@ -24,17 +24,12 @@ interface UseWeaponFiltersReturn {
   activeFilterCount: number;
 }
 
-export function useWeaponFilters(
-  weapons: WeaponSummary[]
-): UseWeaponFiltersReturn {
+export function useWeaponFilters(weapons: WeaponSummary[]): UseWeaponFiltersReturn {
   const [filters, setFilters] = useState<WeaponFilters>(defaultWeaponFilters);
   const debouncedSearch = useDebounce(filters.search, 300);
 
   const filteredWeapons = useMemo(() => {
-    return filterWeapons(weapons, {
-      ...filters,
-      search: debouncedSearch,
-    });
+    return filterWeapons(weapons, { ...filters, search: debouncedSearch });
   }, [weapons, filters, debouncedSearch]);
 
   const setSearch = useCallback((search: string) => {
@@ -44,36 +39,36 @@ export function useWeaponFilters(
   const toggleWeaponType = useCallback((type: string) => {
     setFilters((prev) => ({
       ...prev,
-      weaponTypes: prev.weaponTypes.includes(type as any)
+      weaponTypes: prev.weaponTypes.includes(type as WeaponType)
         ? prev.weaponTypes.filter((t) => t !== type)
-        : [...prev.weaponTypes, type as any],
+        : [...prev.weaponTypes, type as WeaponType],
     }));
   }, []);
 
   const toggleRarity = useCallback((rarity: string) => {
     setFilters((prev) => ({
       ...prev,
-      rarities: prev.rarities.includes(rarity as any)
+      rarities: prev.rarities.includes(rarity as Rarity)
         ? prev.rarities.filter((r) => r !== rarity)
-        : [...prev.rarities, rarity as any],
+        : [...prev.rarities, rarity as Rarity],
     }));
   }, []);
 
   const toggleElement = useCallback((element: string) => {
     setFilters((prev) => ({
       ...prev,
-      elements: prev.elements.includes(element as any)
+      elements: prev.elements.includes(element as Element)
         ? prev.elements.filter((e) => e !== element)
-        : [...prev.elements, element as any],
+        : [...prev.elements, element as Element],
     }));
   }, []);
 
   const toggleDamageType = useCallback((type: string) => {
     setFilters((prev) => ({
       ...prev,
-      damageTypes: prev.damageTypes.includes(type as any)
+      damageTypes: prev.damageTypes.includes(type as DamageType)
         ? prev.damageTypes.filter((t) => t !== type)
-        : [...prev.damageTypes, type as any],
+        : [...prev.damageTypes, type as DamageType],
     }));
   }, []);
 
@@ -91,10 +86,7 @@ export function useWeaponFilters(
   }, []);
 
   const toggleSortOrder = useCallback(() => {
-    setFilters((prev) => ({
-      ...prev,
-      sortOrder: prev.sortOrder === "asc" ? "desc" : "asc",
-    }));
+    setFilters((prev) => ({ ...prev, sortOrder: prev.sortOrder === "asc" ? "desc" : "asc" }));
   }, []);
 
   const resetFilters = useCallback(() => {

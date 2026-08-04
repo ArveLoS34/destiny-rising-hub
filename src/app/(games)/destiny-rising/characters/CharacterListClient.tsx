@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Container } from "@/components/ui/Container";
 import { Typography } from "@/components/ui/Typography";
 import { Search } from "@/components/ui/Search";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -45,7 +43,6 @@ export function CharacterListClient({
     activeFilterCount,
   } = useCharacterFilters(characters);
 
-  const [showFilters, setShowFilters] = useState(true);
 
   return (
     <div className="flex gap-6">
@@ -54,7 +51,7 @@ export function CharacterListClient({
         <div className="sticky top-20">
           <CharacterFilterBar
             filters={filters}
-            filterOptions={filterOptions}
+        filterOptions={filterOptions}
             onToggleElement={toggleElement}
             onToggleRole={toggleRole}
             onToggleRarity={toggleRarity}

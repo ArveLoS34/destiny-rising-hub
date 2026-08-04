@@ -1,5 +1,5 @@
 import { characters } from "@/data/games/destiny-rising/characters";
-import { charactersDetail, getCharacterBySlug, getCharacterById } from "@/data/games/destiny-rising/characters-detail";
+import { getCharacterBySlug, getCharacterById } from "@/data/games/destiny-rising/characters-detail";
 import type { CharacterSummary, CharacterFilters, CharacterSortField } from "@/types/domain";
 import { logger } from "@/lib/logger";
 
@@ -81,13 +81,6 @@ export function filterCharacters(
     result = result.filter((c) => filters.factions.includes(c.faction));
   }
 
-  // Damage type filter
-  if (filters.damageTypes.length > 0) {
-    // Note: CharacterSummary doesn't have damageType, so this filter
-    // would need to be applied against detailed data.
-    // For now, we skip this in the summary view.
-  }
-
   // Sort
   result = sortCharacters(result, filters.sortBy, filters.sortOrder);
 
@@ -113,7 +106,7 @@ export function sortCharacters(
         comparison = a.name.localeCompare(b.name);
         break;
       case "rarity": {
-        const rarityOrder = { SSR: 4, SR: 3, R: 2, N: 1 };
+        const rarityOrder: Record<string, number> = { SSR: 4, SR: 3, R: 2, N: 1 };
         comparison = rarityOrder[a.rarity] - rarityOrder[b.rarity];
         break;
       }
@@ -152,11 +145,11 @@ export function sortCharacters(
 // ─── Filter Options ───
 
 export function getFilterOptions() {
-  const elements = [...new Set(characters.map((c) => c.element))].sort();
-  const roles = [...new Set(characters.map((c) => c.role))].sort();
-  const rarities = [...new Set(characters.map((c) => c.rarity))];
-  const weaponTypes = [...new Set(characters.map((c) => c.weaponType))].sort();
-  const factions = [...new Set(characters.map((c) => c.faction))].sort();
+  const elements = [...new Set(characters.map((c) => c.element))] as import("@/types/domain").Element[];
+  const roles = [...new Set(characters.map((c) => c.role))] as import("@/types/domain").Role[];
+  const rarities = [...new Set(characters.map((c) => c.rarity))] as import("@/types/domain").Rarity[];
+  const weaponTypes = [...new Set(characters.map((c) => c.weaponType))] as import("@/types/domain").WeaponType[];
+  const factions = [...new Set(characters.map((c) => c.faction))] as import("@/types/domain").Faction[];
 
   return {
     elements,

@@ -3,8 +3,8 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Typography } from "@/components/ui/Typography";
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import type { CharacterSortField, CharacterFilters } from "@/types/domain";
+import { ArrowUp, ArrowDown } from "lucide-react";
+import type { CharacterSortField } from "@/types/domain";
 
 interface CharacterSortBarProps {
   sortBy: CharacterSortField;

@@ -15,10 +15,6 @@ import {
   Sun,
   Moon,
   Crosshair,
-  Sword,
-  Shield,
-  Cross,
-  Target,
 } from "lucide-react";
 
 interface WeaponCardProps {

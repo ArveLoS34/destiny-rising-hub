@@ -9,7 +9,7 @@ import { WeaponCard } from "@/features/weapons/components/cards/WeaponCard";
 import { WeaponFilterBar } from "@/features/weapons/components/filters/WeaponFilterBar";
 import { WeaponSortBar } from "@/features/weapons/components/sorting/WeaponSortBar";
 import { useWeaponFilters } from "@/features/weapons/hooks";
-import type { WeaponSummary, WeaponViewMode } from "@/types/domain";
+import type { WeaponSummary, WeaponViewMode, } from "@/types/domain";
 import { SearchX, Grid3X3, List } from "lucide-react";
 
 interface WeaponListClientProps {
@@ -54,7 +54,7 @@ export function WeaponListClient({
         <div className="sticky top-20">
           <WeaponFilterBar
             filters={filters}
-            filterOptions={filterOptions}
+            filterOptions={filterOptions as WeaponListClientProps["filterOptions"]}
             onToggleWeaponType={toggleWeaponType}
             onToggleRarity={toggleRarity}
             onToggleElement={toggleElement}

@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { type HTMLAttributes } from "react";
 
-interface FooterProps extends HTMLAttributes<HTMLElement> {}
+type FooterProps = HTMLAttributes<HTMLElement>
 
 export function Footer({ className, ...props }: FooterProps) {
   return (

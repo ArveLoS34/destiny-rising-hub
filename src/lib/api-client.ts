@@ -3,7 +3,6 @@
  * Handles authentication, error parsing, and request/response interceptors.
  */
 
-import { siteConfig } from "@/config/site";
 
 export interface ApiError {
   status: number;

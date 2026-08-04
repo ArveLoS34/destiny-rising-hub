@@ -1,27 +1,17 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Container } from "@/components/ui/Container";
 import { Typography } from "@/components/ui/Typography";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
-import { Badge } from "@/components/ui/Badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
-import { Progress } from "@/components/ui/Progress";
 import { CharacterHero } from "./CharacterHero";
 import { CharacterSkills } from "./CharacterSkills";
 import { CharacterMaterials } from "./CharacterMaterials";
 import { CharacterBuilds } from "./CharacterBuilds";
 import { CharacterAnalysis } from "./CharacterAnalysis";
-import { getAllCharacters, getCharacterDetail } from "@/features/characters/services/character-service";
+import { getAllCharacters } from "@/features/characters/services/character-service";
 import { charactersDetail } from "@/data/games/destiny-rising/characters-detail";
-import {
-  Shield,
-  Sword,
-  Heart,
-  Star,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { Star, TrendingUp, Users } from "lucide-react";
 
 interface CharacterPageProps {
   params: Promise<{ slug: string }>;
@@ -70,7 +60,8 @@ export default async function CharacterDetailPage({ params }: CharacterPageProps
       <Breadcrumb
         items={[
           { label: "Home", href: "/" },
-          { label: "Characters", href: "/(games)/destiny-rising/characters" },
+          { label: "Destiny Rising", href: "/" },
+          { label: "Characters", href: "/destiny-rising/characters" },
           { label: character.name },
         ]}
         className="mb-6"

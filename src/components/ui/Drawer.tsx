@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { type HTMLAttributes, forwardRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { type VariantProps, cva } from "class-variance-authority";
+import { cva } from "class-variance-authority";
 
 const drawerVariants = cva(
   "fixed z-[var(--z-modal)] bg-[rgb(var(--color-surface))] shadow-[var(--shadow-xl)] focus:outline-none",

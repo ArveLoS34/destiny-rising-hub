@@ -1,8 +1,7 @@
 import { Typography } from "@/components/ui/Typography";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent,  } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/Accordion";
-import { Progress } from "@/components/ui/Progress";
 import type { Character, CharacterSkill } from "@/types/domain";
 import { Sword, Zap, Star, Shield } from "lucide-react";
 

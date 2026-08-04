@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { AlertTriangle, RefreshCw, type LucideIcon } from "lucide-react";
 import { type HTMLAttributes, forwardRef } from "react";
-import { type VariantProps, cva } from "class-variance-authority";
+import { cva } from "class-variance-authority";
 import { Button } from "./Button";
 
 const errorStateVariants = cva("flex flex-col items-center justify-center py-12 text-center", {

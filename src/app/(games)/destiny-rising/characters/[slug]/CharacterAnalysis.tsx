@@ -8,21 +8,6 @@ interface CharacterAnalysisProps {
   character: Character;
 }
 
-const strengthColors: Record<string, string> = {
-  damage: "text-red-400",
-  utility: "text-blue-400",
-  survivability: "text-green-400",
-  synergy: "text-purple-400",
-  ease: "text-amber-400",
-};
-
-const weaknessColors: Record<string, string> = {
-  matchup: "text-red-400",
-  mechanic: "text-orange-400",
-  resource: "text-yellow-400",
-  playstyle: "text-pink-400",
-};
-
 export function CharacterAnalysis({ character }: CharacterAnalysisProps) {
   return (
     <div className="space-y-8">

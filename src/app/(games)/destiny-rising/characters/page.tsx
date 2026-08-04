@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { Container } from "@/components/ui/Container";
 import { Typography } from "@/components/ui/Typography";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Badge } from "@/components/ui/Badge";

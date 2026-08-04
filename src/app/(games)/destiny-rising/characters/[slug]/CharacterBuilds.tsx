@@ -1,7 +1,6 @@
 import { Typography } from "@/components/ui/Typography";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import type { Character } from "@/types/domain";
 import { Star, Users, Wrench, ThumbsUp } from "lucide-react";
 

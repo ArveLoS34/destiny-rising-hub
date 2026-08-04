@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { type HTMLAttributes, forwardRef } from "react";
-import { type VariantProps, cva } from "class-variance-authority";
+import { cva } from "class-variance-authority";
 import { Button } from "./Button";
 
 const paginationVariants = cva("flex items-center justify-center gap-1", {

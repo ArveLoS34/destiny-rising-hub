@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
-import { type ElementType, type HTMLAttributes, forwardRef } from "react";
-import { type VariantProps, cva } from "class-variance-authority";
+import { type HTMLAttributes, forwardRef } from "react";
 
 const typographyVariants = cva("", {
   variants: {
@@ -79,7 +78,7 @@ const Typography = forwardRef<HTMLElement, TypographyProps>(
     return (
       <Component
         className={cn(typographyVariants({ variant, weight, textColor, align, truncate, className }))}
-        ref={ref as React.Ref<any>}
+        ref={ref as React.Ref<HTMLHeadingElement & HTMLParagraphElement & HTMLSpanElement>}
         {...props}
       />
     );
@@ -89,3 +88,4 @@ Typography.displayName = "Typography";
 
 export { Typography, typographyVariants };
 export type { TypographyProps };
+import { cva } from "class-variance-authority";

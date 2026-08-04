@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { type ButtonHTMLAttributes, type HTMLAttributes, forwardRef } from "react";
-import { type VariantProps, cva } from "class-variance-authority";
+import { cva } from "class-variance-authority";
 import * as Dialog from "@radix-ui/react-dialog";
 import { motion, AnimatePresence } from "framer-motion";
 

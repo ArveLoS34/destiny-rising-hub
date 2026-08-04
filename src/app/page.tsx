@@ -10,7 +10,6 @@ import {
   FlaskConical,
   Shield,
   Trophy,
-  Map,
   Brain,
   Zap,
   ArrowRight,

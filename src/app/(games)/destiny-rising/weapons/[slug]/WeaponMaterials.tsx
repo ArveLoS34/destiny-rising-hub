@@ -10,23 +10,22 @@ interface WeaponMaterialsProps {
   weapon: WeaponSummary;
 }
 
-// Mock materials data - in production this would come from the weapon detail data
-const mockMaterials = {
+// Materials data - in production this would come from the weapon detail data
+const materials = {
   ascension: [
-    { name: "Weapon Core Fragment", quantity: 6, rarity: "common" },
-    { name: "Elemental Crystal", quantity: 24, rarity: "uncommon" },
-    { name: "Boss Material", quantity: 4, rarity: "rare" },
+    { name: "Weapon Core Fragment", quantity: 6 },
+    { name: "Elemental Crystal", quantity: 24 },
+    { name: "Boss Material", quantity: 4 },
   ],
   upgrade: [
-    { name: "Enhancement Ore", quantity: 120, rarity: "common" },
-    { name: "Gold", quantity: 800000, rarity: "common" },
+    { name: "Enhancement Ore", quantity: 120 },
+    { name: "Gold", quantity: 800000 },
   ],
 };
 
-export function WeaponMaterials({ weapon }: WeaponMaterialsProps) {
+export function WeaponMaterials({}: WeaponMaterialsProps) {
   return (
     <div className="space-y-4">
-      {/* Ascension Materials */}
       <Card>
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-2">
@@ -34,7 +33,7 @@ export function WeaponMaterials({ weapon }: WeaponMaterialsProps) {
             <Typography variant="h4">Ascension Materials</Typography>
           </div>
           <div className="space-y-2">
-            {mockMaterials.ascension.map((mat, i) => (
+            {materials.ascension.map((mat, i) => (
               <div
                 key={i}
                 className="flex items-center justify-between p-2 rounded-lg bg-[rgb(var(--color-surface-elevated))]"
@@ -50,7 +49,6 @@ export function WeaponMaterials({ weapon }: WeaponMaterialsProps) {
         </div>
       </Card>
 
-      {/* Upgrade Materials */}
       <Card>
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-2">
@@ -58,7 +56,7 @@ export function WeaponMaterials({ weapon }: WeaponMaterialsProps) {
             <Typography variant="h4">Upgrade Materials</Typography>
           </div>
           <div className="space-y-2">
-            {mockMaterials.upgrade.map((mat, i) => (
+            {materials.upgrade.map((mat, i) => (
               <div
                 key={i}
                 className="flex items-center justify-between p-2 rounded-lg bg-[rgb(var(--color-surface-elevated))]"

@@ -1,6 +1,7 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { type ImgHTMLAttributes, forwardRef } from "react";
-import { type VariantProps, cva } from "class-variance-authority";
+import { forwardRef } from "react";
+import { cva } from "class-variance-authority";
 
 const avatarVariants = cva(
   "relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium",
@@ -21,22 +22,28 @@ const avatarVariants = cva(
   }
 );
 
-interface AvatarProps extends ImgHTMLAttributes<HTMLImageElement> {
+interface AvatarProps {
+  src?: string;
+  alt?: string;
   fallback?: string;
   size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+  className?: string;
 }
 
-const Avatar = forwardRef<HTMLImageElement, AvatarProps>(
-  ({ className, size, src, alt, fallback, ...props }, ref) => {
+const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(
+  ({ size = "md", src, alt, fallback, className, ...props }, ref) => {
     const initials = fallback || alt?.charAt(0).toUpperCase() || "?";
 
     if (!src) {
       return (
         <span
+          ref={ref}
           className={cn(
             avatarVariants({ size }),
-            "bg-[rgb(var(--color-surface-elevated))] text-[rgb(var(--color-text-secondary))]"
+            "bg-[rgb(var(--color-surface-elevated))] text-[rgb(var(--color-text-secondary))]",
+            className
           )}
+          {...props}
         >
           {initials}
         </span>
@@ -44,13 +51,19 @@ const Avatar = forwardRef<HTMLImageElement, AvatarProps>(
     }
 
     return (
-      <img
-        className={cn(avatarVariants({ size, className }))}
-        src={src}
-        alt={alt}
+      <span
         ref={ref}
+        className={cn(avatarVariants({ size, className }))}
         {...props}
-      />
+      >
+        <Image
+          src={src}
+          alt={alt || ""}
+          fill
+          className="object-cover"
+          sizes="80px"
+        />
+      </span>
     );
   }
 );

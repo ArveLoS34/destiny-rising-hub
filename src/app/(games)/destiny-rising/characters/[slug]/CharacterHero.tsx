@@ -1,6 +1,5 @@
 import { Typography } from "@/components/ui/Typography";
 import { Badge } from "@/components/ui/Badge";
-import { Card, CardContent } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 import type { Character } from "@/types/domain";
 import {
