@@ -35,6 +35,7 @@ Bu kararın olumlu/olumsuz sonuçları nelerdir?
 | [ADR-005](./ADR-005-nextjs-standalone.md) | Next.js 16 Standalone Output | ✅ Kabul Edildi | 2026-08-05 |
 | [ADR-006](./ADR-006-docker-compose.md) | Docker Compose Geliştirme Ortamı | ✅ Kabul Edildi | 2026-08-05 |
 | [ADR-007](./ADR-007-milestone-workflow.md) | Milestone + RC Release Workflow | ✅ Kabul Edildi | 2026-08-05 |
+| [ADR-008](./ADR-008-observability.md) | OpenTelemetry Observability | ✅ Kabul Edildi | 2026-08-05 |
 
 ## ADR Okuma Rehberi
 

@@ -2,6 +2,22 @@
 
 > **Terminoloji:** Milestone (kapsam) + RC (Release Candidate — doğrulama)
 > **Ana Prensip:** "Kod yazıldı" ≠ "Production'da doğrulandı"
+> **Faz:** Doğrulama (Roadmap kapandı — Release Burndown aktif)
+
+---
+
+## Release Burndown
+
+```
+RC-1  Infrastructure     ████████████████████ 100% hazir  → Doğrulama bekleniyor
+RC-2  Database           ████████████████████ 100% hazir  → Doğrulama bekleniyor
+RC-3  Identity           ████████░░░░░░░░░░░░  40%       → Schema hazır, implementasyon bekleniyor
+RC-4  Storage            ████░░░░░░░░░░░░░░░░  20%       → Config hazır
+RC-5  Queue              ██░░░░░░░░░░░░░░░░░░  10%       → Planlandı
+RC-6  Full Workflow      █░░░░░░░░░░░░░░░░░░░   5%       → E2E senaryo tanımlandı
+```
+
+**Toplam İlerleme:** ████░░░░░░░░░░░░░░░░ %35 (Development) → Production doğrulaması bekleniyor
 
 ---
 
@@ -25,6 +41,7 @@
 | **M2** | Identity + OAuth + RBAC | RC-3 | ⏳ Schema ready |
 | **M3** | Infrastructure (Redis + Queue + Storage + SMTP) | RC-4, RC-5 | ⏳ Planned |
 | **M4** | Production Validation + E2E + Beta | RC-6 | 🔨 Partially started |
+| **M5** | Observability (OpenTelemetry + Grafana) | — | 🟡 ADR-008 tanımlandı |
 
 ---
 
@@ -339,3 +356,83 @@ Tüm mimari kararlar `docs/adr/` klasöründe belgelenmiştir:
 > **"Boş bir sunucuda `docker compose up` çalıştırıldıktan sonra
 > sistem gerçekten ayağa kalkıyor mu ve bir içerik oluşturulup
 > uçtan uca yayınlanabiliyor mu?"**
+
+---
+
+## Hedef: Zero Manual Operation
+
+v1.0 öncesi nihai hedef: **Hiçbir operasyonel işlem için SSH, terminal veya SQL gerekmemesi.**
+
+```
+Yeni oyun patch'i geldi
+  ↓
+CMS         → Patch data girişi
+  ↓
+Review      → Admin onayı
+  ↓
+Release     → Queue tetiklenir
+  ↓
+Queue       → Import, validation, transform
+  ↓
+Publish     → Search index + AI refresh + Notification
+  ↓
+Monitor     → Grafana dashboard'da her şey yeşil ✅
+  ↓
+✅ Kimse terminal kullanmadı.
+```
+
+### Zero Manual Operation Gereksinimleri
+
+| Gereksinim | Durum | RC |
+|------------|-------|-----|
+| CMS'den tüm CRUD operasyonları | 🔨 | RC-2 |
+| Review → Publish workflow | ⏳ | RC-3 |
+| Background processing (queue) | ⏳ | RC-5 |
+| Search index otomatik güncelleme | ⏳ | RC-5 |
+| AI refresh otomatik tetikleme | ⏳ | RC-5 |
+| Notification otomatik gönderim | ⏳ | RC-5 |
+| Database migration otomatik | 🔨 | RC-2 |
+| Health monitoring otomatik | 🔨 | RC-1 |
+| Alert → Dashboard (manuel log kontrolü yok) | ⏳ | ADR-008 |
+| Backup otomatik | 🔨 | docker-compose.prod.yml |
+| Rollback otomatik (CI/CD) | 🔨 | ci.yml |
+| Secret rotation otomatik | ⏳ | M3 |
+| Scaling otomatik | ⏳ | Future |
+
+### Observability Katmanı (ADR-008)
+
+```
+Application
+  ↓
+OpenTelemetry (traces + metrics + logs)
+  ↓
+┌──────────┬──────────┬──────────┐
+│ Jaeger   │Prometheus│  Grafana │
+│ (Traces) │(Metrics) │(Dashboard│
+└──────────┴──────────┴──────────┘
+```
+
+**Amaç:** "Nerede yavaşladı?" sorusuna 5 saniyede cevap verebilmek.
+
+---
+
+## Olgunluk Matrisi
+
+```
+┌───────────────────────┬───────────┬───────────┬────────────┐
+│ Katman                │ Durum     │ Skor      │ Not        │
+├───────────────────────┼───────────┼───────────┼────────────┤
+│ Ürün Tasarımı         │ 🟢 Olgun  │ 10/10     │ CMS, review│
+│ Yazılım Mimarisi      │ 🟢 Olgun  │ 10/10     │ ADR'ler    │
+│ Domain Model          │ 🟢 Olgun  │ 10/10     │ Game-agnost│
+│ Frontend              │ 🟢 Olgun  │ 9.5/10    │ Next.js 16 │
+│ API Tasarımı          │ 🟢 Olgun  │ 9/10      │ REST + RPC │
+│ Kod Kalitesi          │ 🟢 Olgun  │ 10/10     │ 0 TS error │
+│ Operasyon Altyapısı   │ 🟢 Olgun  │ 9/10      │ Docker     │
+│ DevOps Altyapısı      │ 🟢 Olgun  │ 9/10      │ CI/CD+SBOM │
+│ Observability         │ 🟡 Hazır  │ 6/10      │ ADR-008    │
+│ Production Doğrulaması│ 🟡 Başladı│ 2/10      │ RC bekleni │
+└───────────────────────┴───────────┴───────────┴────────────┘
+
+Genel: 8.5/10 (Architecture) + 2/10 (Evidence) → Doğrulama fazında
+```
