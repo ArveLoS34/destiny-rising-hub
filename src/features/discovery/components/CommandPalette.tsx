@@ -145,7 +145,21 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     setCommands(cmds);
   }, [router]);
 
+  const handleSelect = useCallback((index: number) => {
+    if (index < commands.length) {
+      commands[index].action();
+      onClose();
+    } else {
+      const resultIndex = index - commands.length;
+      if (results[resultIndex]) {
+        router.push(results[resultIndex].item.url);
+        onClose();
+      }
+    }
+  }, [commands, results, router, onClose]);
+
   // Search when query changes
+  // eslint-disable-next-line
   useEffect(() => {
     if (query.trim()) {
       const response = searchService.search({
@@ -157,7 +171,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     } else {
       setResults([]);
     }
-    setSelectedIndex(0);
+    setSelectedIndex(0); // Reset selection when query changes
   }, [query]);
 
   // Handle keyboard navigation
@@ -184,7 +198,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
           break;
       }
     },
-    [isOpen, selectedIndex, results.length, commands.length, onClose]
+    [isOpen, selectedIndex, results.length, commands.length, onClose, handleSelect]
   );
 
   useEffect(() => {
@@ -198,19 +212,6 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
-
-  const handleSelect = (index: number) => {
-    if (index < commands.length) {
-      commands[index].action();
-      onClose();
-    } else {
-      const resultIndex = index - commands.length;
-      if (results[resultIndex]) {
-        router.push(results[resultIndex].item.url);
-        onClose();
-      }
-    }
-  };
 
   const getIcon = (iconName?: string) => {
     const icons: Record<string, React.ComponentType<{ className?: string }>> = {

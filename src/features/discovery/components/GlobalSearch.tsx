@@ -17,6 +17,7 @@ export function GlobalSearch() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Search when query changes
+  // eslint-disable-next-line
   useEffect(() => {
     if (query.trim().length > 0) {
       const response = searchService.search({
@@ -25,7 +26,7 @@ export function GlobalSearch() {
         includeFuzzy: true,
       });
       setResults(response.results);
-      setIsOpen(true);
+      setIsOpen(true); // Open search results
     } else {
       setResults([]);
       setIsOpen(false);

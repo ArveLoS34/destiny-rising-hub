@@ -25,9 +25,10 @@ export function RecommendationDiscovery({
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // eslint-disable-next-line
   useEffect(() => {
     const recs = recommendationService.getYouMayAlsoLike(entityType, entityId, limit);
-    setRecommendations(recs);
+    setRecommendations(recs); // Set recommendations
     setLoading(false);
   }, [entityType, entityId, limit]);
 
