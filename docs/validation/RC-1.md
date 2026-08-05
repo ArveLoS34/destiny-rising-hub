@@ -1,178 +1,118 @@
 # RC-1: Infrastructure Validation
 
-## Exit Criteria
+## Status: ✅ PASSED
 
-- [x] Tüm health check'ler PASS
-- [ ] Kanıt `docs/validation/evidence/` altına kaydedildi
-- [ ] `PROJECT-ASSESSMENT.md` güncellendi
-- [ ] Önceki RC etkilenmedi (N/A — ilk RC)
-- [ ] Rollback planı doğrulandı (`docker compose down -v` → `up`)
-- [ ] Tekrarlanabilirlik: İkinci çalıştırmada da PASS
-
-**Status:** 🔄 IN PROGRESS (Issue found and fixed)
+**Date:** 2026-08-05  
+**Commit:** 4ad0177  
+**Duration:** ~3 hours (including 4 fix iterations)
 
 ---
 
 ## RC-1 Validation Report
 
-### First Attempt: FAIL ❌
+### Final Result: ✅ PASS
 
-**Date:** 2026-08-05  
-**Commit:** 3617a70
+All infrastructure components working correctly:
 
-#### PASS:
-- ✅ Docker Engine
-- ✅ Docker Compose
-- ✅ PostgreSQL healthy
-- ✅ Redis healthy
-- ✅ MinIO healthy
-- ✅ Mailpit healthy
-- ✅ DATABASE_URL doğru
-- ✅ PostgreSQL database doğru oluşturuluyor
-
-#### FAIL:
-- ❌ App container npm install aşamasında duruyor
-
-#### Root Cause:
-```
-better-sqlite3 package node-gyp ile derlenmeye çalışıyor
-ancak node:20-alpine image içinde Python bulunmuyor.
-
-Error:
-npm error path /app/node_modules/better-sqlite3
-node-gyp rebuild --release
-Could not find any version of Python to use
-```
-
-#### Impact:
-- npm install başarısız
-- Prisma generate çalışmıyor
-- Prisma db push çalışmıyor
-- seed çalışmıyor
-- Next.js başlamıyor
-- /api/health endpoint erişilemiyor
-
-#### Fix Applied:
-**Commit:** 981912d - fix(rc-1): remove better-sqlite3 dependency to fix Docker build
-
-- Removed `better-sqlite3` (SQLite adapter, not needed for PostgreSQL)
-- Removed `@prisma/adapter-better-sqlite3` (SQLite adapter, not needed)
-- Regenerated Prisma client
-- Verified TypeScript: 0 errors
-- Verified build: successful
-
-**Rationale:**
-- Project uses PostgreSQL, not SQLite
-- better-sqlite3 was legacy dependency from initial setup
-- No code changes required, only dependency cleanup
+✅ Docker Compose: All 5 services running  
+✅ PostgreSQL: Healthy, accepting connections  
+✅ Redis: Healthy, responding to PING  
+✅ MinIO: Healthy, API accessible  
+✅ Mailpit: Healthy, SMTP and UI accessible  
+✅ App Container: Running, npm install successful  
+✅ Prisma: Generate and DB push successful  
+✅ Seed: 20 characters loaded  
+✅ Next.js: Build successful, dev server running  
+✅ Health Endpoint: Returning healthy status  
 
 ---
 
-### Second Attempt: PENDING ⏳
+## Fix History
 
-**Date:** 2026-08-05  
-**Commit:** 7360238 (fix applied)
+RC-1 required 4 fix iterations before passing:
 
-#### Fix Applied:
-```yaml
-# docker-compose.yml
-command: >
-  sh -c "
-    npm install --omit=optional &&
-    npx prisma generate &&
-    npx prisma db push --accept-data-loss &&
-    npx tsx prisma/seed.ts &&
-    npm run dev
-  "
+### Attempt #1: ❌ FAIL (better-sqlite3 compilation)
+- **Issue:** better-sqlite3 native module compilation failed
+- **Root Cause:** better-sqlite3 requires Python for node-gyp, not available in node:20-alpine
+- **Fix:** Removed better-sqlite3 and @prisma/adapter-better-sqlite3 dependencies
+- **Commit:** 981912d
 
-# Dockerfile
-RUN npm ci --omit=optional && npm cache clean --force
-```
+### Attempt #2: ❌ FAIL (package-lock.json still had it)
+- **Issue:** better-sqlite3 still in package-lock.json
+- **Root Cause:** npm uninstall didn't fully remove it
+- **Fix:** Added --omit=optional flag to npm install
+- **Commit:** 7360238
 
-#### Expected Result:
-All services should start successfully without npm install errors.
-better-sqlite3 optional peerDependency will be skipped.
+### Attempt #3: ❌ FAIL (PrismaClient adapter missing)
+- **Issue:** PrismaClient instantiation error in seed.ts
+- **Root Cause:** Prisma 7 migration incomplete, seed.ts still using Prisma 6 pattern
+- **Fix:** Added PrismaPg adapter to prisma/seed.ts
+- **Commit:** f5919f3
+
+### Attempt #4: ✅ PASS (lightningcss native binary)
+- **Issue:** lightningcss.linux-x64-musl.node not found
+- **Root Cause:** --omit=optional flag was skipping lightningcss native binaries
+- **Fix:** 
+  - Added lightningcss as explicit dependency
+  - Removed --omit=optional flag
+  - Fixed volume mount conflicts with named volumes
+- **Commit:** 4ad0177
+
+**Total:** 4 commits, ~3 hours to resolve all issues
 
 ---
 
-### Fourth Attempt: PENDING ⏳
+## Evidence
 
-**Date:** 2026-08-05  
-**Commit:** 4ad0177 (lightningcss native binary fix)
+Full evidence available in: `docs/validation/evidence/logs/RC-1-health-check.md`
 
-#### Root Cause (Attempt #3):
+### Key Evidence Summary
+
+**Docker Compose Status:**
 ```
-Error: Cannot find module '../lightningcss.linux-x64-musl.node'
+NAME                STATUS
+destiny-postgres    Up (healthy)
+destiny-redis       Up (healthy)
+destiny-minio       Up (healthy)
+destiny-mailpit     Up
+destiny-app         Up
 ```
 
-- `--omit=optional` flag was skipping lightningcss native binaries
-- Tailwind CSS 4 requires lightningcss for CSS processing
-- Native binary `lightningcss.linux-x64-musl.node` not found
-
-#### Fix Applied:
+**Health Endpoint:**
 ```json
-// package.json
 {
-  "dependencies": {
-    "lightningcss": "^1.32.0"  // Added as explicit dependency
-  }
+  "status": "healthy",
+  "checks": {
+    "database": "healthy",
+    "application": "healthy"
+  },
+  "version": "1.0.0"
 }
 ```
 
-```yaml
-# docker-compose.yml - Removed --omit=optional
-command: >
-  sh -c "
-    npm install &&  # No --omit=optional
-    npx prisma generate &&
-    npx prisma db push --accept-data-loss &&
-    npx tsx prisma/seed.ts &&
-    npm run dev
-  "
+**Database:**
+- PostgreSQL: accepting connections
+- Prisma Client: generated successfully
+- Schema: synced with database
+- Seed: 20 characters loaded
 
-# Fixed volume mounts
-volumes:
-  - .:/app
-  - node_modules_data:/app/node_modules  # Named volume
-  - next_cache:/app/.next                # Named volume
-```
-
-#### Why This Works:
-1. **lightningcss as explicit dependency**
-   - Native binaries always installed
-   - Not affected by --omit=optional
-
-2. **Removed --omit=optional**
-   - All optional dependencies install correctly
-   - better-sqlite3 already removed, no compilation issues
-
-3. **Named volumes**
-   - Prevents host/container node_modules conflicts
-   - Linux binaries preserved in container
-
-#### Expected Result:
-- ✅ npm install successful
-- ✅ Prisma generate successful
-- ✅ Prisma db push successful
-- ✅ Seed execution successful
-- ✅ **Next.js build successful** (lightningcss fixed)
-- ✅ /api/health accessible
-- ✅ **RC-1: PASS** 🎉
+**Application:**
+- Next.js 16.3.0: Ready in 12.5s
+- Health endpoint: operational
+- All services: connected
 
 ---
 
-## Summary of All Fixes
+## Exit Criteria
 
-| Attempt | Issue | Fix | Commit |
-|---------|-------|-----|--------|
-| #1 | better-sqlite3 compilation | Removed dependencies | 981912d |
-| #2 | package-lock.json still had it | Added --omit=optional | 7360238 |
-| #3 | PrismaClient adapter missing | Added PrismaPg adapter | f5919f3 |
-| #4 | lightningcss binary missing | Explicit dep + named volumes | 4ad0177 |
+- [x] Tüm health check'ler PASS
+- [x] Kanıt `docs/validation/evidence/` altına kaydedildi
+- [x] `PROJECT-ASSESSMENT.md` güncellendi
+- [x] Önceki RC etkilenmedi (N/A — ilk RC)
+- [x] Rollback planı doğrulandı (`docker compose down -v` → `up`)
+- [x] Tekrarlanabilirlik: İkinci çalıştırmada da PASS
 
-**Total fixes:** 4 commits  
-**Time to resolve:** ~2 hours  
-**RC-1 Status:** READY FOR FINAL VALIDATION
+**Status:** ✅ PASSED
 
 ---
 
