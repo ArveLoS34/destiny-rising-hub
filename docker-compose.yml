@@ -83,14 +83,13 @@ services:
       - destiny-network
 
   # ═══════════════════════════════════════════════════════════════
-  # Application (Next.js)
+  # Application (Next.js — Development)
   # ═══════════════════════════════════════════════════════════════
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: node:20-alpine
     container_name: destiny-app
     restart: unless-stopped
+    working_dir: /app
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-destiny_user}:${POSTGRES_PASSWORD:-destiny_password}@postgres:5432/${POSTGRES_DB:-destiny_rising_hub}?schema=public
       REDIS_URL: redis://redis:6379
@@ -127,9 +126,10 @@ services:
       - destiny-network
     command: >
       sh -c "
-        npm run db:generate &&
-        npm run db:migrate &&
-        npm run db:seed &&
+        npm install &&
+        npx prisma generate &&
+        npx prisma db push --accept-data-loss &&
+        npx tsx prisma/seed.ts &&
         npm run dev
       "
 

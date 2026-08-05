@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { characters } from '@/data/games/destiny-rising/characters';
+import { characters } from '../src/data/games/destiny-rising/characters';
 
 const prisma = new PrismaClient();
 

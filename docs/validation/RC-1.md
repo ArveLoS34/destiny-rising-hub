@@ -2,175 +2,212 @@
 
 ## Objective
 
-Docker Compose ile tam geliştirme/production ortamı tek komutla ayağa kalkıyor mu?
-Tüm servisler (PostgreSQL, Redis, MinIO, Mailpit, Application) healthy durumda mı?
+Docker Compose ile tam geliştirme ortamı tek komutla ayağa kalkıyor mu?
+Tüm servisler healthy durumda mı? Manuel müdahale gerekiyor mu?
+
+## Pre-Flight Validation (Sandbox — 2026-08-05)
+
+Docker olmadan yapılan statik doğrulama:
+
+| # | Kontrol | Sonuç |
+|---|---------|-------|
+| 1 | docker-compose.yml — Valid YAML | ✅ PASS |
+| 2 | docker-compose.prod.yml — Valid YAML | ✅ PASS |
+| 3 | Dockerfile — Present (production) | ✅ PASS |
+| 4 | .env.docker — 42+ variables | ✅ PASS |
+| 5 | TypeScript — 0 errors | ✅ PASS |
+| 6 | Health endpoint — exists | ✅ PASS |
+| 7 | Next.js standalone — configured | ✅ PASS |
+| 8 | tsx — installed | ✅ PASS |
+| 9 | Seed script — relative imports | ✅ PASS |
+| 10 | App image — node:20-alpine + npm install | ✅ PASS |
+| 11 | Migration — prisma db push (non-interactive) | ✅ PASS |
+| 12 | Port mapping — consistent | ✅ PASS |
+| 13 | Health check dependencies — configured | ✅ PASS |
+| 14 | Prisma adapter-pg + pg — installed | ✅ PASS |
+
+**Pre-Flight Sonucu: 14/14 PASS**
+
+## Pre-Flight Sırasındaki Bulgular ve Düzeltmeler
+
+| # | Sorun | Düzeltme | Commit |
+|---|-------|----------|--------|
+| 1 | App servisi production Dockerfile kullanıyordu, node_modules boş kalıyordu | `node:20-alpine` + `npm install` olarak değiştirildi | df8bc3a |
+| 2 | `prisma migrate dev` interaktif, Docker'da çalışmaz | `prisma db push --accept-data-loss` olarak değiştirildi | df8bc3a |
+| 3 | `tsx` devDependency'de yoktu, seed çalışmazdı | `npm install tsx --save-dev` | df8bc3a |
+| 4 | Seed script `@/` path alias kullanıyordu | Relative import (`../src/...`) olarak değiştirildi | df8bc3a |
+
+---
 
 ## Environment
 
-- **OS:** [Doldurulacak — doğrulama yapılan işletim sistemi]
+> **⏳ Gerçek ortam doğrulaması bekleniyor**
+>
+> Aşağıdaki alan, Docker kurulu bir makinede doğrulama yapıldığında doldurulacaktır.
+
+- **OS:** [Doldurulacak]
 - **Docker:** [Versiyon]
 - **Docker Compose:** [Versiyon]
 - **RAM:** [Sistem RAM]
-- **CPU:** [Çekirdek sayısı]
+- **CPU:** [Çekirdek]
 - **Tarih:** [Doğrulama tarihi]
 
-## Commands
+---
 
-Aşağıdaki komutlar sırayla çalıştırılır:
+## Gerçek Ortam Doğrulama Talimatları
 
-### 1. Ortam Hazırlığı
+Aşağıdaki adımlar, Docker kurulu herhangi bir makinede sırayla çalıştırılır:
+
+### Adım 1: Temiz Ortam
 
 ```bash
-# Environment dosyasını kopyala
-cp .env.docker .env
+# Yeni klasör
+mkdir ~/test-rc1 && cd ~/test-rc1
 
-# Tüm servisleri başlat
+# Clone
+git clone https://github.com/ArveLoS34/destiny-rising-hub.git .
+
+# Environment
+cp .env.docker .env
+```
+
+### Adım 2: Başlat
+
+```bash
 docker compose up -d
 ```
 
-### 2. Servis Durumu
+**Beklenen:** İlk çalıştırmada ~3-5 dakika (image pull + npm install + migration + seed)
+
+### Adım 3: Servis Durumu
 
 ```bash
-# Tüm servislerin durumunu kontrol et
 docker compose ps
-
-# Her servisin health check'ini ayrı ayrı kontrol et
-docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Health}}"
 ```
 
-### 3. PostgreSQL Bağlantısı
+**Beklenen:**
+```
+NAME               STATUS
+destiny-postgres   Up (healthy)
+destiny-redis      Up (healthy)
+destiny-minio      Up (healthy)
+destiny-mailpit    Up
+destiny-app        Up
+```
+
+### Adım 4: Health Endpoint
 
 ```bash
-# PostgreSQL'e bağlan
+curl -s http://localhost:3000/api/health | python3 -m json.tool
+```
+
+**Beklenen:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-08-05T...",
+  "checks": {
+    "database": "healthy",
+    "application": "healthy"
+  }
+}
+```
+
+### Adım 5: PostgreSQL
+
+```bash
 docker compose exec postgres pg_isready -U destiny_user
-
-# Veritabanı listesini kontrol et
-docker compose exec postgres psql -U destiny_user -d destiny_rising_hub -c "\dt"
 ```
 
-### 4. Redis Bağlantısı
+**Beklenen:** `accepting connections`
+
+### Adım 6: Redis
 
 ```bash
-# Redis ping
 docker compose exec redis redis-cli ping
-
-# Redis info
-docker compose exec redis redis-cli info server | head -20
 ```
 
-### 5. MinIO Erişimi
+**Beklenen:** `PONG`
+
+### Adım 7: MinIO
 
 ```bash
-# MinIO health check
-curl -sf http://localhost:9000/minio/health/live
-
-# MinIO Console erişimi
-curl -sf -o /dev/null -w "%{http_code}" http://localhost:9001
+curl -sf -o /dev/null -w "%{http_code}" http://localhost:9000/minio/health/live
 ```
 
-### 6. Mailpit Erişimi
+**Beklenen:** `200`
+
+### Adım 8: Mailpit
 
 ```bash
-# Mailpit UI
 curl -sf -o /dev/null -w "%{http_code}" http://localhost:8025
-
-# SMTP port
-docker compose exec mailpit netstat -tlnp | grep 1025 || echo "Port 1025 listening"
 ```
 
-### 7. Application
+**Beklenen:** `200`
+
+### Adım 9: Application Logları
 
 ```bash
-# Application health check
-curl -sf http://localhost:3000/api/health | jq .
-
-# Application ana sayfa
-curl -sf -o /dev/null -w "%{http_code}" http://localhost:3000
+docker compose logs --tail=30 app
 ```
 
-### 8. Application Logları
+**Kontrol:**
+- ❌ Restart loop yok
+- ❌ Fatal error yok
+- ❌ Connection timeout yok
+- ❌ Migration hatası yok
 
-```bash
-# Son 50 satır log
-docker compose logs --tail=50 app
-```
+### Adım 10: Manuel Müdahale Kontrolü
 
-### 9. Network
+Aşağıdakilerden **hiçbiri** yapılmamalı:
+- ❌ Container içine girip dosya değiştirme
+- ❌ Elle SQL çalıştırma
+- ❌ Port değiştirme
+- ❌ Elle migration düzeltme
+- ❌ npm install manuel çalışma
 
-```bash
-# Docker network bilgisi
-docker compose config --services
-
-# Port mapping
-docker compose port app 3000
-```
-
-## Expected Results
-
-| Kontrol | Beklenen Sonuç |
-|---------|----------------|
-| `docker compose ps` | 5 servis: all Up (healthy) |
-| PostgreSQL `pg_isready` | `accepting connections` |
-| Redis `ping` | `PONG` |
-| MinIO health | HTTP 200 |
-| Mailpit UI | HTTP 200 |
-| App `/api/health` | `{"status": "healthy"}` |
-| App ana sayfa | HTTP 200 |
+---
 
 ## Actual Results
 
-> **⏳ PENDING — Doğrulama bekleniyor**
->
-> Bu bölüm, gerçek doğrulama yapıldığında komut çıktılarının kaydedileceği alandır.
->
-> Örnek format:
-> ```
-> $ docker compose ps
-> NAME                IMAGE               STATUS              PORTS
-> destiny-postgres    postgres:16-alpine  Up 2 minutes (healthy)   0.0.0.0:5432->5432/tcp
-> destiny-redis       redis:7-alpine      Up 2 minutes (healthy)   0.0.0.0:6379->6379/tcp
-> destiny-minio       minio/minio:latest  Up 2 minutes (healthy)   0.0.0.0:9000-9001->9000-9001/tcp
-> destiny-mailpit     axllent/mailpit     Up 2 minutes             0.0.0.0:1025->1025/tcp, 0.0.0.0:8025->8025/tcp
-> destiny-app         destiny-app         Up 1 minute              0.0.0.0:3000->3000/tcp
-> ```
+> **⏳ PENDING — Docker kurulu ortamda doğrulama bekleniyor**
 
 ## Evidence
 
 > **⏳ PENDING**
 >
-> - [ ] docker compose ps çıktısı
-> - [ ] pg_isready çıktısı
-> - [ ] redis-cli ping çıktısı
-> - [ ] curl health check çıktısı
-> - [ ] Application logları (ilk 50 satır)
-> - [ ] Port mapping doğrulaması
+> - [ ] `docker compose ps` çıktısı
+> - [ ] `curl localhost:3000/api/health` çıktısı
+> - [ ] `pg_isready` çıktısı
+> - [ ] `redis-cli ping` çıktısı
+> - [ ] MinIO health response
+> - [ ] Mailpit UI erişim
+> - [ ] App logları (son 30 satır)
 
-## Performance Notes
+## Duration
 
-| Metrik | Hedef | Gerçek |
-|--------|-------|--------|
-| docker compose up süresi | < 60s | — |
-| PostgreSQL startup | < 10s | — |
-| Redis startup | < 5s | — |
-| Application startup | < 30s | — |
-| Toplam RAM kullanımı | < 2GB | — |
+> **⏳ PENDING**
+
+## Issues Found
+
+> Pre-flight'ta 4 sorun bulundu ve düzeltildi (yukarıda listelendi).
+> Gerçek ortam doğrulamasında ek sorun bulunmadı. / Bulunan sorunlar: ...
 
 ## Status
 
-⏳ **PENDING** — Doğrulama yapılmadı
+⏳ **PENDING** — Pre-flight PASS (14/14), gerçek ortam doğrulaması bekleniyor
 
 ---
 
-### Checklist
+## PASS Criteria
 
-- [ ] `cp .env.docker .env` başarılı
-- [ ] `docker compose up -d` → 5 servis Up
-- [ ] PostgreSQL accepting connections
-- [ ] Redis PONG
-- [ ] MinIO health 200
-- [ ] Mailpit UI accessible
-- [ ] Application /api/health → healthy
-- [ ] Application ana sayfa → 200
-- [ ] Loglar temiz (fatal error yok)
-- [ ] `docker compose down` → temiz shutdown
-- [ ] `docker compose up -d` → tekrar başarılı (persistence)
+| Kontrol | Beklenen | Durum |
+|---------|----------|-------|
+| Temiz clone | `git clone` başarılı | ✅ (pre-flight) |
+| docker compose up | 5 servis Up | ⏳ |
+| Tüm container healthy | PostgreSQL, Redis, MinIO healthy | ⏳ |
+| Health endpoint | `{"status": "healthy"}` | ⏳ |
+| Restart loop yok | Loglar temiz | ⏳ |
+| Fatal log yok | No errors | ⏳ |
+| Manuel müdahale yok | Zero manual intervention | ⏳ |
+| Evidence eklendi | docs/validation/RC-1.md dolu | ⏳ |
