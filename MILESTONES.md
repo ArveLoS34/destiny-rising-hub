@@ -436,3 +436,83 @@ OpenTelemetry (traces + metrics + logs)
 
 Genel: 8.5/10 (Architecture) + 2/10 (Evidence) → Doğrulama fazında
 ```
+
+---
+
+## v1.0 Sonrası Versiyonlama Stratejisi
+
+v1.0'dan sonra sprint mantığı bırakılır. Semantic versioning ile sürüm tabanlı geliştirme:
+
+```
+v1.0.0  ─── Initial Release (RC-1 → RC-6 geçildi)
+
+v1.0.x  ─── Bug Fixes
+            ├── Kritik hata düzeltmeleri
+            ├── Güvenlik yamaları
+            └── Performans iyileştirmeleri
+
+v1.1    ─── Quality of Life
+            ├── UX iyileştirmeleri
+            ├── Dashboard geliştirmeleri
+            └── Accessibility düzeltmeleri
+
+v1.2    ─── Game Update Support
+            ├── Yeni patch verileri
+            ├── Yeni karakterler
+            └── Yeni oyun mekanikleri
+
+v1.3    ─── Community Expansion
+            ├── Forum/ tartısma sistemi
+            ├── Turnuva takibi
+            └── Sosyal özellikler
+
+v2.0    ─── AI Assistant
+            ├── Conversational AI
+            ├── Personalized recommendations
+            └── Real-time coaching
+```
+
+### Versiyon Kuralları
+
+| Versiyon | Ne Zaman | İçerik |
+|----------|----------|--------|
+| **MAJOR** (2.0) | Büyük mimari değişiklik | Breaking changes, yeni platform |
+| **MINOR** (1.x) | Yeni özellik | Backward compatible, yeni modül |
+| **PATCH** (1.0.x) | Hata düzeltme | Güvenlik, bug fix, performans |
+
+### Release Process (v1.0 Sonrası)
+
+```
+Feature branch → PR → Review → Merge to develop
+  ↓
+RC validation (gerekirse)
+  ↓
+Merge to main
+  ↓
+npm version minor/patch
+  ↓
+Git tag
+  ↓
+Deploy
+  ↓
+Release notes
+```
+
+---
+
+## Release Manifest
+
+v1.0 release öncesi `release-manifest.json` oluşturulur:
+
+```bash
+npx tsx scripts/generate-release-manifest.ts
+```
+
+Bu dosya release'in tam durumunu kaydeder:
+- Git commit hash
+- Dependency versiyonları
+- Database schema hash
+- RC validation durumu
+- Generation timestamp
+
+İleride hata araştırırken "bu sürümde tam olarak ne vardı?" sorusuna cevap verir.

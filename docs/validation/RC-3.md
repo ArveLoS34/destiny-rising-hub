@@ -1,5 +1,19 @@
 # RC-3: Performance Validation
 
+## Exit Criteria
+
+- [ ] Tüm load test senaryoları PASS (baseline/normal/peak/stress)
+- [ ] Lighthouse tüm kategoriler >90
+- [ ] Kanıt `docs/validation/evidence/reports/` altına kaydedildi
+- [ ] `PROJECT-ASSESSMENT.md` güncellendi
+- [ ] RC-1 etkilenmedi (altyapı hâlâ sağlıklı)
+- [ ] RC-2 etkilenmedi (kullanıcı akışları hâlâ çalışıyor)
+- [ ] Bottleneck'ler tespit edildi ve dokümante edildi
+
+**Status:** ⬜ NOT STARTED
+
+---
+
 ## Objective
 
 Sistem gerçek yük altında performans hedeflerini karşılıyor mu?

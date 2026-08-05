@@ -1,5 +1,22 @@
 # RC-5: Production Rehearsal
 
+## Exit Criteria
+
+- [ ] 7/7 provası senaryosu PASS
+- [ ] Cold start <10 dakika
+- [ ] Backup → Restore başarılı (veri kaybı yok)
+- [ ] Rollback <5 dakika
+- [ ] Disaster recovery <15 dakika
+- [ ] Zero-downtime deploy: 0 failed request
+- [ ] Kanıt `docs/validation/evidence/` altına kaydedildi
+- [ ] `PROJECT-ASSESSMENT.md` güncellendi
+- [ ] Önceki RC'ler etkilenmedi
+- [ ] Runbook dokümante edildi
+
+**Status:** ⬜ NOT STARTED
+
+---
+
 ## Objective
 
 Gerçek production ortamının tam provası yapılabiliyor mu?

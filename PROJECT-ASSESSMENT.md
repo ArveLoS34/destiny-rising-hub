@@ -7,13 +7,19 @@
 
 ---
 
-## İki Metrik Sistemi
+## Üç Metrik Sistemi
 
-Bu proje artık iki bağımsız metrik ile takip edilir.
+Bu proje artık üç bağımsız metrik ile takip edilir.
 
-### 1. Geliştirme Durumu (Development Progress)
+```
+Product Completion       ████████████████████  94%   ✅
+Operational Readiness    ██░░░░░░░░░░░░░░░░░░  10%   🟡
+Production Validation    ░░░░░░░░░░░░░░░░░░░░   0%   🎯
+```
 
-Neredeyse tamamlandı. Bu tarafta büyük sprintler değil, yalnızca küçük iyileştirmeler olacak.
+### 1. Product Completion (Ürün Tamamlanma)
+
+Ürünün tasarım ve implementasyon olarak ne kadar tamamlandığı.
 
 | Alan | Skor |
 |------|------|
@@ -22,40 +28,52 @@ Neredeyse tamamlandı. Bu tarafta büyük sprintler değil, yalnızca küçük i
 | CMS | 95% |
 | API Tasarımı | 95% |
 | Repository/Service | 95% |
-| Docker & DevOps | 90% |
 | Dokümantasyon | 98% |
-| Release Süreci | 90% |
-| **Development Progress** | **~94%** |
+| AI Features | 90% |
+| **Product Completion** | **~94%** |
 
-### 2. Release Hazırlığı (Production Validation)
+> Bu tarafta büyük sprintler değil, yalnızca küçük iyileştirmeler olacak.
 
-Asıl odak burada. Kalite niteliği odaklı release süreci.
+### 2. Operational Readiness (Operasyon Hazırlığı)
 
-| RC | Durum | Önem | Kapsam |
-|----|-------|------|--------|
-| RC-1 Infrastructure | 🟡 Ready | Kritik | Docker + servisler + health |
-| RC-2 Functional | ⬜ Not Started | Kritik | 43 kullanıcı akışı |
-| RC-3 Performance | ⬜ Not Started | Yüksek | Load test + Lighthouse |
-| RC-4 Security | ⬜ Not Started | Yüksek | 54 güvenlik testi |
-| RC-5 Production Rehearsal | ⬜ Not Started | Yüksek | Backup/restore/rollback |
-| RC-6 Launch Approval | ⬜ Not Started | En Kritik | v1.0 release gate |
-| **Production Validation** | **0/6 (%0)** | — | — |
+Operasyon altyapısının ne kadar hazır olduğu.
 
-### Overall Release Confidence
+| Alan | Skor |
+|------|------|
+| Docker & DevOps | 90% |
+| CI/CD Pipeline | 95% |
+| Security Pipeline | 90% |
+| Monitoring Design | 80% |
+| Backup Strategy | 85% |
+| Release Process | 95% |
+| Observability Design | 70% |
+| **Operational Readiness** | **~10%** |
 
-```
-Development:           ███████████████████░ 94%   ✅ Tamamlandı
-Production Validation: ░░░░░░░░░░░░░░░░░░░░  0%   🎯 0/6 RC passed
-  └── RC-1 Ready:      ████████████████████ 100%  🟡 Pre-flight done, awaiting Docker
-─────────────────────────────────────────────
-Release Confidence:    DÜŞÜK (henüz doğrulanmış RC yok)
-```
+> Altyapı tasarlandı ama gerçek ortamda doğrulanmadı.
 
-> ⚠️ "Production ready" ifadesi, Production Validation %100 olduğunda
-> kullanılabilir. Şu an bir hedeftir, doğrulanmış bir sonuç değildir.
->
-> ⚠️ "RC-1 Ready" ≠ "RC-1 Passed"
-> RC-1 pre-flight'ı geçti ama gerçek Docker doğrulaması yapılmadı.
+### 3. Production Validation (Gerçek Doğrulama)
+
+RC'lerin gerçek ortamda kaçının geçtiği.
+
+| RC | Status |
+|----|--------|
+| RC-1 Infrastructure | 🟡 READY |
+| RC-2 Functional | ⬜ |
+| RC-3 Performance | ⬜ |
+| RC-4 Security | ⬜ |
+| RC-5 Production Rehearsal | ⬜ |
+| RC-6 Launch Approval | ⬜ |
+| **Production Validation** | **0/6 (0%)** |
+
+> Henüz hiçbir RC doğrulanmadı. Asıl odak burada.
+
+### Üç Soru, Üç Cevap
+
+| Soru | Metrik | Cevap |
+|------|--------|-------|
+| Ürün ne kadar tamamlandı? | Product Completion | %94 |
+| Operasyon altyapısı ne kadar hazır? | Operational Readiness | %10 |
+| Gerçek doğrulama ne kadar? | Production Validation | 0/6 |
 
 ---
 

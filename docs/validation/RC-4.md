@@ -1,5 +1,20 @@
 # RC-4: Security Validation
 
+## Exit Criteria
+
+- [ ] 54/54 güvenlik testi PASS
+- [ ] npm audit: 0 high/critical
+- [ ] Trivy: 0 critical
+- [ ] Gitleaks: 0 finding
+- [ ] Kanıt `docs/validation/evidence/reports/` altına kaydedildi
+- [ ] `PROJECT-ASSESSMENT.md` güncellendi
+- [ ] Önceki RC'ler etkilenmedi (RC-1, RC-2, RC-3 hâlâ PASS)
+- [ ] Güvenlik düzeltmeleri varsa dokümante edildi
+
+**Status:** ⬜ NOT STARTED
+
+---
+
 ## Objective
 
 Sistem güvenlik açıklarına karşı dayanıklı mı?

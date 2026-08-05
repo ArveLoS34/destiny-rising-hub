@@ -1,5 +1,18 @@
 # RC-2: Functional Validation
 
+## Exit Criteria
+
+- [ ] 43/43 kullanıcı akışı PASS
+- [ ] Kanıt `docs/validation/evidence/` altına kaydedildi
+- [ ] `PROJECT-ASSESSMENT.md` güncellendi
+- [ ] RC-1 etkilenmedi (altyapı hâlâ sağlıklı)
+- [ ] Rollback planı doğrulandı
+- [ ] Tekrarlanabilir: Aynı senaryolar ikinci kez de PASS
+
+**Status:** ⬜ NOT STARTED
+
+---
+
 ## Objective
 
 Tüm kritik kullanıcı akışları uçtan uca çalışıyor mu?

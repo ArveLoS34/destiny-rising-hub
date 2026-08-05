@@ -1,5 +1,18 @@
 # RC-1: Infrastructure Validation
 
+## Exit Criteria
+
+- [ ] Tüm health check'ler PASS
+- [ ] Kanıt `docs/validation/evidence/` altına kaydedildi
+- [ ] `PROJECT-ASSESSMENT.md` güncellendi
+- [ ] Önceki RC etkilenmedi (N/A — ilk RC)
+- [ ] Rollback planı doğrulandı (`docker compose down -v` → `up`)
+- [ ] Tekrarlanabilirlik: İkinci çalıştırmada da PASS
+
+**Status:** 🟡 READY
+
+---
+
 ## Objective
 
 Docker Compose ile tam geliştirme ortamı tek komutla ayağa kalkıyor mu?

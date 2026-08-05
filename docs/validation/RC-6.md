@@ -1,5 +1,22 @@
 # RC-6: Launch Approval
 
+## Exit Criteria
+
+- [ ] RC-1 through RC-5: All PASS
+- [ ] 20/20 release readiness check PASS
+- [ ] 5/5 sign-off alındı
+- [ ] `release-manifest.json` oluşturuldu
+- [ ] Release notes hazırlandı
+- [ ] v1.0.0 tag oluşturuldu
+- [ ] Kanıt `docs/validation/evidence/` altına kaydedildi
+- [ ] `PROJECT-ASSESSMENT.md` güncellendi
+- [ ] Production deploy doğrulandı
+- [ ] Post-deploy smoke testler PASS
+
+**Status:** ⬜ NOT STARTED
+
+---
+
 ## Objective
 
 Tüm RC'ler geçti mi? v1.0.0 release için son onay verilebilir mi?
