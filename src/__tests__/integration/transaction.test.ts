@@ -1,13 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import { databaseService } from '@/lib/database';
 import { characterRepository } from '@/repositories/character-repository';
+import type { Prisma } from '@prisma/client';
 
 /**
  * Transaction Integration Tests
  * Tests transaction support and rollback functionality
- * 
- * Note: Uses 'as any' for test data to avoid domain type vs Prisma type conflicts.
  */
+
+type TransactionClient = Omit<ReturnType<typeof databaseService.getClient>, '$connect' | '$disconnect' | '$on' | '$use' | '$extends'>;
 
 // Helper to create test character data
 function createTestCharData(slug: string, name: string) {
@@ -69,7 +70,7 @@ describe('Transaction Integration Tests', () => {
       try {
         const char = await characterRepository.findBySlug(slug);
         if (char) await characterRepository.delete(char.id);
-      } catch (error) {
+      } catch {
         // Ignore
       }
     }
@@ -82,14 +83,14 @@ describe('Transaction Integration Tests', () => {
       if (existing) {
         await characterRepository.delete(existing.id);
       }
-    } catch (error) {
+    } catch {
       // Ignore
     }
   });
 
   describe('Transaction Commit', () => {
     it('should commit transaction successfully', async () => {
-      await databaseService.transaction(async (tx: any) => {
+      await databaseService.transaction(async (tx: TransactionClient) => {
         await tx.character.create({
           data: createTestCharData('transaction-test-char', 'Transaction Test'),
         });
@@ -105,7 +106,7 @@ describe('Transaction Integration Tests', () => {
   describe('Transaction Rollback', () => {
     it('should rollback on error', async () => {
       try {
-        await databaseService.transaction(async (tx: any) => {
+        await databaseService.transaction(async (tx: TransactionClient) => {
           // Create character
           await tx.character.create({
             data: createTestCharData('tx-rollback-1', 'Should Be Rolled Back'),
@@ -125,7 +126,7 @@ describe('Transaction Integration Tests', () => {
 
     it('should rollback multi-operation on error', async () => {
       try {
-        await databaseService.transaction(async (tx: any) => {
+        await databaseService.transaction(async (tx: TransactionClient) => {
           // Create first character
           await tx.character.create({
             data: createTestCharData('tx-multi-1', 'First Character'),
@@ -154,12 +155,12 @@ describe('Transaction Integration Tests', () => {
   describe('Transaction Isolation', () => {
     it('should maintain isolation between transactions', async () => {
       // Create character outside transaction
-      await characterRepository.create(createTestCharData('tx-rollback-2', 'Isolation Test') as any);
+      await characterRepository.create(createTestCharData('tx-rollback-2', 'Isolation Test') as unknown as Parameters<typeof characterRepository.create>[0]);
       const original = await characterRepository.findBySlug('tx-rollback-2');
       expect(original).toBeDefined();
 
       // Update in transaction
-      await databaseService.transaction(async (tx: any) => {
+      await databaseService.transaction(async (tx: TransactionClient) => {
         await tx.character.update({
           where: { slug: 'tx-rollback-2' },
           data: { popularity: 999 },
@@ -174,7 +175,7 @@ describe('Transaction Integration Tests', () => {
 
   describe('Repository in Transaction', () => {
     it('should use repository methods within transaction', async () => {
-      await databaseService.transaction(async (tx: any) => {
+      await databaseService.transaction(async (tx: TransactionClient) => {
         await tx.character.create({
           data: createTestCharData('tx-rollback-1', 'Repo in Transaction'),
         });

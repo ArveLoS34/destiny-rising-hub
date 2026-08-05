@@ -1,6 +1,7 @@
 import { databaseService } from '@/lib/database';
 import { logger } from '@/lib/logger';
 import type { Character } from '@/types/domain';
+import type { Prisma } from '@prisma/client';
 
 /**
  * Character Repository
@@ -63,7 +64,7 @@ class CharacterRepository {
     try {
       const prisma = databaseService.getClient();
       const character = await prisma.character.create({
-        data: data as any,
+        data: data as unknown as Prisma.CharacterCreateInput,
       });
       logger.info('CharacterRepository', 'Character created', { id: character.id });
       return character as unknown as Character;
@@ -79,21 +80,21 @@ class CharacterRepository {
   async update(id: string, data: Partial<Character>): Promise<Character> {
     try {
       const prisma = databaseService.getClient();
-      const updateData: any = { ...data };
+      const updateData: Prisma.CharacterUpdateInput = { ...data } as unknown as Prisma.CharacterUpdateInput;
       
-      // Handle JSON fields
-      if (data.stats) updateData.stats = data.stats as any;
-      if (data.skills) updateData.skills = data.skills as any;
-      if (data.talents) updateData.talents = data.talents as any;
-      if (data.ascensionMaterials) updateData.ascensionMaterials = data.ascensionMaterials as any;
-      if (data.skillMaterials) updateData.skillMaterials = data.skillMaterials as any;
-      if (data.popularBuilds) updateData.popularBuilds = data.popularBuilds as any;
-      if (data.strengths) updateData.strengths = data.strengths as any;
-      if (data.weaknesses) updateData.weaknesses = data.weaknesses as any;
-      if (data.voiceActors) updateData.voiceActors = data.voiceActors as any;
-      if (data.factionRelation) updateData.factionRelation = data.factionRelation as any;
-      if (data.tierListPlacement) updateData.tierListPlacement = data.tierListPlacement as any;
-      if (data.verification) updateData.verification = data.verification as any;
+      // Handle JSON fields - cast to Prisma.InputJsonValue
+      if (data.stats) updateData.stats = data.stats as unknown as Prisma.InputJsonValue;
+      if (data.skills) updateData.skills = data.skills as unknown as Prisma.InputJsonValue;
+      if (data.talents) updateData.talents = data.talents as unknown as Prisma.InputJsonValue;
+      if (data.ascensionMaterials) updateData.ascensionMaterials = data.ascensionMaterials as unknown as Prisma.InputJsonValue;
+      if (data.skillMaterials) updateData.skillMaterials = data.skillMaterials as unknown as Prisma.InputJsonValue;
+      if (data.popularBuilds) updateData.popularBuilds = data.popularBuilds as unknown as Prisma.InputJsonValue;
+      if (data.strengths) updateData.strengths = data.strengths as unknown as Prisma.InputJsonValue;
+      if (data.weaknesses) updateData.weaknesses = data.weaknesses as unknown as Prisma.InputJsonValue;
+      if (data.voiceActors) updateData.voiceActors = data.voiceActors as unknown as Prisma.InputJsonValue;
+      if (data.factionRelation) updateData.factionRelation = data.factionRelation as unknown as Prisma.InputJsonValue;
+      if (data.tierListPlacement) updateData.tierListPlacement = data.tierListPlacement as unknown as Prisma.InputJsonValue;
+      if (data.verification) updateData.verification = data.verification as unknown as Prisma.InputJsonValue;
 
       const character = await prisma.character.update({
         where: { id },
@@ -159,7 +160,7 @@ class CharacterRepository {
   }): Promise<Character[]> {
     try {
       const prisma = databaseService.getClient();
-      const where: any = {};
+      const where: Prisma.CharacterWhereInput = {};
       
       if (filter.element) where.element = filter.element;
       if (filter.role) where.role = filter.role;

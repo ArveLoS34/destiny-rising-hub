@@ -118,10 +118,10 @@ async function main() {
         counters: [],
         popularBuilds: [],
         strengths: [
-          { description: `Strong ${character.element} damage output`, category: 'damage' as any },
+          { description: `Strong ${character.element} damage output`, category: 'damage' },
         ],
         weaknesses: [
-          { description: `Vulnerable to crowd control`, category: 'survivability' as any },
+          { description: `Vulnerable to crowd control`, category: 'survivability' },
         ],
         lore: `${character.name}, known as ${character.title}, is a legendary ${character.role} from the ${character.faction} faction.`,
         voiceActors: {

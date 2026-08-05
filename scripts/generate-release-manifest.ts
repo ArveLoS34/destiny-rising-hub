@@ -10,8 +10,10 @@
  */
 
 import { execSync } from 'child_process';
-import { writeFileSync } from 'fs';
+import { createHash } from 'crypto';
+import { writeFileSync, readFileSync } from 'fs';
 import { join } from 'path';
+import { createRequire } from 'module';
 
 interface ReleaseManifest {
   version: string;
@@ -75,7 +77,8 @@ function getNodeVersion(): string {
 
 function getPackageVersion(packageName: string): string {
   try {
-    const pkg = require(join(process.cwd(), 'package.json'));
+    const require = createRequire(join(process.cwd(), 'package.json'));
+    const pkg = require('./package.json');
     return pkg.dependencies?.[packageName] || pkg.devDependencies?.[packageName] || 'unknown';
   } catch {
     return 'unknown';
@@ -84,8 +87,6 @@ function getPackageVersion(packageName: string): string {
 
 function getSchemaHash(): string {
   try {
-    const { createHash } = require('crypto');
-    const { readFileSync } = require('fs');
     const schema = readFileSync(join(process.cwd(), 'prisma/schema.prisma'), 'utf-8');
     return createHash('sha256').update(schema).digest('hex').substring(0, 16);
   } catch {

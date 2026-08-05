@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import { logger } from '@/lib/logger';
@@ -32,7 +32,7 @@ class DatabaseService {
 
     // Log queries in development
     if (process.env.NODE_ENV === 'development') {
-      this.prisma.$on('query' as never, (e: any) => {
+      this.prisma.$on('query' as never, (e: { query: string; duration: number; params: string }) => {
         logger.debug('Database', `Query: ${e.query}`, {
           duration: e.duration,
           params: e.params,
@@ -90,9 +90,9 @@ class DatabaseService {
    * Execute transaction
    */
   async transaction<T>(
-    fn: (tx: any) => Promise<T>
+    fn: (tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$use' | '$extends'>) => Promise<T>
   ): Promise<T> {
-    return this.prisma.$transaction(fn as any) as Promise<T>;
+    return this.prisma.$transaction(fn);
   }
 
   /**

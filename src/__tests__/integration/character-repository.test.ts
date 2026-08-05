@@ -21,7 +21,7 @@ describe('CharacterRepository Integration Tests', () => {
     if (testCharacterId) {
       try {
         await characterRepository.delete(testCharacterId);
-      } catch (error) {
+      } catch {
         // Ignore if already deleted
       }
     }
@@ -34,7 +34,7 @@ describe('CharacterRepository Integration Tests', () => {
       if (existing) {
         await characterRepository.delete(existing.id);
       }
-    } catch (error) {
+    } catch {
       // Ignore
     }
   });
@@ -109,7 +109,7 @@ describe('CharacterRepository Integration Tests', () => {
         winRate: 50.0,
       };
 
-      const created = await characterRepository.create(characterData as any);
+      const created = await characterRepository.create(characterData as unknown as Parameters<typeof characterRepository.create>[0]);
 
       expect(created).toBeDefined();
       expect(created.id).toBeDefined();
@@ -138,7 +138,7 @@ describe('CharacterRepository Integration Tests', () => {
       const updated = await characterRepository.update(testCharacterId, {
         name: 'Updated Test Character',
         popularity: 75,
-      } as any);
+      } as Parameters<typeof characterRepository.update>[1]);
 
       expect(updated).toBeDefined();
       expect(updated.name).toBe('Updated Test Character');
@@ -207,7 +207,7 @@ describe('CharacterRepository Integration Tests', () => {
           pickRate: 0,
           banRate: 0,
           winRate: 50.0,
-        } as any);
+        } as unknown as Parameters<typeof characterRepository.create>[0]);
       }
     });
 
@@ -218,7 +218,7 @@ describe('CharacterRepository Integration Tests', () => {
           if (char) {
             await characterRepository.delete(char.id);
           }
-        } catch (error) {
+        } catch {
           // Ignore
         }
       }
