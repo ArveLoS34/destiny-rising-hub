@@ -10,11 +10,8 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
-# Install build dependencies for native modules (better-sqlite3, etc.)
-RUN apk add --no-cache libc6-compat python3 make g++
-
 COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts && npm cache clean --force
+RUN npm ci --omit=optional && npm cache clean --force
 
 # ─── Stage 2: Generate Prisma Client ──────────────────────────
 FROM deps AS prisma

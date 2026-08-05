@@ -126,7 +126,7 @@ services:
       - destiny-network
     command: >
       sh -c "
-        npm install &&
+        npm install --omit=optional &&
         npx prisma generate &&
         npx prisma db push --accept-data-loss &&
         npx tsx prisma/seed.ts &&
