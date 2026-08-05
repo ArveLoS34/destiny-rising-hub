@@ -70,11 +70,42 @@ Could not find any version of Python to use
 
 ### Second Attempt: PENDING ⏳
 
-**Date:** TBD  
-**Commit:** 981912d (fix applied)
+**Date:** 2026-08-05  
+**Commit:** 7360238 (fix applied)
+
+#### Fix Applied:
+```yaml
+# docker-compose.yml
+command: >
+  sh -c "
+    npm install --omit=optional &&
+    npx prisma generate &&
+    npx prisma db push --accept-data-loss &&
+    npx tsx prisma/seed.ts &&
+    npm run dev
+  "
+
+# Dockerfile
+RUN npm ci --omit=optional && npm cache clean --force
+```
 
 #### Expected Result:
 All services should start successfully without npm install errors.
+better-sqlite3 optional peerDependency will be skipped.
+
+---
+
+### Third Attempt (if needed)
+
+**Alternative Solution (if --omit=optional doesn't work):**
+Use `node:20` (full Debian image) instead of `node:20-alpine`:
+```yaml
+app:
+  image: node:20
+  # ... rest of config
+```
+
+This image includes Python and all build tools, but results in larger image size.
 
 ---
 
