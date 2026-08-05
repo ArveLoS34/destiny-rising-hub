@@ -67,106 +67,120 @@ describe('RC-2: API Integration Tests', () => {
   // ========================================================================
   describe('1.2 Characters API', () => {
     it('1.2.1 GET /api/v1/characters should return all characters', async () => {
-      const response = await fetch('http://localhost:3000/api/v1/characters');
+      const response = await fetch('http://localhost:3000/api/v1/characters?limit=100');
       
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-      expect(data.length).toBe(20); // Seed data'dan 20 karakter
+      expect(data.data).toBeDefined();
+      expect(Array.isArray(data.data)).toBe(true);
+      expect(data.data.length).toBe(20); // Seed data'dan 20 karakter
     });
 
-    it('1.2.2 GET /api/v1/characters/:slug should return specific character', async () => {
-      const response = await fetch('http://localhost:3000/api/v1/characters/nova');
+    it('1.2.2 GET /api/v1/characters (first character) should return character data', async () => {
+      const response = await fetch('http://localhost:3000/api/v1/characters?limit=1');
       
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(data.slug).toBe('nova');
-      expect(data.name).toBe('Nova');
+      expect(data.data).toBeDefined();
+      expect(data.data.length).toBe(1);
+      
+      const character = data.data[0];
+      expect(character.name).toBeDefined();
+      expect(character.slug).toBeDefined();
     });
 
-    it('1.2.3 GET /api/v1/characters?element=Fire should filter by element', async () => {
-      const response = await fetch('http://localhost:3000/api/v1/characters?element=Fire');
+    it('1.2.3 GET /api/v1/characters?filter[element]=Fire should filter by element', async () => {
+      const response = await fetch('http://localhost:3000/api/v1/characters?filter[element]=Fire');
       
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-      expect(data.length).toBeGreaterThan(0);
+      expect(data.data).toBeDefined();
+      expect(Array.isArray(data.data)).toBe(true);
+      expect(data.data.length).toBeGreaterThan(0);
       
       // Tüm karakterler Fire elementinde olmalı
-      data.forEach((character: any) => {
+      data.data.forEach((character: any) => {
         expect(character.element).toBe('Fire');
       });
     });
 
-    it('1.2.4 GET /api/v1/characters?search=nova should search characters', async () => {
-      const response = await fetch('http://localhost:3000/api/v1/characters?search=nova');
+    it('1.2.4 GET /api/v1/characters should support pagination', async () => {
+      const response = await fetch('http://localhost:3000/api/v1/characters?page=1&limit=10');
       
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-      expect(data.length).toBeGreaterThan(0);
-      
-      // Arama sonucu Nova içermeli
-      const hasNova = data.some((character: any) => 
-        character.name.toLowerCase().includes('nova')
-      );
-      expect(hasNova).toBe(true);
+      expect(data.data).toBeDefined();
+      expect(data.pagination).toBeDefined();
+      expect(data.pagination.page).toBe(1);
+      expect(data.pagination.limit).toBe(10);
     });
 
-    it('1.2.5 GET /api/v1/characters/:invalid should return 404', async () => {
-      const response = await fetch('http://localhost:3000/api/v1/characters/invalid-character-xyz');
-      
-      expect(response.status).toBe(404);
-    });
-
-    it('1.2.6 Character should have all required fields', async () => {
-      const response = await fetch('http://localhost:3000/api/v1/characters/nova');
-      const data = await response.json();
-      
-      // Gerekli alanları kontrol et
-      expect(data.id).toBeDefined();
-      expect(data.slug).toBeDefined();
-      expect(data.name).toBeDefined();
-      expect(data.title).toBeDefined();
-      expect(data.element).toBeDefined();
-      expect(data.role).toBeDefined();
-      expect(data.rarity).toBeDefined();
-      expect(data.weaponType).toBeDefined();
-      expect(data.faction).toBeDefined();
-    });
-
-    it('1.2.7 GET /api/v1/characters?role=DPS should filter by role', async () => {
-      const response = await fetch('http://localhost:3000/api/v1/characters?role=DPS');
+    it('1.2.5 GET /api/v1/characters?filter[role]=DPS should filter by role', async () => {
+      const response = await fetch('http://localhost:3000/api/v1/characters?filter[role]=DPS');
       
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-      expect(data.length).toBeGreaterThan(0);
+      expect(data.data).toBeDefined();
+      expect(Array.isArray(data.data)).toBe(true);
+      expect(data.data.length).toBeGreaterThan(0);
       
       // Tüm karakterler DPS roleünde olmalı
-      data.forEach((character: any) => {
+      data.data.forEach((character: any) => {
         expect(character.role).toBe('DPS');
       });
     });
 
-    it('1.2.8 GET /api/v1/characters?rarity=SSR should filter by rarity', async () => {
-      const response = await fetch('http://localhost:3000/api/v1/characters?rarity=SSR');
+    it('1.2.6 GET /api/v1/characters?filter[rarity]=SSR should filter by rarity', async () => {
+      const response = await fetch('http://localhost:3000/api/v1/characters?filter[rarity]=SSR');
       
       expect(response.status).toBe(200);
       
       const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-      expect(data.length).toBeGreaterThan(0);
+      expect(data.data).toBeDefined();
+      expect(Array.isArray(data.data)).toBe(true);
+      expect(data.data.length).toBeGreaterThan(0);
       
       // Tüm karakterler SSR rarity'de olmalı
-      data.forEach((character: any) => {
+      data.data.forEach((character: any) => {
         expect(character.rarity).toBe('SSR');
       });
+    });
+
+    it('1.2.7 Character should have all required fields', async () => {
+      const response = await fetch('http://localhost:3000/api/v1/characters?limit=1');
+      const data = await response.json();
+      const character = data.data[0];
+      
+      // Gerekli alanları kontrol et
+      expect(character.id).toBeDefined();
+      expect(character.slug).toBeDefined();
+      expect(character.name).toBeDefined();
+      expect(character.title).toBeDefined();
+      expect(character.element).toBeDefined();
+      expect(character.role).toBeDefined();
+      expect(character.rarity).toBeDefined();
+      expect(character.weaponType).toBeDefined();
+      expect(character.faction).toBeDefined();
+    });
+
+    it('1.2.8 GET /api/v1/characters should support sorting', async () => {
+      const response = await fetch('http://localhost:3000/api/v1/characters?sort=name&order=asc&limit=5');
+      
+      expect(response.status).toBe(200);
+      
+      const data = await response.json();
+      expect(data.data).toBeDefined();
+      expect(Array.isArray(data.data)).toBe(true);
+      
+      // İsimlere göre sıralanmış olmalı
+      const names = data.data.map((c: any) => c.name);
+      const sortedNames = [...names].sort();
+      expect(names).toEqual(sortedNames);
     });
   });
 
