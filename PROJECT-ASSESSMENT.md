@@ -1,8 +1,9 @@
 # Destiny Rising Hub — Project Assessment
 
 > **Tarih:** 2026-08-05
-> **Commit:** c3431a4
+> **Commit:** df8bc3a
 > **Faz:** Development ✅ → **Verification 🎯**
+> **Son Güncelleme:** 2026-08-05
 
 ---
 
@@ -14,59 +15,107 @@ tam kapsamlı bir SaaS platformuna dönüşmüştür.
 
 ---
 
+## Production Validation Progress
+
+> Bu bölüm yaşayan bir belgedir. Her RC tamamlandığında güncellenir.
+
+```
+RC-1  Infrastructure        ⬜ Not Started
+RC-2  Database              ⬜ Not Started
+RC-3  Identity              ⬜ Not Started
+RC-4  Storage               ⬜ Not Started
+RC-5  Queue                 ⬜ Not Started
+RC-6  End-to-End            ⬜ Not Started
+
+Overall Validation Progress: 0 / 6
+```
+
+### Kanıt Durumu
+
+| RC | Status | Evidence | Tarih | Rapor |
+|----|--------|----------|-------|-------|
+| RC-1 | ⬜ Not Started | — | — | [RC-1.md](./docs/validation/RC-1.md) |
+| RC-2 | ⬜ Not Started | — | — | [RC-2.md](./docs/validation/RC-2.md) |
+| RC-3 | ⬜ Not Started | — | — | [RC-3.md](./docs/validation/RC-3.md) |
+| RC-4 | ⬜ Not Started | — | — | [RC-4.md](./docs/validation/RC-4.md) |
+| RC-5 | ⬜ Not Started | — | — | [RC-5.md](./docs/validation/RC-5.md) |
+| RC-6 | ⬜ Not Started | — | — | [RC-6.md](./docs/validation/RC-6.md) |
+
+### RC Tamamlandığında Kanıt Formatı
+
+```
+RC-1  Infrastructure        ✅ Completed (2026-08-XX)
+  Evidence:
+    - docker compose ps (5 servis healthy)
+    - Health endpoint: {"status": "healthy"}
+    - PostgreSQL: accepting connections
+    - Redis: PONG
+    - MinIO: HTTP 200
+    - Mailpit: accessible
+    - Application logs: clean
+  Verified by: [name]
+  Validation report: docs/validation/RC-1.md
+```
+
+---
+
+## Başarı Metrikleri
+
+> Artık "kaç satır kod yazıldı?" değil, aşağıdaki metrikler takip edilir.
+
+| Metrik | Mevcut | Hedef |
+|--------|--------|-------|
+| RC Tamamlanma Oranı | 0 / 6 | 6 / 6 |
+| Release Checklist | 0 / 92 | 92 / 92 |
+| Production Validation Evidence | 0 | 6+ |
+| Açık Kritik Blocker | — | 0 |
+| Integration Test Başarı | — | %100 |
+| Smoke Test Başarı | — | %100 |
+| Mean Time to Recover | — | < 5dk |
+
+---
+
 ## Olgunluk Değerlendirmesi
 
 | Alan | Skor | Durum |
 |------|------|-------|
-| Domain Tasarımı | 100% | 🟢 Game-agnostic, ADR-001 ile belgelenmiş |
-| Frontend | 98% | 🟢 Next.js 16, Tailwind v4, Framer Motion |
+| Domain Tasarımı | 100% | 🟢 Game-agnostic, ADR-001 |
+| Frontend | 98% | 🟢 Next.js 16, Tailwind v4 |
 | CMS | 95% | 🟢 Review → Publish workflow |
-| API Tasarımı | 95% | 🟢 RESTful, health check, validation |
-| Repository/Service Mimarisi | 95% | 🟢 Pattern belgelenmiş, test edilebilir |
-| Docker & DevOps | 90% | 🟢 Compose (dev+prod), CI/CD, SBOM, Trivy |
-| Dokümantasyon | 98% | 🟢 8 ADR, RC templates, 92 maddelik checklist |
-| Release Süreci | 90% | 🟢 Milestone + RC sistemi |
-| **Gerçek Production Doğrulaması** | **10–15%** | 🟡 **RC'ler bekleniyor** |
-
-**Genel:** ~93% (Mimari + Altyapı) → Doğrulama ile kanıtlanmayı bekliyor
+| API Tasarımı | 95% | 🟢 RESTful, health check |
+| Repository/Service | 95% | 🟢 Pattern + test coverage |
+| Docker & DevOps | 90% | 🟢 Compose + CI/CD + SBOM |
+| Dokümantasyon | 98% | 🟢 8 ADR, 92 maddelik checklist |
+| Release Süreci | 90% | 🟢 Milestone + RC |
+| **Production Doğrulama** | **10–15%** | 🟡 **RC bekleniyor** |
+| **Genel** | **~93%** | 🟡 **Doğrulama fazında** |
 
 ---
 
 ## Risk Matrisi
 
-| Risk | Alan | Olasılık | Etki | Azaltma |
-|------|------|----------|------|---------|
-| PostgreSQL ayağa kalkmıyor | RC-1 | Orta | Kritik | Docker Compose health check |
-| OAuth çalışmıyor | RC-3 | Orta | Yüksek | Provider test planı hazır |
-| Queue işlemiyor | RC-5 | Düşük | Orta | BullMQ retry + DLQ |
-| Storage upload yapamıyor | RC-4 | Düşük | Orta | MinIO S3-compatible |
-| Full E2E workflow başarısız | RC-6 | Orta | Kritik | Adım adım validation |
+| Risk | Alan | Olasılık | Etki | RC |
+|------|------|----------|------|-----|
+| PostgreSQL ayağa kalkmıyor | Infrastructure | Orta | Kritik | RC-1 |
+| OAuth çalışmıyor | Identity | Orta | Yüksek | RC-3 |
+| Queue işlemiyor | Queue | Düşük | Orta | RC-5 |
+| Storage upload yapamıyor | Storage | Düşük | Orta | RC-4 |
+| Full E2E başarısız | End-to-End | Orta | Kritik | RC-6 |
 
 **Not:** Tüm riskler kodla ilgili değil — gerçek ortam doğrulamasıyla ilgili.
 
 ---
 
-## Faz Geçiş Kararı
+## Faz Geçiş Durumu
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                                                         │
 │   ✅ FAZ 1: ÖZELLİK GELİŞTİRME — KAPANDI              │
-│                                                         │
-│   Karar: Bundan sonra YENİ ÖZELLİK EKLENMEZ.           │
-│   Sadece RC doğrulamaları yapılır.                      │
-│                                                         │
+│   Karar: Yeni özellik eklenmez. Sadece RC doğrulanır.  │
 ├─────────────────────────────────────────────────────────┤
-│                                                         │
 │   🎯 FAZ 2: DOĞRULAMA — AKTİF                         │
-│                                                         │
 │   RC-1 → RC-2 → RC-3 → RC-4 → RC-5 → RC-6             │
-│                                                         │
-│   Her RC kapatıldığında kanıt üretilir:                 │
-│   docs/validation/RC-N.md                               │
-│                                                         │
 │   Başarı ölçütü: "Kaç RC geçti?"                       │
-│                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -85,73 +134,41 @@ RC-6  Full E2E           █░░░░░░░░░░░░░░░░░�
 
 ---
 
-## Zaman Çizelgesi Tahmini
+## Zaman Çizelgesi
 
-| Milestone | Tahmini Süre | Hedef |
-|-----------|-------------|-------|
-| RC-1 Infrastructure | 1–2 gün | Hafta 1 |
-| RC-2 Database | 2–3 gün | Hafta 1 |
-| RC-3 Identity | 1–2 hafta | Hafta 2–3 |
-| RC-4 Storage | 3–5 gün | Hafta 3–4 |
-| RC-5 Queue | 3–5 gün | Hafta 4 |
-| RC-6 Full E2E | 1 hafta | Hafta 5 |
-| **Kapalı Beta** | **2 hafta** | **Hafta 5–7** |
-| **v1.0 Release** | **1–2 hafta** | **Hafta 7–8** |
+| Milestone | Süre | Hedef | Durum |
+|-----------|------|-------|-------|
+| RC-1 Infrastructure | 1–2 gün | Hafta 1 | ⬜ |
+| RC-2 Database | 2–3 gün | Hafta 1 | ⬜ |
+| RC-3 Identity | 1–2 hafta | Hafta 2–3 | ⬜ |
+| RC-4 Storage | 3–5 gün | Hafta 3–4 | ⬜ |
+| RC-5 Queue | 3–5 gün | Hafta 4 | ⬜ |
+| RC-6 Full E2E | 1 hafta | Hafta 5 | ⬜ |
+| **Kapalı Beta** | 2 hafta | Hafta 5–7 | ⬜ |
+| **v1.0** | 1–2 hafta | Hafta 7–8 | ⬜ |
 
 ---
 
 ## Nihai Hedef: Zero Manual Operation
 
-Bir admin CMS'de karakter güncelleyecek. Hiçbir aşamada SSH, SQL veya terminal kullanılmayacak.
-
 ```
-CMS          → Karakter güncelle
-  ↓
-Review       → Admin onayı
-  ↓
-Patch Mgr    → Release planı
-  ↓
-BullMQ       → Import, validation, transform
-  ↓
-Search Index → Otomatik güncelle
-  ↓
-AI Refresh   → Otomatik öneri
-  ↓
-Notification → Otomatik bildirim
-  ↓
-Frontend     → Canlı kullanıcıya görünür
-  ↓
-Grafana      → Her şey yeşil ✅
+CMS → Review → Patch → Queue → Publish → Frontend → Grafana ✅
+
+Hiçbir aşamada SSH, SQL veya terminal kullanılmayacak.
+Bu senaryo sorunsuz çalıştığında platform operasyonel olarak olgundur.
 ```
 
-**Bu senaryo sorunsuz çalıştığında:**
-> Platform mimari olarak değil, **operasyonel olarak da olgunlaşmış** demektir.
+---
+
+## Değişiklik Günlüğü
+
+| Tarih | Değişiklik |
+|-------|-----------|
+| 2026-08-05 | Assessment oluşturuldu: Development → Verification geçişi |
+| 2026-08-05 | Production Validation Progress bölümü eklendi (yaşayan belge) |
+| 2026-08-05 | Başarı metrikleri tanımlandı (RC, checklist, evidence) |
 
 ---
 
-## Projenin Durumu — Tek Cümle
-
-> Geliştirme fazı kapandı; altyapı hazır, mimari belgelenmiş,
-> CI/CD aktif — bundan sonra ilerleme **kanıt üreterek** ölçülecek.
-
----
-
-## Teknik Özet
-
-| Metrik | Değer |
-|--------|-------|
-| GitHub Commits | 4 (bu oturumda) |
-| TypeScript Errors | 0 |
-| ADR Sayısı | 8 |
-| RC Validation Template | 6 |
-| Release Checklist Maddesi | 92 |
-| Docker Servisleri | 5 (dev) + backup (prod) |
-| CI/CD Pipeline Stage | 5 (Quality → Test → Build → Docker/Security → Deploy) |
-| Prisma Models | 20+ |
-| Integration Test Senaryoları | 15+ |
-| Domain Model | Game-agnostic, 14 tip dosyası |
-
----
-
-*Bu dosya, projenin development → verification geçiş anının kalıcı kaydını tutar.*
-*İlerleyen dönemde bu belgedeki tahminler, gerçek RC sonuçlarıyla güncellenecektir.*
+*Bu dosya yaşayan bir belgedir. Her RC tamamlandığında güncellenir.*
+*Sonraki adım: RC-1'i başlatmak ve evidence üretmek.*
