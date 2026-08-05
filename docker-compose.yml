@@ -113,8 +113,8 @@ services:
       - "${APP_PORT:-3000}:3000"
     volumes:
       - .:/app
-      - /app/node_modules
-      - /app/.next
+      - node_modules_data:/app/node_modules
+      - next_cache:/app/.next
     depends_on:
       postgres:
         condition: service_healthy
@@ -126,7 +126,7 @@ services:
       - destiny-network
     command: >
       sh -c "
-        npm install --omit=optional &&
+        npm install &&
         npx prisma generate &&
         npx prisma db push --accept-data-loss &&
         npx tsx prisma/seed.ts &&
@@ -161,3 +161,5 @@ volumes:
   redis_data:
   minio_data:
   mailpit_data:
+  node_modules_data:
+  next_cache:

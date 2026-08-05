@@ -11,7 +11,7 @@ FROM node:20-alpine AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=optional && npm cache clean --force
+RUN npm ci && npm cache clean --force
 
 # ─── Stage 2: Generate Prisma Client ──────────────────────────
 FROM deps AS prisma
