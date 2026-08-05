@@ -44,21 +44,25 @@ Asıl odak burada. Henüz hiçbir RC doğrulanmadı.
 ### Overall Release Confidence
 
 ```
-Development:          ███████████████████░ 94%   ✅ Tamamlandı
-Production Validation:░░░░░░░░░░░░░░░░░░░░  0%   🎯 Bekleniyor
+Development:           ███████████████████░ 94%   ✅ Tamamlandı
+Production Validation: ░░░░░░░░░░░░░░░░░░░░  0%   🎯 0/6 RC passed
+  └── RC-1 Ready:      ████████████████████ 100%  🟡 Pre-flight done, awaiting Docker
 ─────────────────────────────────────────────
-Release Confidence:   DÜŞÜK (henüz doğrulanmış RC yok)
+Release Confidence:    DÜŞÜK (henüz doğrulanmış RC yok)
 ```
 
 > ⚠️ "Production ready" ifadesi, Production Validation %100 olduğunda
 > kullanılabilir. Şu an bir hedeftir, doğrulanmış bir sonuç değildir.
+>
+> ⚠️ "RC-1 Ready" ≠ "RC-1 Passed"
+> RC-1 pre-flight'ı geçti ama gerçek Docker doğrulaması yapılmadı.
 
 ---
 
 ## Production Validation Progress
 
 ```
-RC-1  Infrastructure        ⬜ Not Started
+RC-1  Infrastructure        🟡 Ready (Pre-flight 14/14 PASS, Real validation pending)
 RC-2  Database              ⬜ Not Started
 RC-3  Identity              ⬜ Not Started
 RC-4  Storage               ⬜ Not Started
@@ -67,6 +71,36 @@ RC-6  End-to-End            ⬜ Not Started
 
 Overall Validation Progress: 0 / 6
 ```
+
+### RC-1 Detaylı Durum
+
+```
+RC-1: Infrastructure Validation
+├── Preparation     ████████████████████ 100% ✅
+│   ├── docker-compose.yml fixed
+│   ├── Dockerfile validated
+│   ├── Seed script fixed
+│   ├── TypeScript clean (0 errors)
+│   ├── Health endpoint ready
+│   └── Pre-flight: 14/14 PASS
+│
+├── Real Validation ░░░░░░░░░░░░░░░░░░░░   0% ⬜
+│   ├── Clean clone            ⬜
+│   ├── docker compose up      ⬜
+│   ├── 5 services healthy     ⬜
+│   ├── Health endpoint        ⬜
+│   ├── No fatal logs          ⬜
+│   ├── No restart loops       ⬜
+│   ├── No manual intervention ⬜
+│   ├── Repeatable (2nd run)   ⬜
+│   └── Evidence documented    ⬜
+│
+└── Result            ⬜ NOT PASSED (awaiting real environment)
+```
+
+> **Önemli:** Pre-flight PASS ≠ RC-1 PASS
+> Pre-flight statik analizdir (Docker olmadan).
+> RC-1 gerçek Docker ortamında doğrulamadır.
 
 ---
 
@@ -78,12 +112,30 @@ Overall Validation Progress: 0 / 6
 ### RC-1: Infrastructure Validation
 
 ```
-Status:    ⬜ Not Started
+Status:    🟡 READY (Pre-flight complete, real validation pending)
+Pre-flight: 14/14 PASS
 Date:      —
 Duration:  —
 
-Evidence:
-  (Henüz doğrulanmadı)
+Pre-Flight Fixes Applied:
+  1. docker-compose.yml: production Dockerfile → node:20-alpine + npm install
+  2. Migration: prisma migrate dev → prisma db push (non-interactive)
+  3. tsx: installed as devDependency
+  4. Seed: @/ path alias → relative import
+
+Evidence (Real Validation):
+  (Awaiting Docker environment)
+
+Real Validation Checklist:
+  ⬜ Clean clone
+  ⬜ docker compose up → 5 services Up
+  ⬜ All containers healthy
+  ⬜ Health endpoint PASS
+  ⬜ No fatal logs
+  ⬜ No restart loops
+  ⬜ No manual intervention
+  ⬜ Repeatable (down -v → up → same result)
+  ⬜ Evidence documented
 
 Issues Found:
   —
@@ -308,6 +360,9 @@ Hiçbir aşamada SSH, SQL veya terminal kullanılmayacak.
 | 2026-08-05 | Release Journal formatı eklendi |
 | 2026-08-05 | Commit convention güncellendi: `rc(rc-N):` / `validation(rc-N):` |
 | 2026-08-05 | Overall Release Confidence: DÜŞÜK (0/6 RC) |
+| 2026-08-05 | RC-1 pre-flight: 14/14 PASS, 4 düzeltme uygulandı |
+| 2026-08-05 | RC-1 durumu: 🟡 READY (pre-flight ✅, gerçek doğrulama ⬜) |
+| 2026-08-05 | "Pre-flight PASS ≠ RC-1 PASS" ayrımı belgelendi |
 
 ---
 
