@@ -95,42 +95,84 @@ better-sqlite3 optional peerDependency will be skipped.
 
 ---
 
-### Third Attempt: PENDING ⏳
+### Fourth Attempt: PENDING ⏳
 
 **Date:** 2026-08-05  
-**Commit:** f5919f3 (Prisma 7 adapter migration completed)
+**Commit:** 4ad0177 (lightningcss native binary fix)
 
-#### Fix Applied:
-```typescript
-// prisma/seed.ts - Prisma 7 Driver Adapter
-
-// Before (Prisma 6):
-const prisma = new PrismaClient();
-
-// After (Prisma 7):
-import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
-
-const pool = new Pool({ connectionString: databaseUrl });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+#### Root Cause (Attempt #3):
+```
+Error: Cannot find module '../lightningcss.linux-x64-musl.node'
 ```
 
-#### All PrismaClient Instantiations Updated:
-- ✅ `src/lib/database.ts` - Already using adapter
-- ✅ `src/lib/auth/index.ts` - Already using adapter
-- ✅ `prisma/seed.ts` - Fixed in commit f5919f3
+- `--omit=optional` flag was skipping lightningcss native binaries
+- Tailwind CSS 4 requires lightningcss for CSS processing
+- Native binary `lightningcss.linux-x64-musl.node` not found
+
+#### Fix Applied:
+```json
+// package.json
+{
+  "dependencies": {
+    "lightningcss": "^1.32.0"  // Added as explicit dependency
+  }
+}
+```
+
+```yaml
+# docker-compose.yml - Removed --omit=optional
+command: >
+  sh -c "
+    npm install &&  # No --omit=optional
+    npx prisma generate &&
+    npx prisma db push --accept-data-loss &&
+    npx tsx prisma/seed.ts &&
+    npm run dev
+  "
+
+# Fixed volume mounts
+volumes:
+  - .:/app
+  - node_modules_data:/app/node_modules  # Named volume
+  - next_cache:/app/.next                # Named volume
+```
+
+#### Why This Works:
+1. **lightningcss as explicit dependency**
+   - Native binaries always installed
+   - Not affected by --omit=optional
+
+2. **Removed --omit=optional**
+   - All optional dependencies install correctly
+   - better-sqlite3 already removed, no compilation issues
+
+3. **Named volumes**
+   - Prevents host/container node_modules conflicts
+   - Linux binaries preserved in container
 
 #### Expected Result:
-- npm install: ✅ successful (--omit=optional)
-- Prisma generate: ✅ successful
-- Prisma db push: ✅ successful
-- Seed execution: ✅ successful (adapter fixed)
-- Next.js startup: ✅ successful
-- /api/health: ✅ accessible
+- ✅ npm install successful
+- ✅ Prisma generate successful
+- ✅ Prisma db push successful
+- ✅ Seed execution successful
+- ✅ **Next.js build successful** (lightningcss fixed)
+- ✅ /api/health accessible
+- ✅ **RC-1: PASS** 🎉
 
-#### Alternative Solution (if needed):
-If adapter still doesn't work, use `node:20` (full Debian image) instead of `node:20-alpine`.
+---
+
+## Summary of All Fixes
+
+| Attempt | Issue | Fix | Commit |
+|---------|-------|-----|--------|
+| #1 | better-sqlite3 compilation | Removed dependencies | 981912d |
+| #2 | package-lock.json still had it | Added --omit=optional | 7360238 |
+| #3 | PrismaClient adapter missing | Added PrismaPg adapter | f5919f3 |
+| #4 | lightningcss binary missing | Explicit dep + named volumes | 4ad0177 |
+
+**Total fixes:** 4 commits  
+**Time to resolve:** ~2 hours  
+**RC-1 Status:** READY FOR FINAL VALIDATION
 
 ---
 
