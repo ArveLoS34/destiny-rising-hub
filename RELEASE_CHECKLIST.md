@@ -111,7 +111,21 @@
 - [ ] MILESTONES.md güncel
 - [ ] README.md güncel (gerekirse)
 
-## 11. Post-Release
+## 11. Advanced Validation
+
+- [ ] Docker image reproducible build doğrulandı (aynı kaynak → aynı hash)
+- [ ] Migration rollback test edildi (geri alma çalışıyor)
+- [ ] Disaster recovery testi yapıldı (backup'tan restore)
+- [ ] Secret rotation prosedürü doğrulandı
+- [ ] Dependency vulnerability raporu temiz (0 high/critical)
+- [ ] Monitoring dashboard doğrulandı
+- [ ] Alert kuralları tetiklendi ve test edildi
+- [ ] SBOM (Software Bill of Materials) oluşturuldu
+- [ ] Container security scan temiz (Trivy: 0 critical)
+- [ ] Secret scan temiz (Gitleaks: 0 finding)
+- [ ] License compliance doğrulandı (yasaklı lisans yok)
+
+## 12. Post-Release
 
 - [ ] Production smoke testler PASS
 - [ ] Error rate < 0.1% (ilk 1 saat)
@@ -120,6 +134,8 @@
 - [ ] Rollback gerekip gerekmediği değerlendirildi (ilk 24 saat)
 - [ ] Release announcement yayınlandı
 - [ ] Git tag oluşturuldu (`vX.Y.Z`)
+- [ ] SBOM release artifact olarak saklandı
+- [ ] Validation report docs/validation/RC-N.md güncellendi
 
 ---
 

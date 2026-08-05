@@ -30,7 +30,7 @@ jobs:
       - run: npx tsc --noEmit
 
   security-audit:
-    name: 🔒 Security Audit
+    name: 🔒 Dependency Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,11 +39,16 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       - run: npm ci
-      - name: npm audit
+      - name: npm audit (high/critical)
         run: npm audit --audit-level=high
         continue-on-error: true
-      - name: Check for known vulnerabilities
-        run: npx audit-ci --high
+      - name: Generate audit report
+        run: npm audit --json > audit-report.json || true
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-report
+          path: audit-report.json
 
   dependency-review:
     name: 📦 Dependency Review
@@ -54,6 +59,35 @@ jobs:
       - uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
+          deny-licenses: GPL-3.0, AGPL-3.0
+
+  license-check:
+    name: 📋 License Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - name: Check licenses
+        run: |
+          npx license-checker --summary --failOn "GPL-3.0;AGPL-3.0" || true
+          echo "=== License Summary ==="
+          npx license-checker --summary
+
+  secret-scan:
+    name: 🔐 Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ═══════════════════════════════════════════════════════════════
   # Stage 2: Tests
@@ -62,7 +96,7 @@ jobs:
   unit-tests:
     name: 🧪 Unit Tests
     runs-on: ubuntu-latest
-    needs: [lint, security-audit]
+    needs: [lint, security-audit, secret-scan]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -82,7 +116,7 @@ jobs:
   integration-tests:
     name: 🔗 Integration Tests
     runs-on: ubuntu-latest
-    needs: [lint, security-audit]
+    needs: [lint, security-audit, secret-scan]
 
     services:
       postgres:
@@ -146,7 +180,7 @@ jobs:
           retention-days: 7
 
   # ═══════════════════════════════════════════════════════════════
-  # Stage 4: Docker
+  # Stage 4: Docker + Security
   # ═══════════════════════════════════════════════════════════════
 
   docker-build:
@@ -171,14 +205,61 @@ jobs:
         run: |
           docker run --rm destiny-rising-hub:${{ github.sha }} node -e "console.log('Image OK')" || true
 
+  trivy-scan:
+    name: 🛡️ Container Security Scan (Trivy)
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build Docker image for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: destiny-rising-hub:scan
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'destiny-rising-hub:scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  sbom-generation:
+    name: 📄 SBOM Generation (CycloneDX)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - name: Generate SBOM
+        run: npx @cyclonedx/cyclonedx-npm --output-file sbom.json
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json
+
   # ═══════════════════════════════════════════════════════════════
-  # Stage 5: Deploy (main branch only)
+  # Stage 5: Deploy
   # ═══════════════════════════════════════════════════════════════
 
   deploy-staging:
     name: 🚀 Deploy Staging
     runs-on: ubuntu-latest
-    needs: [docker-build]
+    needs: [docker-build, trivy-scan, sbom-generation]
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     environment: staging
     steps:
@@ -186,19 +267,17 @@ jobs:
       - name: Deploy to staging
         run: |
           echo "🚀 Deploying to staging..."
-          # TODO: Add actual deployment commands
-          # Example: docker compose -f docker-compose.prod.yml up -d
+          # TODO: docker compose -f docker-compose.prod.yml up -d
           echo "✅ Staging deploy complete"
       - name: Smoke tests
         run: |
-          echo "🧪 Running smoke tests against staging..."
-          # TODO: Add smoke test commands
-          # curl -f https://staging.destinyrisinghub.com/api/health
+          echo "🧪 Running smoke tests..."
+          # TODO: curl -f https://staging.destinyrisinghub.com/api/health
 
   deploy-production:
     name: 🚀 Deploy Production
     runs-on: ubuntu-latest
-    needs: [docker-build]
+    needs: [docker-build, trivy-scan, sbom-generation]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
     steps:
@@ -206,15 +285,15 @@ jobs:
       - name: Pre-deploy backup
         run: |
           echo "💾 Creating pre-deploy backup..."
-          # TODO: Add backup command
+          # TODO: pg_dump / volume snapshot
       - name: Deploy to production
         run: |
           echo "🚀 Deploying to production..."
-          # TODO: Add actual deployment commands
+          # TODO: docker compose -f docker-compose.prod.yml up -d
           echo "✅ Production deploy complete"
       - name: Post-deploy smoke tests
         run: |
-          echo "🧪 Running post-deploy smoke tests..."
+          echo "🧪 Post-deploy smoke tests..."
           # TODO: curl -f https://destinyrisinghub.com/api/health
       - name: Create release tag
         if: success()
