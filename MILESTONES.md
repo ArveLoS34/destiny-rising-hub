@@ -9,15 +9,15 @@
 ## Release Burndown
 
 ```
-RC-1  Infrastructure     ████████████████████ 100% hazir  → Doğrulama bekleniyor
-RC-2  Database           ████████████████████ 100% hazir  → Doğrulama bekleniyor
-RC-3  Identity           ████████░░░░░░░░░░░░  40%       → Schema hazır, implementasyon bekleniyor
-RC-4  Storage            ████░░░░░░░░░░░░░░░░  20%       → Config hazır
-RC-5  Queue              ██░░░░░░░░░░░░░░░░░░  10%       → Planlandı
-RC-6  Full Workflow      █░░░░░░░░░░░░░░░░░░░   5%       → E2E senaryo tanımlandı
+RC-1  Infrastructure       ████████████████████ HAZIR  → Pre-flight ✅, Docker bekleniyor
+RC-2  Functional           ░░░░░░░░░░░░░░░░░░░░  0%    → RC-1 sonrası
+RC-3  Performance          ░░░░░░░░░░░░░░░░░░░░  0%    → RC-2 sonrası
+RC-4  Security             ░░░░░░░░░░░░░░░░░░░░  0%    → RC-2 sonrası (paralel)
+RC-5  Production Rehearsal ░░░░░░░░░░░░░░░░░░░░  0%    → RC-3 + RC-4 sonrası
+RC-6  Launch Approval      ░░░░░░░░░░░░░░░░░░░░  0%    → Tüm RC'ler PASS
 ```
 
-**Toplam İlerleme:** ████░░░░░░░░░░░░░░░░ %35 (Development) → Production doğrulaması bekleniyor
+**Toplam İlerleme:** █░░░░░░░░░░░░░░░░░░ ~%5 → Doğrulama başladı
 
 ---
 

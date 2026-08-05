@@ -1,211 +1,178 @@
-# RC-6: Full Workflow Validation
+# RC-6: Launch Approval
 
 ## Objective
 
-Uçtan uca iş akışı — CMS'den frontend'e, hiçbir manuel müdahale olmadan — çalışıyor mu?
-Bu, production readiness'ın nihai kanıtıdır.
-
-## Environment
-
-- **Tüm Servisler:** PostgreSQL, Redis, MinIO, Mailpit, Application, Worker
-- **Tarih:** [Doğrulama tarihi]
+Tüm RC'ler geçti mi? v1.0.0 release için son onay verilebilir mi?
+Bu, release gate'dir — tüm önceki RC'lerin PASS olması gerekir.
 
 ## Prerequisites
 
 - ✅ RC-1 PASS (Infrastructure)
-- ✅ RC-2 PASS (Database)
-- ✅ RC-3 PASS (Identity)
-- ✅ RC-4 PASS (Storage)
-- ✅ RC-5 PASS (Queue)
+- ✅ RC-2 PASS (Functional)
+- ✅ RC-3 PASS (Performance)
+- ✅ RC-4 PASS (Security)
+- ✅ RC-5 PASS (Production Rehearsal)
 
-## End-to-End Senaryo
+## Final Gate Checklist
 
-Tek bir senaryo: **Yeni karakter oluştur ve yayınla.**
+### RC Status
 
-```
-1. CMS → Yeni karakter formunu doldur
-2. Validation → Zod schema validation geç
-3. Review → Admin onayı
-4. Publish → Status: DRAFT → PUBLISHED
-5. Queue → Background job tetiklenir
-6. Search Index → Karakter aranabilir olur
-7. AI Refresh → Öneriler hesaplanır
-8. Notification → Abonelere bildirim
-9. Frontend → Karakter sayfada görünür
-```
+| RC | Objective | Status | Evidence |
+|----|-----------|--------|----------|
+| RC-1 | Infrastructure | ⬜ | [RC-1.md](./RC-1.md) |
+| RC-2 | Functional | ⬜ | [RC-2.md](./RC-2.md) |
+| RC-3 | Performance | ⬜ | [RC-3.md](./RC-3.md) |
+| RC-4 | Security | ⬜ | [RC-4.md](./RC-4.md) |
+| RC-5 | Production Rehearsal | ⬜ | [RC-5.md](./RC-5.md) |
 
-## Commands
+### Release Readiness
 
-### 1. Authentication
+| # | Kontrol | Beklenen | Durum |
+|---|---------|----------|-------|
+| 1 | Tüm RC'ler PASS | 5/5 | ⬜ |
+| 2 | TypeScript errors | 0 | ⬜ |
+| 3 | ESLint errors | 0 | ⬜ |
+| 4 | Test coverage | >80% | ⬜ |
+| 5 | Integration tests | All PASS | ⬜ |
+| 6 | E2E tests | All PASS | ⬜ |
+| 7 | Lighthouse (all categories) | >90 | ⬜ |
+| 8 | npm audit | 0 high/critical | ⬜ |
+| 9 | Trivy scan | 0 critical | ⬜ |
+| 10 | Gitleaks | 0 secrets | ⬜ |
+| 11 | SBOM generated | CycloneDX | ⬜ |
+| 12 | Documentation updated | All docs current | ⬜ |
+| 13 | ADR'ler güncel | Son kararlar eklendi | ⬜ |
+| 14 | CHANGELOG hazır | Release notes yazıldı | ⬜ |
+| 15 | Migration rollback planı | Dokümante edildi | ⬜ |
+| 16 | Monitoring active | Grafana + alerts | ⬜ |
+| 17 | Backup verified | Restore test edildi | ⬜ |
+| 18 | Security headers | All present | ⬜ |
+| 19 | HTTPS configured | Certificate valid | ⬜ |
+| 20 | Rate limiting active | Configured + tested | ⬜ |
 
-```bash
-# Admin olarak giriş yap
-curl -X POST http://localhost:3000/api/auth/signin \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@test.com","password":"..."}'
-```
+### Sign-off
 
-### 2. Karakter Oluşturma (CMS)
+| Rol | İsim | Tarih | Onay |
+|-----|------|-------|------|
+| Tech Lead | | | ⬜ |
+| DevOps | | | ⬜ |
+| Security | | | ⬜ |
+| QA | | | ⬜ |
+| Product Owner | | | ⬜ |
 
-```bash
-# Yeni karakter oluştur (DRAFT)
-curl -X POST http://localhost:3000/api/characters \
-  -H "Authorization: Bearer {token}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "RC6 Test Character",
-    "slug": "rc6-test",
-    "element": "Fire",
-    "role": "DPS",
-    "rarity": "SSR"
-  }'
-```
+## Release Actions
 
-### 3. Validation
-
-```bash
-# Zod schema validation geçti mi?
-# Response: 201 Created (validation başarılı)
-# veya 400 Bad Request (validation başarısız)
-```
-
-### 4. Admin Review
+Tüm kontroller PASS olduğunda:
 
 ```bash
-# Karakteri onayla
-curl -X PATCH http://localhost:3000/api/characters/rc6-test/review \
-  -H "Authorization: Bearer {token}" \
-  -d '{"status": "APPROVED"}'
+# 1. Version bump
+npm version major  # v1.0.0
+
+# 2. Create release tag
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+
+# 3. Create GitHub Release
+# - Release notes
+# - Changelog
+# - SBOM attached
+
+# 4. Deploy to production
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+
+# 5. Post-deploy verification
+curl -s http://localhost:3000/api/health | jq .
+
+# 6. Announce
+# - Blog post
+# - Social media
+# - Community notification
 ```
 
-### 5. Publish
+## v1.0.0 Release Notes Template
 
-```bash
-# Karakteri yayınla
-curl -X PATCH http://localhost:3000/api/characters/rc6-test/publish \
-  -H "Authorization: Bearer {token}"
+```markdown
+# Destiny Rising Hub v1.0.0
+
+## 🎉 Initial Release
+
+Destiny Rising Hub is a comprehensive content platform for the Destiny Rising game community.
+
+## ✨ Features
+
+### Character Database
+- 20+ characters with detailed stats, skills, and builds
+- Advanced search and filtering
+- AI-powered recommendations
+
+### Community
+- User profiles with OAuth (Google, GitHub, Discord)
+- Build sharing and team composition
+- Guides and tier lists
+- Comments, ratings, and reactions
+
+### Content Management
+- Admin CMS for character data management
+- Review and publish workflow
+- AI-assisted content generation
+
+### Performance
+- Server-side rendering with Next.js 16
+- Redis caching layer
+- Optimized image delivery
+
+## 🔧 Technical Stack
+- Next.js 16.3.0
+- React 19
+- TypeScript
+- PostgreSQL 16
+- Redis 7
+- Prisma 7.9.1
+- Docker Compose
+
+## 📊 Validation
+- RC-1 Infrastructure: ✅ PASS
+- RC-2 Functional: ✅ PASS
+- RC-3 Performance: ✅ PASS
+- RC-4 Security: ✅ PASS
+- RC-5 Production Rehearsal: ✅ PASS
+
+## 📝 Full Changelog
+[Link to compare view]
 ```
-
-### 6. Queue Processing
-
-```bash
-# Job tetiklendi mi?
-docker compose exec redis redis-cli keys "bull:*"
-
-# Worker logları
-docker compose logs --tail=10 worker | grep "rc6-test"
-
-# Job tamamlandı mı?
-docker compose exec redis redis-cli keys "bull:*:completed"
-```
-
-### 7. Search Index
-
-```bash
-# Karakter aranabilir mi?
-curl -sf "http://localhost:3000/api/characters/search?q=rc6" | jq '.[].name'
-# Beklenen: "RC6 Test Character"
-```
-
-### 8. AI Refresh
-
-```bash
-# AI önerileri hesaplandı mı?
-curl -sf http://localhost:3000/api/characters/rc6-test/suggestions | jq .
-```
-
-### 9. Notification
-
-```bash
-# Bildirim gönderildi mi?
-# Mailpit'te kontrol et
-curl -sf http://localhost:8025/api/messages | jq '.[].subject'
-```
-
-### 10. Frontend
-
-```bash
-# Karakter listesinde görünüyor mu?
-curl -sf http://localhost:3000/characters | grep "rc6-test"
-
-# Karakter detay sayfası
-curl -sf -o /dev/null -w "%{http_code}" http://localhost:3000/characters/rc6-test
-# Beklenen: 200
-```
-
-## Expected Results
-
-| Adım | Beklenen Sonuç | Durum |
-|------|----------------|-------|
-| 1. Auth | Admin session oluşturuldu | ⏳ |
-| 2. Create | 201 Created, DRAFT | ⏳ |
-| 3. Validation | Zod schema PASS | ⏳ |
-| 4. Review | APPROVED | ⏳ |
-| 5. Publish | PUBLISHED, job tetiklendi | ⏳ |
-| 6. Queue | Job completed | ⏳ |
-| 7. Search | Aranabilir | ⏳ |
-| 8. AI | Öneriler hesaplandı | ⏳ |
-| 9. Notification | Email gönderildi | ⏳ |
-| 10. Frontend | Sayfa erişilebilir | ⏳ |
-
-## Actual Results
-
-> **⏳ PENDING**
 
 ## Evidence
 
 > **⏳ PENDING**
 >
-> - [ ] Karakter oluşturma response
-> - [ ] Review/Publish response
-> - [ ] Queue job logları
-> - [ ] Search sonuçları
-> - [ ] AI suggestions response
-> - [ ] Mailpit'te email
-> - [ ] Frontend sayfa screenshot
-> - [ ] **Timeline:** Create → Frontend görünür (toplam süre)
+> - [ ] All RC evidence compiled
+> - [ ] Sign-off forms completed
+> - [ ] Release notes published
+> - [ ] v1.0.0 tag created
+> - [ ] GitHub Release created
+> - [ ] Production deploy verified
 
-## Timing
+## Duration
 
-| Metrik | Hedef | Gerçek |
-|--------|-------|--------|
-| Create → Publish | < 1sn | — |
-| Publish → Search | < 5sn | — |
-| Publish → AI | < 30sn | — |
-| Publish → Notification | < 10sn | — |
-| Publish → Frontend | < 5sn | — |
-| **E2E Total** | < 60sn | — |
+> **⏳ PENDING**
 
-## Zero Manual Intervention
+## Issues Found
 
-Bu RC'nin en önemli kriteri: **Hiçbir adımda manuel müdahale yok.**
-
-- [ ] Karakter oluşturma → otomatik validation
-- [ ] Review → otomatik queue tetikleme
-- [ ] Publish → otomatik search index update
-- [ ] AI → otomatik suggestion generation
-- [ ] Notification → otomatik email
-- [ ] Frontend → otomatik görünür
+> **⏳ PENDING**
 
 ## Status
 
-⏳ **PENDING**
+⏳ **PENDING** — Tüm RC'lerin PASS olması bekleniyor
 
 ---
 
-### Checklist
+### PASS Criteria
 
-- [ ] Admin login başarılı
-- [ ] Karakter oluşturuldu (DRAFT)
-- [ ] Validation geçti
-- [ ] Admin review onayladı
-- [ ] Publish → PUBLISHED
-- [ ] Queue job tetiklendi
-- [ ] Queue job completed
-- [ ] Search index güncellendi
-- [ ] AI öneriler hesaplandı
-- [ ] Notification gönderildi (Mailpit)
-- [ ] Frontend'de karakter görünüyor
-- [ ] Frontend detay sayfası erişilebilir
-- [ ] E2E total < 60sn
-- [ ] Sıfır manuel müdahale
+| Kontrol | Beklenen | Durum |
+|---------|----------|-------|
+| RC-1 through RC-5 | All PASS | ⬜ |
+| Release readiness | 20/20 checks | ⬜ |
+| Sign-off | 5/5 roles | ⬜ |
+| Release actions | All completed | ⬜ |
+| **Genel** | **LAUNCH APPROVED** | ⬜ |

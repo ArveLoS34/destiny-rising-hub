@@ -1,108 +1,168 @@
-# RC-3: Identity Validation
+# RC-3: Performance Validation
 
 ## Objective
 
-OAuth authentication gerçek çalışıyor mu? Session yönetimi fonksiyonel mu?
-RBAC middleware korumalı route'ları koruyor mu?
-
-## Environment
-
-- **OAuth Providers:** Google, GitHub, Discord
-- **Session Store:** Redis
-- **Tarih:** [Doğrulama tarihi]
+Sistem gerçek yük altında performans hedeflerini karşılıyor mu?
+Bottleneck'ler tespit edildi ve giderildi mi?
 
 ## Prerequisites
 
 - ✅ RC-1 PASS
 - ✅ RC-2 PASS
-- OAuth Client ID/Secret'lar konfigüre edilmiş
 
-## Commands
+## Load Test Senaryoları
 
-### 1. OAuth Login Flow
-
-```bash
-# Google OAuth başlat
-curl -v http://localhost:3000/api/auth/signin/google
-
-# GitHub OAuth başlat
-curl -v http://localhost:3000/api/auth/signin/github
-
-# Discord OAuth başlat
-curl -v http://localhost:3000/api/auth/signin/discord
-```
-
-### 2. Session Management
+### Test 1: Baseline (10 eş zamanlı kullanıcı)
 
 ```bash
-# Session oluşturuldu mu?
-docker compose exec redis redis-cli keys "session:*"
-
-# Session içeriği
-docker compose exec redis redis-cli get "session:{token}"
-
-# Session TTL
-docker compose exec redis redis-cli ttl "session:{token}"
+# k6 ile test
+k6 run tests/load/baseline.js
 ```
 
-### 3. Logout
+| Metrik | Hedef | Gerçek | Durum |
+|--------|-------|--------|-------|
+| Response time p50 | <100ms | — | ⬜ |
+| Response time p95 | <300ms | — | ⬜ |
+| Response time p99 | <500ms | — | ⬜ |
+| Error rate | <0.1% | — | ⬜ |
+| Requests/sec | >50 | — | ⬜ |
+| CPU usage | <50% | — | ⬜ |
+| Memory usage | <512MB | — | ⬜ |
+
+### Test 2: Normal Load (100 eş zamanlı kullanıcı)
 
 ```bash
-# Logout
-curl -v -X POST http://localhost:3000/api/auth/signout
-
-# Session silindi mi?
-docker compose exec redis redis-cli keys "session:*"
+k6 run tests/load/normal.js
 ```
 
-### 4. RBAC
+| Metrik | Hedef | Gerçek | Durum |
+|--------|-------|--------|-------|
+| Response time p50 | <200ms | — | ⬜ |
+| Response time p95 | <500ms | — | ⬜ |
+| Response time p99 | <1000ms | — | ⬜ |
+| Error rate | <0.5% | — | ⬜ |
+| Requests/sec | >200 | — | ⬜ |
+| CPU usage | <70% | — | ⬜ |
+| Memory usage | <768MB | — | ⬜ |
+
+### Test 3: Peak Load (500 eş zamanlı kullanıcı)
 
 ```bash
-# Korumalı route (auth gerekli)
-curl -sf http://localhost:3000/api/user/profile
-# Beklenen: 401 Unauthorized (token yok)
-
-# Admin route
-curl -sf http://localhost:3000/api/admin/users
-# Beklenen: 403 Forbidden (normal user)
+k6 run tests/load/peak.js
 ```
 
-## Expected Results
+| Metrik | Hedef | Gerçek | Durum |
+|--------|-------|--------|-------|
+| Response time p50 | <500ms | — | ⬜ |
+| Response time p95 | <1500ms | — | ⬜ |
+| Response time p99 | <3000ms | — | ⬜ |
+| Error rate | <1% | — | ⬜ |
+| Requests/sec | >400 | — | ⬜ |
+| CPU usage | <90% | — | ⬜ |
+| Memory usage | <1024MB | — | ⬜ |
 
-| Kontrol | Beklenen Sonuç |
-|---------|----------------|
-| Google OAuth redirect | Consent screen'e yönlendirme |
-| Google OAuth callback | Session token oluşturuldu |
-| GitHub OAuth | Aynı akış |
-| Discord OAuth | Aynı akış |
-| Session Redis'te | Key mevcut, TTL > 0 |
-| Logout | Session Redis'ten silindi |
-| 401 Unauthorized | Token olmadan korumalı route |
-| 403 Forbidden | Yetkisiz kullanıcı admin route |
+### Test 4: Stress Test (1000+ kullanıcı, breaking point)
 
-## Actual Results
+```bash
+k6 run tests/load/stress.js
+```
+
+| Metrik | Hedef | Gerçek | Durum |
+|--------|-------|--------|-------|
+| Breaking point | >800 user | — | ⬜ |
+| Recovery time | <30sn | — | ⬜ |
+| Data loss | 0 | — | ⬜ |
+
+## Component Performance
+
+### PostgreSQL
+
+| Metrik | Hedef | Gerçek | Durum |
+|--------|-------|--------|-------|
+| Connection time | <10ms | — | ⬜ |
+| Query time (simple) | <20ms | — | ⬜ |
+| Query time (complex) | <100ms | — | ⬜ |
+| Connection pool usage | <80% | — | ⬜ |
+| Slow queries (>1s) | 0 | — | ⬜ |
+
+### Redis
+
+| Metrik | Hedef | Gerçek | Durum |
+|--------|-------|--------|-------|
+| Cache hit rate | >90% | — | ⬜ |
+| Response time | <5ms | — | ⬜ |
+| Memory usage | <256MB | — | ⬜ |
+| Eviction rate | <1% | — | ⬜ |
+
+### Application
+
+| Metrik | Hedef | Gerçek | Durum |
+|--------|-------|--------|-------|
+| Startup time | <30sn | — | ⬜ |
+| Heap memory | <512MB | — | ⬜ |
+| Event loop lag | <50ms | — | ⬜ |
+| Garbage collection | <5% CPU | — | ⬜ |
+
+### Search
+
+| Metrik | Hedef | Gerçek | Durum |
+|--------|-------|--------|-------|
+| Search latency p95 | <200ms | — | ⬜ |
+| Index update time | <5sn | — | ⬜ |
+| Relevance accuracy | >90% | — | ⬜ |
+
+## Lighthouse Scores
+
+```bash
+npm run lighthouse
+```
+
+| Kategori | Hedef | Gerçek | Durum |
+|----------|-------|--------|-------|
+| Performance | >90 | — | ⬜ |
+| Accessibility | >95 | — | ⬜ |
+| Best Practices | >90 | — | ⬜ |
+| SEO | >90 | — | ⬜ |
+| First Contentful Paint | <2sn | — | ⬜ |
+| Largest Contentful Paint | <2.5sn | — | ⬜ |
+| Cumulative Layout Shift | <0.1 | — | ⬜ |
+| Time to Interactive | <3.5sn | — | ⬜ |
+
+## Evidence
+
+> **⏳ PENDING**
+>
+> - [ ] k6 test raporları (HTML)
+> - [ ] Lighthouse raporları
+> - [ ] Grafana dashboard screenshot'ları
+> - [ ] PostgreSQL slow query log
+> - [ ] Redis stats
+> - [ ] APM traces
+
+## Duration
 
 > **⏳ PENDING**
 
-## Evidence
+## Issues Found
 
 > **⏳ PENDING**
 
 ## Status
 
-⏳ **PENDING**
+⏳ **PENDING** — RC-2 sonrası başlatılacak
 
 ---
 
-### Checklist
+### PASS Criteria
 
-- [ ] Google OAuth ile giriş yapılıyor
-- [ ] GitHub OAuth ile giriş yapılıyor
-- [ ] Discord OAuth ile giriş yapılıyor
-- [ ] Session Redis'te saklanıyor
-- [ ] Session TTL > 0
-- [ ] Logout session'ı siliyor
-- [ ] 401: Token olmadan erişim engelleniyor
-- [ ] 403: Yetkisiz rol engelleniyor
-- [ ] 200: Yetkili kullanıcı erişebiliyor
-- [ ] Auth integration testler PASS
+| Kontrol | Beklenen | Durum |
+|---------|----------|-------|
+| Baseline (10 user) | Tüm metrikler yeşil | ⬜ |
+| Normal (100 user) | Tüm metrikler yeşil | ⬜ |
+| Peak (500 user) | Tüm metrikler yeşil | ⬜ |
+| Stress test | Breaking point belirlendi | ⬜ |
+| PostgreSQL | Tüm metrikler yeşil | ⬜ |
+| Redis | Tüm metrikler yeşil | ⬜ |
+| Application | Tüm metrikler yeşil | ⬜ |
+| Lighthouse | Tüm kategoriler >90 | ⬜ |
+| **Genel** | **Tüm testler PASS** | ⬜ |

@@ -1,144 +1,136 @@
-# RC-2: Database Validation
+# RC-2: Functional Validation
 
 ## Objective
 
-Prisma migration gerçek PostgreSQL üzerinde uygulanıyor mu? Seed data başarıyla yükleniyor mu?
-Repository operasyonları gerçek DB üzerinde çalışıyor mu? Integration testler geçiyor mu?
-
-## Environment
-
-- **PostgreSQL:** 16 Alpine (Docker)
-- **Prisma:** 7.9.1
-- **Tarih:** [Doğrulama tarihi]
+Tüm kritik kullanıcı akışları uçtan uca çalışıyor mu?
+Gerçek kullanıcı senaryoları hiçbir manuel müdahale olmadan tamamlanabiliyor mu?
 
 ## Prerequisites
 
 - ✅ RC-1 PASS (Infrastructure doğrulandı)
-- Docker Compose çalışıyor
 
-## Commands
+## Test Senaryoları
 
-### 1. Migration
+### Authentication & Authorization
 
-```bash
-# Schema doğrulama
-npx prisma validate
+| # | Senaryo | Beklenen Sonuç | Durum |
+|---|---------|----------------|-------|
+| 1 | Kullanıcı kayıt (email/password) | Hesap oluşturuldu, email doğrulama | ⬜ |
+| 2 | Google OAuth ile giriş | Redirect → consent → session | ⬜ |
+| 3 | GitHub OAuth ile giriş | Redirect → consent → session | ⬜ |
+| 4 | Discord OAuth ile giriş | Redirect → consent → session | ⬜ |
+| 5 | Logout | Session sonlandı, redirect | ⬜ |
+| 6 | Yetkisiz erişim → 401 | Korumalı route engellendi | ⬜ |
+| 7 | Yetkisiz rol → 403 | Admin route engellendi | ⬜ |
 
-# Migration apply
-npx prisma migrate deploy
+### User Profile
 
-# Alternatif (development)
-npx prisma db push
-```
+| # | Senaryo | Beklenen Sonuç | Durum |
+|---|---------|----------------|-------|
+| 8 | Profil görüntüleme | Kullanıcı bilgileri doğru | ⬜ |
+| 9 | Profil düzenleme | Değişiklikler kaydedildi | ⬜ |
+| 10 | Avatar yükleme | Image upload + resize başarılı | ⬜ |
+| 11 | Şifre değiştirme | Eski şifre doğrulandı, yeni aktif | ⬜ |
 
-### 2. Seed
+### Character Operations
 
-```bash
-# Seed data yükle
-npm run db:seed
+| # | Senaryo | Beklenen Sonuç | Durum |
+|---|---------|----------------|-------|
+| 12 | Karakter listesi | 20 karakter render edildi | ⬜ |
+| 13 | Karakter detay | Tüm alanlar doğru | ⬜ |
+| 14 | Karakter arama | Sonuçlar doğru, <200ms | ⬜ |
+| 15 | Karakter filtreleme | Element/Role/Rarity çalışıyor | ⬜ |
+| 16 | Karakter sıralama | Popularity/Name sıralaması | ⬜ |
 
-# Karakter sayısını doğrula
-docker compose exec postgres psql -U destiny_user -d destiny_rising_hub -c "SELECT COUNT(*) FROM \"Character\";"
-```
+### Content: Builds & Teams
 
-### 3. Integration Tests
+| # | Senaryo | Beklenen Sonuç | Durum |
+|---|---------|----------------|-------|
+| 17 | Build oluşturma | Kaydedildi, slug oluşturuldu | ⬜ |
+| 18 | Build düzenleme | Değişiklikler yansıdı | ⬜ |
+| 19 | Build silme | Soft delete, artık görünmüyor | ⬜ |
+| 20 | Team oluşturma | Üyeler doğru bağlandı | ⬜ |
+| 21 | Team paylaşma | Public link erişilebilir | ⬜ |
 
-```bash
-# Tüm testler
-npm test
+### Content: Guides
 
-# Sadece character repository testleri
-npm test -- --testPathPattern=character-repository
+| # | Senaryo | Beklenen Sonuç | Durum |
+|---|---------|----------------|-------|
+| 22 | Guide oluşturma (DRAFT) | DRAFT olarak kaydedildi | ⬜ |
+| 23 | Guide düzenleme | Markdown render doğru | ⬜ |
+| 24 | Guide publish | PUBLISHED, listede görünüyor | ⬜ |
+| 25 | Guide archive | ARCHIVED, listeden kaldırıldı | ⬜ |
 
-# Sadece transaction testleri
-npm test -- --testPathPattern=transaction
-```
+### Social Features
 
-### 4. API Testleri
+| # | Senaryo | Beklenen Sonuç | Durum |
+|---|---------|----------------|-------|
+| 26 | Yorum yazma | Kaydedildi, listelendi | ⬜ |
+| 27 | Yorum yanıtlama | Thread oluştu | ⬜ |
+| 28 | Like/Reaction | Sayı arttı, toggle çalıştı | ⬜ |
+| 29 | Favori ekleme | Favoriler listesine eklendi | ⬜ |
+| 30 | Follow/Unfollow | Takip ilişkisi oluştu/kalktı | ⬜ |
 
-```bash
-# Karakter listesi
-curl -sf http://localhost:3000/api/characters | jq '.[].name'
+### AI Features
 
-# Karakter detay (slug)
-curl -sf http://localhost:3000/api/characters/nova | jq '.name'
+| # | Senaryo | Beklenen Sonuç | Durum |
+|---|---------|----------------|-------|
+| 31 | AI Advisor — Build önerisi | Öneri <5sn, geçerli içerik | ⬜ |
+| 32 | AI Advisor — Team önerisi | Öneri <5sn, geçerli içerik | ⬜ |
+| 33 | AI Counter-pick | Counter karakter listesi doğru | ⬜ |
 
-# Search
-curl -sf "http://localhost:3000/api/characters/search?q=fire" | jq '.[].name'
+### Admin Operations
 
-# Filter by element
-curl -sf "http://localhost:3000/api/characters?element=Fire" | jq '.[].name'
-```
+| # | Senaryo | Beklenen Sonuç | Durum |
+|---|---------|----------------|-------|
+| 34 | Admin — Karakter oluştur | DB'ye yazıldı, listede | ⬜ |
+| 35 | Admin — Karakter güncelle | Değişiklikler yansıdı | ⬜ |
+| 36 | Admin — Guide onaylama | DRAFT → PUBLISHED | ⬜ |
+| 37 | Admin — Kullanıcı ban | Kullanıcı erişimi kesildi | ⬜ |
+| 38 | Admin — Rapor inceleme | PENDING → RESOLVED | ⬜ |
 
-### 5. Frontend Testleri
+### Navigation & Search
 
-```bash
-# Karakter listesi sayfası
-curl -sf -o /dev/null -w "%{http_code}" http://localhost:3000/characters
-
-# Karakter detay sayfası
-curl -sf -o /dev/null -w "%{http_code}" http://localhost:3000/characters/nova
-```
-
-### 6. DB Performance
-
-```bash
-# Index usage doğrulama
-docker compose exec postgres psql -U destiny_user -d destiny_rising_hub -c "
-  EXPLAIN ANALYZE SELECT * FROM \"Character\" WHERE element = 'Fire' ORDER BY popularity DESC;
-"
-
-# Slow query log kontrolü
-docker compose logs postgres | grep "duration"
-```
-
-## Expected Results
-
-| Kontrol | Beklenen Sonuç |
-|---------|----------------|
-| `prisma validate` | `The schema at ... is valid` |
-| `prisma migrate deploy` | 0 error |
-| `npm run db:seed` | 20 characters seeded |
-| `SELECT COUNT(*)` | 20 |
-| `npm test` | PASS — tüm testler |
-| API `/api/characters` | 20 karakter JSON array |
-| API search | Sonuç döndürüyor |
-| API filter | Filtered sonuç döndürüyor |
-| Frontend `/characters` | HTTP 200, karakter listesi render |
-| Index kullanımı | `Index Scan` EXPLAIN çıktısında |
-
-## Actual Results
-
-> **⏳ PENDING — Doğrulama bekleniyor**
+| # | Senaryo | Beklenen Sonuç | Durum |
+|---|---------|----------------|-------|
+| 39 | Global search | Sonuçlar <500ms | ⬜ |
+| 40 | Filter + Sort kombinasyonu | Doğru sonuç kümesi | ⬜ |
+| 41 | Pagination | Sayfalama çalışıyor | ⬜ |
+| 42 | Deep link | URL'den doğru sayfa açıldı | ⬜ |
+| 43 | 404 handling | Geçerli 404 sayfası | ⬜ |
 
 ## Evidence
 
 > **⏳ PENDING**
 >
-> - [ ] prisma validate çıktısı
-> - [ ] migration log
-> - [ ] seed log (20 characters)
-> - [ ] npm test sonucu (tam output)
-> - [ ] API response (ilk 3 karakter)
-> - [ ] EXPLAIN ANALYZE çıktısı
+> - [ ] Her senaryo için screenshot
+> - [ ] API response logları
+> - [ ] Database state doğrulama
+> - [ ] Response time ölçümleri
+
+## Duration
+
+> **⏳ PENDING**
+
+## Issues Found
+
+> **⏳ PENDING**
 
 ## Status
 
-⏳ **PENDING**
+⏳ **PENDING** — RC-1 sonrası başlatılacak
 
 ---
 
-### Checklist
+### PASS Criteria
 
-- [ ] `prisma validate` → valid
-- [ ] Migration apply → 0 error
-- [ ] Seed → 20 characters
-- [ ] DB count → 20
-- [ ] Integration tests → all PASS
-- [ ] Transaction tests → all PASS
-- [ ] API /api/characters → 20 characters
-- [ ] API search → results
-- [ ] API filter → filtered results
-- [ ] Frontend /characters → 200 OK
-- [ ] Frontend /characters/nova → 200 OK
-- [ ] Index kullanımı doğrulandı
+| Kontrol | Beklenen | Durum |
+|---------|----------|-------|
+| Tüm auth akışları | ✅ | ⬜ |
+| Tüm CRUD operasyonları | ✅ | ⬜ |
+| Tüm social features | ✅ | ⬜ |
+| AI features | ✅ | ⬜ |
+| Admin operations | ✅ | ⬜ |
+| Navigation & Search | ✅ | ⬜ |
+| Manual intervention | 0 | ⬜ |
+| **Genel** | **43/43 PASS** | ⬜ |

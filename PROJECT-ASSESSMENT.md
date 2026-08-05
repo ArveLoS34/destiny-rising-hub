@@ -29,17 +29,17 @@ Neredeyse tamamlandı. Bu tarafta büyük sprintler değil, yalnızca küçük i
 
 ### 2. Release Hazırlığı (Production Validation)
 
-Asıl odak burada. Henüz hiçbir RC doğrulanmadı.
+Asıl odak burada. Kalite niteliği odaklı release süreci.
 
-| RC | Durum | Önem |
-|----|-------|------|
-| RC-1 Infrastructure | ⬜ Not Started | Kritik |
-| RC-2 Database | ⬜ Not Started | Kritik |
-| RC-3 Identity | ⬜ Not Started | Kritik |
-| RC-4 Storage | ⬜ Not Started | Yüksek |
-| RC-5 Queue | ⬜ Not Started | Yüksek |
-| RC-6 Full E2E | ⬜ Not Started | En Kritik |
-| **Production Validation** | **0/6 (%0)** | — |
+| RC | Durum | Önem | Kapsam |
+|----|-------|------|--------|
+| RC-1 Infrastructure | 🟡 Ready | Kritik | Docker + servisler + health |
+| RC-2 Functional | ⬜ Not Started | Kritik | 43 kullanıcı akışı |
+| RC-3 Performance | ⬜ Not Started | Yüksek | Load test + Lighthouse |
+| RC-4 Security | ⬜ Not Started | Yüksek | 54 güvenlik testi |
+| RC-5 Production Rehearsal | ⬜ Not Started | Yüksek | Backup/restore/rollback |
+| RC-6 Launch Approval | ⬜ Not Started | En Kritik | v1.0 release gate |
+| **Production Validation** | **0/6 (%0)** | — | — |
 
 ### Overall Release Confidence
 
@@ -63,11 +63,11 @@ Release Confidence:    DÜŞÜK (henüz doğrulanmış RC yok)
 
 ```
 RC-1  Infrastructure        🟡 Ready (Pre-flight 14/14 PASS, Real validation pending)
-RC-2  Database              ⬜ Not Started
-RC-3  Identity              ⬜ Not Started
-RC-4  Storage               ⬜ Not Started
-RC-5  Queue                 ⬜ Not Started
-RC-6  End-to-End            ⬜ Not Started
+RC-2  Functional            ⬜ Not Started
+RC-3  Performance           ⬜ Not Started
+RC-4  Security              ⬜ Not Started
+RC-5  Production Rehearsal  ⬜ Not Started
+RC-6  Launch Approval       ⬜ Not Started
 
 Overall Validation Progress: 0 / 6
 ```
