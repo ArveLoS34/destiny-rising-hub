@@ -1,23 +1,61 @@
 # Destiny Rising Hub — Project Assessment
 
 > **Tarih:** 2026-08-05
-> **Commit:** df8bc3a
+> **Commit:** a02cbb4
 > **Faz:** Development ✅ → **Verification 🎯**
 > **Son Güncelleme:** 2026-08-05
 
 ---
 
-## Proje Tanımı
+## İki Metrik Sistemi
 
-Destiny Rising Hub, Destiny Rising oyunu için kurumsal ölçekte tasarlanmış bir içerik platformudur.
-Bir oyun rehberinden; CMS, yayın süreçleri, operasyon araçları ve DevOps altyapısı olan
-tam kapsamlı bir SaaS platformuna dönüşmüştür.
+Bu proje artık iki bağımsız metrik ile takip edilir.
+
+### 1. Geliştirme Durumu (Development Progress)
+
+Neredeyse tamamlandı. Bu tarafta büyük sprintler değil, yalnızca küçük iyileştirmeler olacak.
+
+| Alan | Skor |
+|------|------|
+| Domain Tasarımı | 100% |
+| Frontend | 98% |
+| CMS | 95% |
+| API Tasarımı | 95% |
+| Repository/Service | 95% |
+| Docker & DevOps | 90% |
+| Dokümantasyon | 98% |
+| Release Süreci | 90% |
+| **Development Progress** | **~94%** |
+
+### 2. Release Hazırlığı (Production Validation)
+
+Asıl odak burada. Henüz hiçbir RC doğrulanmadı.
+
+| RC | Durum | Önem |
+|----|-------|------|
+| RC-1 Infrastructure | ⬜ Not Started | Kritik |
+| RC-2 Database | ⬜ Not Started | Kritik |
+| RC-3 Identity | ⬜ Not Started | Kritik |
+| RC-4 Storage | ⬜ Not Started | Yüksek |
+| RC-5 Queue | ⬜ Not Started | Yüksek |
+| RC-6 Full E2E | ⬜ Not Started | En Kritik |
+| **Production Validation** | **0/6 (%0)** | — |
+
+### Overall Release Confidence
+
+```
+Development:          ███████████████████░ 94%   ✅ Tamamlandı
+Production Validation:░░░░░░░░░░░░░░░░░░░░  0%   🎯 Bekleniyor
+─────────────────────────────────────────────
+Release Confidence:   DÜŞÜK (henüz doğrulanmış RC yok)
+```
+
+> ⚠️ "Production ready" ifadesi, Production Validation %100 olduğunda
+> kullanılabilir. Şu an bir hedeftir, doğrulanmış bir sonuç değildir.
 
 ---
 
 ## Production Validation Progress
-
-> Bu bölüm yaşayan bir belgedir. Her RC tamamlandığında güncellenir.
 
 ```
 RC-1  Infrastructure        ⬜ Not Started
@@ -30,107 +68,196 @@ RC-6  End-to-End            ⬜ Not Started
 Overall Validation Progress: 0 / 6
 ```
 
-### Kanıt Durumu
+---
 
-| RC | Status | Evidence | Tarih | Rapor |
-|----|--------|----------|-------|-------|
-| RC-1 | ⬜ Not Started | — | — | [RC-1.md](./docs/validation/RC-1.md) |
-| RC-2 | ⬜ Not Started | — | — | [RC-2.md](./docs/validation/RC-2.md) |
-| RC-3 | ⬜ Not Started | — | — | [RC-3.md](./docs/validation/RC-3.md) |
-| RC-4 | ⬜ Not Started | — | — | [RC-4.md](./docs/validation/RC-4.md) |
-| RC-5 | ⬜ Not Started | — | — | [RC-5.md](./docs/validation/RC-5.md) |
-| RC-6 | ⬜ Not Started | — | — | [RC-6.md](./docs/validation/RC-6.md) |
+## Release Journal
 
-### RC Tamamlandığında Kanıt Formatı
+> Her RC tamamlandığında bu bölüme eklenir. Belge sadece durum takibi değil,
+> gerçek bir release journal'dır.
+
+### RC-1: Infrastructure Validation
 
 ```
-RC-1  Infrastructure        ✅ Completed (2026-08-XX)
-  Evidence:
-    - docker compose ps (5 servis healthy)
-    - Health endpoint: {"status": "healthy"}
-    - PostgreSQL: accepting connections
-    - Redis: PONG
-    - MinIO: HTTP 200
-    - Mailpit: accessible
-    - Application logs: clean
-  Verified by: [name]
-  Validation report: docs/validation/RC-1.md
+Status:    ⬜ Not Started
+Date:      —
+Duration:  —
+
+Evidence:
+  (Henüz doğrulanmadı)
+
+Issues Found:
+  —
+
+Commit:
+  —
+
+Verified by:
+  —
 ```
+
+### RC-2: Database Validation
+
+```
+Status:    ⬜ Not Started
+Date:      —
+Duration:  —
+
+Evidence:
+  (Henüz doğrulanmadı)
+
+Issues Found:
+  —
+
+Commit:
+  —
+
+Verified by:
+  —
+```
+
+### RC-3: Identity Validation
+
+```
+Status:    ⬜ Not Started
+Date:      —
+Duration:  —
+
+Evidence:
+  (Henüz doğrulanmadı)
+
+Issues Found:
+  —
+
+Commit:
+  —
+
+Verified by:
+  —
+```
+
+### RC-4: Storage Validation
+
+```
+Status:    ⬜ Not Started
+Date:      —
+Duration:  —
+
+Evidence:
+  (Henüz doğrulanmadı)
+
+Issues Found:
+  —
+
+Commit:
+  —
+
+Verified by:
+  —
+```
+
+### RC-5: Queue Validation
+
+```
+Status:    ⬜ Not Started
+Date:      —
+Duration:  —
+
+Evidence:
+  (Henüz doğrulanmadı)
+
+Issues Found:
+  —
+
+Commit:
+  —
+
+Verified by:
+  —
+```
+
+### RC-6: Full End-to-End Validation
+
+```
+Status:    ⬜ Not Started
+Date:      —
+Duration:  —
+
+Evidence:
+  (Henüz doğrulanmadı)
+
+Issues Found:
+  —
+
+Commit:
+  —
+
+Verified by:
+  —
+```
+
+---
+
+## Commit Convention
+
+Bu fazdan itibaren commit mesajları doğrulama tarihçesini yansıtır.
+
+### Format
+
+```
+rc(rc-N): Açıklama
+validation(rc-N): Açıklama
+fix(rc-N): Açıklama  (RC sırasında bulunan hata düzeltmeleri)
+docs: Açıklama       (Genel dokümantasyon)
+```
+
+### Örnekler
+
+```
+rc(rc-1): Validate Docker infrastructure on clean environment
+rc(rc-2): Pass PostgreSQL migration and seed verification
+rc(rc-3): Validate Google OAuth and session management
+rc(rc-4): Verify MinIO upload, resize and WebP conversion
+rc(rc-5): Validate BullMQ job processing and retry mechanism
+rc(rc-6): Pass full CMS → Publish → Frontend end-to-end workflow
+
+fix(rc-1): Increase health check timeout to 30s for slow startup
+fix(rc-2): Add missing gameId field to seed data
+validation(rc-1): Document Docker Compose evidence and service logs
+docs: Update PROJECT-ASSESSMENT.md with RC-1 results
+```
+
+### Neden?
+
+Git geçmişi artık "özellik geliştirme tarihçesi"nden çok
+"doğrulama tarihçesi"ne dönüşür. `git log` çalıştırıldığında:
+
+```
+a02cbb4  rc(rc-1): Validate Docker infrastructure on clean environment
+f0500fc  rc(rc-2): Pass PostgreSQL migration and seed verification
+e1234ab  fix(rc-2): Fix missing index on character search
+d5678cd  rc(rc-3): Validate Google OAuth and session management
+...
+```
+
+Bu, "bu hafta hangi RC kapandı ve hangi kanıt üretildi?" sorusuna
+doğrudan cevap verir.
 
 ---
 
 ## Başarı Metrikleri
 
-> Artık "kaç satır kod yazıldı?" değil, aşağıdaki metrikler takip edilir.
+> "Yeni hangi özellik eklendi?" değil,
+> "Bu hafta hangi RC kapandı ve hangi kanıt üretildi?"
 
 | Metrik | Mevcut | Hedef |
 |--------|--------|-------|
-| RC Tamamlanma Oranı | 0 / 6 | 6 / 6 |
+| RC Tamamlanma | 0 / 6 | 6 / 6 |
 | Release Checklist | 0 / 92 | 92 / 92 |
-| Production Validation Evidence | 0 | 6+ |
-| Açık Kritik Blocker | — | 0 |
+| Validation Evidence | 0 | 6+ |
+| Kritik Blocker | — | 0 |
 | Integration Test Başarı | — | %100 |
 | Smoke Test Başarı | — | %100 |
 | Mean Time to Recover | — | < 5dk |
-
----
-
-## Olgunluk Değerlendirmesi
-
-| Alan | Skor | Durum |
-|------|------|-------|
-| Domain Tasarımı | 100% | 🟢 Game-agnostic, ADR-001 |
-| Frontend | 98% | 🟢 Next.js 16, Tailwind v4 |
-| CMS | 95% | 🟢 Review → Publish workflow |
-| API Tasarımı | 95% | 🟢 RESTful, health check |
-| Repository/Service | 95% | 🟢 Pattern + test coverage |
-| Docker & DevOps | 90% | 🟢 Compose + CI/CD + SBOM |
-| Dokümantasyon | 98% | 🟢 8 ADR, 92 maddelik checklist |
-| Release Süreci | 90% | 🟢 Milestone + RC |
-| **Production Doğrulama** | **10–15%** | 🟡 **RC bekleniyor** |
-| **Genel** | **~93%** | 🟡 **Doğrulama fazında** |
-
----
-
-## Risk Matrisi
-
-| Risk | Alan | Olasılık | Etki | RC |
-|------|------|----------|------|-----|
-| PostgreSQL ayağa kalkmıyor | Infrastructure | Orta | Kritik | RC-1 |
-| OAuth çalışmıyor | Identity | Orta | Yüksek | RC-3 |
-| Queue işlemiyor | Queue | Düşük | Orta | RC-5 |
-| Storage upload yapamıyor | Storage | Düşük | Orta | RC-4 |
-| Full E2E başarısız | End-to-End | Orta | Kritik | RC-6 |
-
-**Not:** Tüm riskler kodla ilgili değil — gerçek ortam doğrulamasıyla ilgili.
-
----
-
-## Faz Geçiş Durumu
-
-```
-┌─────────────────────────────────────────────────────────┐
-│   ✅ FAZ 1: ÖZELLİK GELİŞTİRME — KAPANDI              │
-│   Karar: Yeni özellik eklenmez. Sadece RC doğrulanır.  │
-├─────────────────────────────────────────────────────────┤
-│   🎯 FAZ 2: DOĞRULAMA — AKTİF                         │
-│   RC-1 → RC-2 → RC-3 → RC-4 → RC-5 → RC-6             │
-│   Başarı ölçütü: "Kaç RC geçti?"                       │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## Release Burndown
-
-```
-RC-1  Infrastructure     ████████████████████ HAZIR  → Doğrulama bekleniyor
-RC-2  Database           ████████████████████ HAZIR  → Doğrulama bekleniyor
-RC-3  Identity           ████████░░░░░░░░░░░░  40%   → Schema hazır
-RC-4  Storage            ████░░░░░░░░░░░░░░░░  20%   → Config hazır
-RC-5  Queue              ██░░░░░░░░░░░░░░░░░░  10%   → Planlandı
-RC-6  Full E2E           █░░░░░░░░░░░░░░░░░░░   5%   → Senaryo tanımlandı
-```
 
 ---
 
@@ -149,13 +276,24 @@ RC-6  Full E2E           █░░░░░░░░░░░░░░░░░�
 
 ---
 
+## Risk Matrisi
+
+| Risk | RC | Olasılık | Etki |
+|------|----|----------|------|
+| PostgreSQL ayağa kalkmıyor | RC-1 | Orta | Kritik |
+| OAuth çalışmıyor | RC-3 | Orta | Yüksek |
+| Queue işlemiyor | RC-5 | Düşük | Orta |
+| Storage upload yapamıyor | RC-4 | Düşük | Orta |
+| Full E2E başarısız | RC-6 | Orta | Kritik |
+
+---
+
 ## Nihai Hedef: Zero Manual Operation
 
 ```
 CMS → Review → Patch → Queue → Publish → Frontend → Grafana ✅
 
 Hiçbir aşamada SSH, SQL veya terminal kullanılmayacak.
-Bu senaryo sorunsuz çalıştığında platform operasyonel olarak olgundur.
 ```
 
 ---
@@ -165,10 +303,13 @@ Bu senaryo sorunsuz çalıştığında platform operasyonel olarak olgundur.
 | Tarih | Değişiklik |
 |-------|-----------|
 | 2026-08-05 | Assessment oluşturuldu: Development → Verification geçişi |
-| 2026-08-05 | Production Validation Progress bölümü eklendi (yaşayan belge) |
-| 2026-08-05 | Başarı metrikleri tanımlandı (RC, checklist, evidence) |
+| 2026-08-05 | Production Validation Progress (yaşayan belge) |
+| 2026-08-05 | İki metrik sistemi: Development + Production Validation |
+| 2026-08-05 | Release Journal formatı eklendi |
+| 2026-08-05 | Commit convention güncellendi: `rc(rc-N):` / `validation(rc-N):` |
+| 2026-08-05 | Overall Release Confidence: DÜŞÜK (0/6 RC) |
 
 ---
 
 *Bu dosya yaşayan bir belgedir. Her RC tamamlandığında güncellenir.*
-*Sonraki adım: RC-1'i başlatmak ve evidence üretmek.*
+*Sonraki adım: RC-1 → docker compose up → evidence üret.*
