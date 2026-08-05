@@ -95,17 +95,42 @@ better-sqlite3 optional peerDependency will be skipped.
 
 ---
 
-### Third Attempt (if needed)
+### Third Attempt: PENDING ⏳
 
-**Alternative Solution (if --omit=optional doesn't work):**
-Use `node:20` (full Debian image) instead of `node:20-alpine`:
-```yaml
-app:
-  image: node:20
-  # ... rest of config
+**Date:** 2026-08-05  
+**Commit:** f5919f3 (Prisma 7 adapter migration completed)
+
+#### Fix Applied:
+```typescript
+// prisma/seed.ts - Prisma 7 Driver Adapter
+
+// Before (Prisma 6):
+const prisma = new PrismaClient();
+
+// After (Prisma 7):
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+
+const pool = new Pool({ connectionString: databaseUrl });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 ```
 
-This image includes Python and all build tools, but results in larger image size.
+#### All PrismaClient Instantiations Updated:
+- ✅ `src/lib/database.ts` - Already using adapter
+- ✅ `src/lib/auth/index.ts` - Already using adapter
+- ✅ `prisma/seed.ts` - Fixed in commit f5919f3
+
+#### Expected Result:
+- npm install: ✅ successful (--omit=optional)
+- Prisma generate: ✅ successful
+- Prisma db push: ✅ successful
+- Seed execution: ✅ successful (adapter fixed)
+- Next.js startup: ✅ successful
+- /api/health: ✅ accessible
+
+#### Alternative Solution (if needed):
+If adapter still doesn't work, use `node:20` (full Debian image) instead of `node:20-alpine`.
 
 ---
 
