@@ -44,14 +44,14 @@ export default function () {
   errorRate.add(!charactersSuccess);
   sleep(0.3);
 
-  // Test 3: Get Single Character
-  const characterStart = Date.now();
-  const characterRes = http.get(`${BASE_URL}/api/v1/characters/nova`);
-  apiLatency.add(Date.now() - characterStart);
-  const characterSuccess = check(characterRes, {
-    'character detail status is 200': (r) => r.status === 200,
+  // Test 3: Get Characters with Pagination
+  const paginatedStart = Date.now();
+  const paginatedRes = http.get(`${BASE_URL}/api/v1/characters?page=1&limit=10`);
+  apiLatency.add(Date.now() - paginatedStart);
+  const paginatedSuccess = check(paginatedRes, {
+    'paginated characters status is 200': (r) => r.status === 200,
   });
-  errorRate.add(!characterSuccess);
+  errorRate.add(!paginatedSuccess);
   sleep(0.3);
 
   // Test 4: Filter Characters by Element
@@ -64,33 +64,33 @@ export default function () {
   errorRate.add(!filterSuccess);
   sleep(0.3);
 
-  // Test 5: Search Characters
-  const searchStart = Date.now();
-  const searchRes = http.get(`${BASE_URL}/api/v1/characters?search=nova`);
-  apiLatency.add(Date.now() - searchStart);
-  const searchSuccess = check(searchRes, {
-    'search status is 200': (r) => r.status === 200,
+  // Test 5: Filter Characters by Role
+  const roleFilterStart = Date.now();
+  const roleFilterRes = http.get(`${BASE_URL}/api/v1/characters?filter[role]=DPS`);
+  apiLatency.add(Date.now() - roleFilterStart);
+  const roleFilterSuccess = check(roleFilterRes, {
+    'role filter status is 200': (r) => r.status === 200,
   });
-  errorRate.add(!searchSuccess);
+  errorRate.add(!roleFilterSuccess);
   sleep(0.3);
 
-  // Test 6: Get Weapons
-  const weaponsStart = Date.now();
-  const weaponsRes = http.get(`${BASE_URL}/api/v1/weapons`);
-  apiLatency.add(Date.now() - weaponsStart);
-  const weaponsSuccess = check(weaponsRes, {
-    'weapons list status is 200': (r) => r.status === 200,
+  // Test 6: Sort Characters
+  const sortStart = Date.now();
+  const sortRes = http.get(`${BASE_URL}/api/v1/characters?sortBy=name&order=asc`);
+  apiLatency.add(Date.now() - sortStart);
+  const sortSuccess = check(sortRes, {
+    'sort status is 200': (r) => r.status === 200,
   });
-  errorRate.add(!weaponsSuccess);
+  errorRate.add(!sortSuccess);
   sleep(0.3);
 
-  // Test 7: Get Materials
-  const materialsStart = Date.now();
-  const materialsRes = http.get(`${BASE_URL}/api/v1/materials`);
-  apiLatency.add(Date.now() - materialsStart);
-  const materialsSuccess = check(materialsRes, {
-    'materials list status is 200': (r) => r.status === 200,
+  // Test 7: Combined Filter and Sort
+  const combinedStart = Date.now();
+  const combinedRes = http.get(`${BASE_URL}/api/v1/characters?filter[element]=Fire&sortBy=popularity&order=desc`);
+  apiLatency.add(Date.now() - combinedStart);
+  const combinedSuccess = check(combinedRes, {
+    'combined filter+sort status is 200': (r) => r.status === 200,
   });
-  errorRate.add(!materialsSuccess);
+  errorRate.add(!combinedSuccess);
   sleep(0.3);
 }

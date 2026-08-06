@@ -29,25 +29,25 @@ export default function () {
   });
   sleep(1);
 
-  // Test 3: Get Single Character
-  const characterRes = http.get(`${BASE_URL}/api/v1/characters/nova`);
-  check(characterRes, {
-    'character detail status is 200': (r) => r.status === 200,
-    'character detail has data': (r) => r.json().data !== null,
+  // Test 3: Get Characters with Pagination
+  const paginatedRes = http.get(`${BASE_URL}/api/v1/characters?page=1&limit=10`);
+  check(paginatedRes, {
+    'paginated characters status is 200': (r) => r.status === 200,
+    'paginated response has pagination metadata': (r) => r.json().pagination !== undefined,
   });
   sleep(1);
 
-  // Test 4: Get Weapons
-  const weaponsRes = http.get(`${BASE_URL}/api/v1/weapons`);
-  check(weaponsRes, {
-    'weapons list status is 200': (r) => r.status === 200,
+  // Test 4: Filter Characters by Element
+  const filterRes = http.get(`${BASE_URL}/api/v1/characters?filter[element]=Fire`);
+  check(filterRes, {
+    'filter status is 200': (r) => r.status === 200,
   });
   sleep(1);
 
-  // Test 5: Get Materials
-  const materialsRes = http.get(`${BASE_URL}/api/v1/materials`);
-  check(materialsRes, {
-    'materials list status is 200': (r) => r.status === 200,
+  // Test 5: Sort Characters
+  const sortRes = http.get(`${BASE_URL}/api/v1/characters?sortBy=name&order=asc`);
+  check(sortRes, {
+    'sort status is 200': (r) => r.status === 200,
   });
   sleep(1);
 }

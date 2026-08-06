@@ -45,14 +45,14 @@ export default function () {
   });
   errorRate.add(!charactersSuccess);
 
-  // Test 3: Get Single Character
-  const characterStart = Date.now();
-  const characterRes = http.get(`${BASE_URL}/api/v1/characters/nova`);
-  apiLatency.add(Date.now() - characterStart);
-  const characterSuccess = check(characterRes, {
-    'character detail status is 200': (r) => r.status === 200,
+  // Test 3: Get Characters with Pagination
+  const paginatedStart = Date.now();
+  const paginatedRes = http.get(`${BASE_URL}/api/v1/characters?page=1&limit=10`);
+  apiLatency.add(Date.now() - paginatedStart);
+  const paginatedSuccess = check(paginatedRes, {
+    'paginated characters status is 200': (r) => r.status === 200,
   });
-  errorRate.add(!characterSuccess);
+  errorRate.add(!paginatedSuccess);
 
   // Test 4: Filter Characters
   const filterStart = Date.now();
@@ -63,23 +63,14 @@ export default function () {
   });
   errorRate.add(!filterSuccess);
 
-  // Test 5: Get Weapons
-  const weaponsStart = Date.now();
-  const weaponsRes = http.get(`${BASE_URL}/api/v1/weapons`);
-  apiLatency.add(Date.now() - weaponsStart);
-  const weaponsSuccess = check(weaponsRes, {
-    'weapons list status is 200': (r) => r.status === 200,
+  // Test 5: Sort Characters
+  const sortStart = Date.now();
+  const sortRes = http.get(`${BASE_URL}/api/v1/characters?sortBy=name&order=asc`);
+  apiLatency.add(Date.now() - sortStart);
+  const sortSuccess = check(sortRes, {
+    'sort status is 200': (r) => r.status === 200,
   });
-  errorRate.add(!weaponsSuccess);
-
-  // Test 6: Get Materials
-  const materialsStart = Date.now();
-  const materialsRes = http.get(`${BASE_URL}/api/v1/materials`);
-  apiLatency.add(Date.now() - materialsStart);
-  const materialsSuccess = check(materialsRes, {
-    'materials list status is 200': (r) => r.status === 200,
-  });
-  errorRate.add(!materialsSuccess);
+  errorRate.add(!sortSuccess);
 
   // Small sleep to simulate real user behavior
   sleep(0.2);

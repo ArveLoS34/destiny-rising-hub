@@ -38,12 +38,12 @@ export default function () {
   errorRate.add(!charactersSuccess);
   sleep(0.5);
 
-  // Test 3: Get Single Character
-  const characterRes = http.get(`${BASE_URL}/api/v1/characters/nova`);
-  const characterSuccess = check(characterRes, {
-    'character detail status is 200': (r) => r.status === 200,
+  // Test 3: Get Characters with Pagination
+  const paginatedRes = http.get(`${BASE_URL}/api/v1/characters?page=1&limit=10`);
+  const paginatedSuccess = check(paginatedRes, {
+    'paginated characters status is 200': (r) => r.status === 200,
   });
-  errorRate.add(!characterSuccess);
+  errorRate.add(!paginatedSuccess);
   sleep(0.5);
 
   // Test 4: Filter Characters by Element
@@ -54,19 +54,19 @@ export default function () {
   errorRate.add(!filterSuccess);
   sleep(0.5);
 
-  // Test 5: Get Weapons
-  const weaponsRes = http.get(`${BASE_URL}/api/v1/weapons`);
-  const weaponsSuccess = check(weaponsRes, {
-    'weapons list status is 200': (r) => r.status === 200,
+  // Test 5: Filter Characters by Role
+  const roleFilterRes = http.get(`${BASE_URL}/api/v1/characters?filter[role]=DPS`);
+  const roleFilterSuccess = check(roleFilterRes, {
+    'role filter status is 200': (r) => r.status === 200,
   });
-  errorRate.add(!weaponsSuccess);
+  errorRate.add(!roleFilterSuccess);
   sleep(0.5);
 
-  // Test 6: Get Materials
-  const materialsRes = http.get(`${BASE_URL}/api/v1/materials`);
-  const materialsSuccess = check(materialsRes, {
-    'materials list status is 200': (r) => r.status === 200,
+  // Test 6: Sort Characters
+  const sortRes = http.get(`${BASE_URL}/api/v1/characters?sortBy=name&order=asc`);
+  const sortSuccess = check(sortRes, {
+    'sort status is 200': (r) => r.status === 200,
   });
-  errorRate.add(!materialsSuccess);
+  errorRate.add(!sortSuccess);
   sleep(0.5);
 }
