@@ -17,12 +17,14 @@ import { characters } from '@/data/games/destiny-rising/characters';
 const querySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
-  sort: z.string().default('popularity'),
+  sortBy: z.string().default('popularity'),
   order: z.enum(['asc', 'desc']).default('desc'),
-  'filter[rarity]': z.string().optional(),
-  'filter[element]': z.string().optional(),
-  'filter[role]': z.string().optional(),
-  'filter[faction]': z.string().optional(),
+  filters: z.object({
+    rarity: z.string().optional(),
+    element: z.string().optional(),
+    role: z.string().optional(),
+    faction: z.string().optional(),
+  }).default({}),
 });
 
 export async function GET(request: NextRequest) {
@@ -42,13 +44,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(error, { status: 400 });
       }
       
-      const { page, limit, sort, order } = validation.data;
-      const filters = {
-        rarity: validation.data['filter[rarity]'],
-        element: validation.data['filter[element]'],
-        role: validation.data['filter[role]'],
-        faction: validation.data['filter[faction]'],
-      };
+      const { page, limit, sortBy, order, filters } = validation.data;
       
       // Filter characters
       let filteredCharacters = [...characters];
@@ -70,7 +66,7 @@ export async function GET(request: NextRequest) {
       filteredCharacters.sort((a, b) => {
         let comparison = 0;
         
-        switch (sort) {
+        switch (sortBy) {
           case 'name':
             comparison = a.name.localeCompare(b.name);
             break;
@@ -103,12 +99,14 @@ export async function GET(request: NextRequest) {
       const offset = (page - 1) * limit;
       const paginatedCharacters = filteredCharacters.slice(offset, offset + limit);
       
-      // Create response
-      const response = createSuccessResponse(
-        paginatedCharacters,
-        generatePaginationMeta(page, limit, total),
-        requestId
-      );
+      // Create response with pagination metadata
+      const response = {
+        success: true,
+        data: paginatedCharacters,
+        pagination: generatePaginationMeta(page, limit, total),
+        requestId,
+        timestamp: new Date().toISOString(),
+      };
       
       return NextResponse.json(response, { status: 200 });
     });
