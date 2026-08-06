@@ -1,4 +1,9 @@
 import '@testing-library/jest-dom';
+import { TextEncoder, TextDecoder } from 'util';
+
+// Polyfill for TextEncoder/TextDecoder (needed for database tests)
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder as any;
 
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
