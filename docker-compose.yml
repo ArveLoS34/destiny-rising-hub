@@ -102,7 +102,19 @@ services:
         condition: service_healthy
     networks:
       - destiny-network
-    command: ./docker-startup.sh
+    command: >
+      sh -c "
+        echo 'Step 1: npm install' &&
+        npm install &&
+        echo 'Step 2: Prisma generate' &&
+        npx prisma generate &&
+        echo 'Step 3: Prisma db push' &&
+        npx prisma db push --accept-data-loss &&
+        echo 'Step 4: Seed (optional)' &&
+        (npx tsx prisma/seed.ts || echo 'Seed failed, continuing...') &&
+        echo 'Step 5: Starting Next.js' &&
+        exec npm run dev
+      "
 
   redis-commander:
     image: rediscommander/redis-commander:latest
