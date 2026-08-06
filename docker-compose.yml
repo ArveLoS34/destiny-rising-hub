@@ -12,7 +12,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-destiny_password}
       POSTGRES_DB: ${POSTGRES_DB:-destiny_rising_hub}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      # - "${POSTGRES_PORT:-5432}:5432"  # Disabled to prevent port conflicts
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
