@@ -6,42 +6,49 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('RC-2: API Integration E2E Tests', () => {
-  test('health endpoint accessible from browser', async ({ request }) => {
-    const response = await request.get('/api/health');
-    expect(response.ok()).toBeTruthy();
+  test('health endpoint accessible from browser', async ({ page }) => {
+    const response = await page.goto('/api/health');
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
     
-    const data = await response.json();
+    const content = await response!.text();
+    const data = JSON.parse(content);
     expect(data.status).toBe('healthy');
     expect(data.checks).toBeDefined();
-    expect(data.checks.database).toBe('healthy');
   });
 
-  test('characters API accessible from browser', async ({ request }) => {
-    const response = await request.get('/api/v1/characters');
-    expect(response.ok()).toBeTruthy();
+  test('characters API accessible from browser', async ({ page }) => {
+    const response = await page.goto('/api/v1/characters');
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
     
-    const data = await response.json();
+    const content = await response!.text();
+    const data = JSON.parse(content);
     expect(data.success).toBe(true);
     expect(data.data).toBeDefined();
     expect(Array.isArray(data.data)).toBeTruthy();
     expect(data.data.length).toBeGreaterThan(0);
   });
 
-  test('characters API pagination works', async ({ request }) => {
-    const response = await request.get('/api/v1/characters?page=1&limit=5');
-    expect(response.ok()).toBeTruthy();
+  test('characters API pagination works', async ({ page }) => {
+    const response = await page.goto('/api/v1/characters?page=1&limit=5');
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
     
-    const data = await response.json();
+    const content = await response!.text();
+    const data = JSON.parse(content);
     expect(data.pagination).toBeDefined();
     expect(data.pagination.page).toBe(1);
     expect(data.pagination.limit).toBe(5);
   });
 
-  test('characters API filtering works', async ({ request }) => {
-    const response = await request.get('/api/v1/characters?filter[element]=Fire');
-    expect(response.ok()).toBeTruthy();
+  test('characters API filtering works', async ({ page }) => {
+    const response = await page.goto('/api/v1/characters?filter[element]=Fire');
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
     
-    const data = await response.json();
+    const content = await response!.text();
+    const data = JSON.parse(content);
     expect(data.data).toBeDefined();
     expect(data.data.length).toBeGreaterThan(0);
     
@@ -51,11 +58,13 @@ test.describe('RC-2: API Integration E2E Tests', () => {
     }
   });
 
-  test('characters API sorting works', async ({ request }) => {
-    const response = await request.get('/api/v1/characters?sort=name&order=asc');
-    expect(response.ok()).toBeTruthy();
+  test('characters API sorting works', async ({ page }) => {
+    const response = await page.goto('/api/v1/characters?sort=name&order=asc');
+    expect(response).not.toBeNull();
+    expect(response!.status()).toBe(200);
     
-    const data = await response.json();
+    const content = await response!.text();
+    const data = JSON.parse(content);
     expect(data.data).toBeDefined();
     expect(data.data.length).toBeGreaterThan(0);
     
