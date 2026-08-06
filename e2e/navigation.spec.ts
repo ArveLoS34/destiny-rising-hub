@@ -22,7 +22,7 @@ test.describe('RC-2: Navigation E2E Tests', () => {
     await page.waitForLoadState('networkidle');
     
     const buildLabLink = page.locator('a[href*="build-lab"], a[href*="/build-lab"]');
-    if (await buildLabLink.isVisible()) {
+    if (await buildLabLink.first().isVisible()) {
       await buildLabLink.first().click();
       await page.waitForLoadState('networkidle');
       expect(page.url()).toContain('/build-lab');
@@ -34,7 +34,7 @@ test.describe('RC-2: Navigation E2E Tests', () => {
     await page.waitForLoadState('networkidle');
     
     const teamsLink = page.locator('a[href*="teams"], a[href*="/teams"]');
-    if (await teamsLink.isVisible()) {
+    if (await teamsLink.first().isVisible()) {
       await teamsLink.first().click();
       await page.waitForLoadState('networkidle');
       expect(page.url()).toContain('/teams');
@@ -46,7 +46,7 @@ test.describe('RC-2: Navigation E2E Tests', () => {
     await page.waitForLoadState('networkidle');
     
     const materialsLink = page.locator('a[href*="materials"], a[href*="/materials"]');
-    if (await materialsLink.isVisible()) {
+    if (await materialsLink.first().isVisible()) {
       await materialsLink.first().click();
       await page.waitForLoadState('networkidle');
       expect(page.url()).toContain('/materials');
@@ -56,8 +56,9 @@ test.describe('RC-2: Navigation E2E Tests', () => {
   test('browser back button works', async ({ page }) => {
     await page.goto('/destiny-rising/characters');
     await page.waitForLoadState('networkidle');
+    await page.waitForSelector('article', { timeout: 10000 });
     
-    const firstCharacter = page.locator('[data-testid="character-card"], article, .character-card, a[href*="/characters/"]').first();
+    const firstCharacter = page.locator('article').first();
     if (await firstCharacter.isVisible()) {
       await firstCharacter.click();
       await page.waitForLoadState('networkidle');
