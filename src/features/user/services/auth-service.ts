@@ -16,6 +16,7 @@
 
 import type { User, UserRole, AuthProvider, ThemePreference } from "@/types/domain";
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 // ─── Mock Auth System (Development) ───
 // This will be replaced by Better Auth + Prisma in production
@@ -72,7 +73,6 @@ const csrfTokens: Map<string, { token: string; expiresAt: Date }> = new Map();
  * Uses crypto.randomUUID() for secure random generation
  */
 export function generateCsrfToken(sessionId: string): string {
-  const crypto = require('crypto');
   const token = crypto.randomBytes(CSRF_TOKEN_LENGTH).toString('hex');
   csrfTokens.set(sessionId, {
     token,
@@ -96,7 +96,6 @@ export function validateCsrfToken(sessionId: string, token: string): boolean {
   }
   
   // Secure comparison to prevent timing attacks
-  const crypto = require('crypto');
   return crypto.timingSafeEqual(
     Buffer.from(stored.token, 'hex'),
     Buffer.from(token, 'hex')

@@ -5,16 +5,16 @@ import { Typography } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { authService } from "@/features/user/services/auth-service";
 import { Globe, MessageCircle, ArrowRight, Shield } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { signIn, demoLogin } = useAuth();
   const [email, setEmail] = useState("guardian@destinyrisinghub.com");
-  const [password, setPassword] = useState("demo123456");
+  const [password, setPassword] = useState("demo123");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,10 +24,10 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const result = await authService.signInWithEmail(email, password);
+      const result = await signIn(email, password);
       if (result.error) {
         setError(result.error);
-      } else if (result.user) {
+      } else {
         router.push("/profile");
       }
     } catch (err) {
@@ -42,7 +42,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      await authService.loginAsDemo();
+      await demoLogin();
       router.push("/profile");
     } catch (err) {
       setError("Demo login failed");
