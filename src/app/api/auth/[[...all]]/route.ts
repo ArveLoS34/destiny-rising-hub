@@ -83,19 +83,41 @@ function validateCsrfHeader(request: NextRequest, sessionToken: string): boolean
 }
 
 function setCsrfCookie(response: NextResponse, sessionId: string, token: string): void {
-  response.headers.append('Set-Cookie', `csrf_token=${token}; Path=/; SameSite=Strict;${secureFlag} Max-Age=${24 * 60 * 60}`);
+  response.cookies.set('csrf_token', token, {
+    path: '/',
+    sameSite: 'strict',
+    secure: isSecure,
+    maxAge: 24 * 60 * 60,
+  });
 }
 
 function setSessionCookie(response: NextResponse, sessionToken: string): void {
-  response.headers.append('Set-Cookie', `session_token=${sessionToken}; HttpOnly;${secureFlag} SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}; Path=/`);
+  response.cookies.set('session_token', sessionToken, {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: isSecure,
+    maxAge: 7 * 24 * 60 * 60,
+  });
 }
 
 function clearSessionCookie(response: NextResponse): void {
-  response.headers.append('Set-Cookie', `session_token=; HttpOnly;${secureFlag} SameSite=Strict; Max-Age=0; Path=/`);
+  response.cookies.set('session_token', '', {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: isSecure,
+    maxAge: 0,
+  });
 }
 
 function clearCsrfCookie(response: NextResponse): void {
-  response.headers.append('Set-Cookie', `csrf_token=; Path=/; SameSite=Strict;${secureFlag} Max-Age=0`);
+  response.cookies.set('csrf_token', '', {
+    path: '/',
+    sameSite: 'strict',
+    secure: isSecure,
+    maxAge: 0,
+  });
 }
 
 function createErrorResponse(message: string, status: number = 400): NextResponse {
