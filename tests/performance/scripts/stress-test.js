@@ -42,6 +42,14 @@ export default function () {
   apiLatency.add(Date.now() - charactersStart);
   const charactersSuccess = check(charactersRes, {
     'characters list status is 200': (r) => r.status === 200,
+    'characters list has data': (r) => {
+      try {
+        const json = r.json();
+        return json.success === true && Array.isArray(json.data) && json.data.length > 0;
+      } catch (e) {
+        return false;
+      }
+    },
   });
   errorRate.add(!charactersSuccess);
 
