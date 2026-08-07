@@ -83,19 +83,69 @@ async function main() {
     if (err.stdout && err.stdout.includes('P3005')) {
       console.log('\n⚠️  P3005 Error: Database schema is not empty');
       console.log('   This means tables exist but migration history is missing.');
-      console.log('   Attempting to baseline the migration...\n');
+      console.log('   Attempting to apply migration manually and baseline...\n');
       
       try {
-        // Try to baseline the migration
+        // Step 1: Apply migration SQL manually to ensure schema is correct
+        console.log('   Step 1: Applying migration SQL manually...');
+        const fs = require('fs');
+        const migrationPath = '/app/prisma/migrations/20260807000000_better_auth_schema_alignment/migration.sql';
+        
+        if (!fs.existsSync(migrationPath)) {
+          throw new Error(`Migration file not found: ${migrationPath}`);
+        }
+        
+        runStep('Apply Migration SQL', 
+          `sh -c "PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub -f ${migrationPath}"`);
+        
+        // Step 2: Verify schema has expected tables/columns
+        console.log('\n   Step 2: Verifying schema...');
+        const { Client } = require('pg');
+        const client = new Client({
+          connectionString: process.env.DATABASE_URL || 'postgresql://destiny_user:destiny_password@postgres:5432/destiny_rising_hub'
+        });
+        
+        await client.connect();
+        
+        // Check Account table has new columns
+        const accountCheck = await client.query(`
+          SELECT column_name FROM information_schema.columns 
+          WHERE table_name = 'Account' AND column_name IN ('providerId', 'accountId', 'accessToken', 'refreshToken')
+        `);
+        
+        if (accountCheck.rows.length < 4) {
+          throw new Error('Schema verification failed: Account table missing expected columns');
+        }
+        
+        // Check Verification table exists
+        const verificationCheck = await client.query(`
+          SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'Verification')
+        `);
+        
+        if (!verificationCheck.rows[0].exists) {
+          throw new Error('Schema verification failed: Verification table not found');
+        }
+        
+        await client.end();
+        console.log('   ✅ Schema verification passed');
+        
+        // Step 3: Baseline the migration
+        console.log('\n   Step 3: Baseline migration...');
         runStep('Baseline Migration', 
           'npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment');
         
-        // Retry migrate deploy
-        runStep('Prisma Migrate Deploy (retry)', 'npx prisma migrate deploy');
-      } catch (baselineErr) {
-        console.log('\n❌ Baseline failed. Manual intervention required.');
-        console.log('   Run: docker compose exec app sh scripts/baseline-migration.sh');
-        throw baselineErr;
+        // Step 4: Verify with migrate status
+        console.log('\n   Step 4: Verify migration status...');
+        runStep('Prisma Migrate Status', 'npx prisma migrate status');
+        
+      } catch (recoveryErr) {
+        console.log('\n❌ P3005 recovery failed.');
+        console.log('   Manual intervention required:');
+        console.log('   1. Check database state');
+        console.log('   2. Apply migration manually if needed');
+        console.log('   3. Run: docker compose exec app sh scripts/baseline-migration.sh');
+        console.log('\n   Error:', recoveryErr.message);
+        throw recoveryErr;
       }
     } else {
       throw err;

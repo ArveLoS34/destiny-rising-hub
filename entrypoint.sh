@@ -47,12 +47,24 @@ if ! npx prisma migrate deploy; then
     npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment || true
     # Try migrate deploy again after baseline
     if ! npx prisma migrate deploy; then
-      echo "Migration still failed - using db push as fallback"
-      npx prisma db push --accept-data-loss
+      # db push fallback only in development
+      if [ "$NODE_ENV" = "development" ]; then
+        echo "Migration still failed - using db push as development fallback"
+        npx prisma db push --accept-data-loss
+      else
+        echo "Migration failed in production/CI - exiting with error"
+        exit 1
+      fi
     fi
   else
-    echo "Migration failed for other reasons - using db push as fallback"
-    npx prisma db push --accept-data-loss
+    # Non-P3005 error - only use db push in development
+    if [ "$NODE_ENV" = "development" ]; then
+      echo "Migration failed for other reasons - using db push as development fallback"
+      npx prisma db push --accept-data-loss
+    else
+      echo "Migration failed in production/CI - exiting with error"
+      exit 1
+    fi
   fi
 fi
 
