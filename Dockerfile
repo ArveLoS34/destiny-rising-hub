@@ -20,6 +20,10 @@ RUN npm ci && npm cache clean --force
 FROM deps AS prisma
 WORKDIR /app
 
+# DATABASE_URL required for prisma generate (dummy value for build)
+ARG DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+ENV DATABASE_URL=${DATABASE_URL}
+
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 
