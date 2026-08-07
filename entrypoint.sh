@@ -39,10 +39,38 @@ echo ""
 echo "Step 4: Running database migrations..."
 # Try migrate deploy first (proper migration management)
 if ! npx prisma migrate deploy; then
-  echo "migrate deploy failed - checking if baseline is needed..."
+  echo "migrate deploy failed - checking error type..."
   
+  # Check if it's P3009 error (failed migrations in history)
+  if npx prisma migrate status 2>&1 | grep -q "P3009\|failed migration"; then
+    echo "P3009 detected: Failed migration in history"
+    echo "Attempting to reset failed migration state..."
+    
+    # Mark the failed migration as rolled back
+    npx prisma migrate resolve --rolled-back 20260807000000_better_auth_schema_alignment || true
+    
+    # Try deploy again
+    if ! npx prisma migrate deploy; then
+      echo "Deploy still failed after reset"
+      
+      # Check if schema is already up to date (manual SQL was run)
+      if npx prisma migrate status 2>&1 | grep -q "already been applied"; then
+        echo "Schema appears up to date, marking migration as applied..."
+        npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment || true
+      else
+        # db push fallback only in development
+        if [ "$NODE_ENV" = "development" ]; then
+          echo "Using db push as development fallback"
+          npx prisma db push --accept-data-loss
+        else
+          echo "Migration failed in production/CI - exiting with error"
+          exit 1
+        fi
+      fi
+    fi
+    
   # Check if it's P3005 error (database schema not empty)
-  if npx prisma migrate status 2>&1 | grep -q "P3005\|not empty"; then
+  elif npx prisma migrate status 2>&1 | grep -q "P3005\|not empty"; then
     echo "Database has tables but no migration history - baselining..."
     npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment || true
     # Try migrate deploy again after baseline
@@ -57,7 +85,7 @@ if ! npx prisma migrate deploy; then
       fi
     fi
   else
-    # Non-P3005 error - only use db push in development
+    # Non-P3005/P3009 error - only use db push in development
     if [ "$NODE_ENV" = "development" ]; then
       echo "Migration failed for other reasons - using db push as development fallback"
       npx prisma db push --accept-data-loss

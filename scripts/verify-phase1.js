@@ -79,8 +79,65 @@ async function main() {
   try {
     runStep('Prisma Migrate Deploy', 'npx prisma migrate deploy');
   } catch (err) {
+    const errorOutput = err.stdout || err.stderr || '';
+    
+    // Check if it's P3009 error (failed migrations in history)
+    if (errorOutput.includes('P3009') || errorOutput.includes('failed migration')) {
+      console.log('\n⚠️  P3009 Error: Failed migration found');
+      console.log('   Migration was marked as failed but SQL may have succeeded.');
+      console.log('   Attempting to reset migration state...\n');
+      
+      try {
+        // Step 1: Mark failed migration as rolled back
+        console.log('   Step 1: Resetting failed migration state...');
+        runStep('Reset Failed Migration', 
+          'npx prisma migrate resolve --rolled-back 20260807000000_better_auth_schema_alignment');
+        
+        // Step 2: Try deploy again
+        console.log('\n   Step 2: Retrying migration deploy...');
+        runStep('Retry Migrate Deploy', 'npx prisma migrate deploy');
+        
+      } catch (recoveryErr) {
+        // If still failing, check if schema is up to date
+        console.log('\n   Step 3: Deploy still failed, checking schema state...');
+        
+        try {
+          const { Client } = require('pg');
+          const client = new Client({
+            connectionString: process.env.DATABASE_URL || 'postgresql://destiny_user:destiny_password@postgres:5432/destiny_rising_hub'
+          });
+          
+          await client.connect();
+          
+          // Check if Account table has new columns (schema is up to date)
+          const accountCheck = await client.query(`
+            SELECT column_name FROM information_schema.columns 
+            WHERE table_name = 'Account' AND column_name IN ('providerId', 'accountId', 'accessToken', 'refreshToken')
+          `);
+          
+          await client.end();
+          
+          if (accountCheck.rows.length >= 4) {
+            console.log('   Schema appears up to date, marking migration as applied...');
+            runStep('Mark Migration Applied', 
+              'npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment');
+          } else {
+            throw new Error('Schema not up to date and migration failed');
+          }
+          
+        } catch (schemaErr) {
+          console.log('\n❌ P3009 recovery failed.');
+          console.log('   Manual intervention required:');
+          console.log('   1. Check _prisma_migrations table');
+          console.log('   2. Reset failed migration: npx prisma migrate resolve --rolled-back 20260807000000_better_auth_schema_alignment');
+          console.log('   3. Run migration again: npx prisma migrate deploy');
+          console.log('\n   Error:', recoveryErr.message);
+          throw recoveryErr;
+        }
+      }
+      
     // Check if it's P3005 error (database schema not empty)
-    if (err.stdout && err.stdout.includes('P3005')) {
+    } else if (errorOutput.includes('P3005')) {
       console.log('\n⚠️  P3005 Error: Database schema is not empty');
       console.log('   This means tables exist but migration history is missing.');
       console.log('   Attempting to apply migration manually and baseline...\n');
