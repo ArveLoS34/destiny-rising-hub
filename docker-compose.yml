@@ -118,14 +118,7 @@ services:
         condition: service_healthy
     networks:
       - destiny-network
-    command: >
-      sh -c "
-        npm install &&
-        npx prisma generate &&
-        npx prisma db push --accept-data-loss &&
-        (npx tsx prisma/seed.ts || echo 'Seed failed but continuing...') &&
-        npm run dev
-      "
+    entrypoint: ["/app/entrypoint.sh"]
 
   redis-commander:
     image: rediscommander/redis-commander:latest
