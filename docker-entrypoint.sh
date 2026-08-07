@@ -1,3 +1,4 @@
+#!/bin/sh
 # Docker entrypoint script
 # Handles migration and seed before application start
 
