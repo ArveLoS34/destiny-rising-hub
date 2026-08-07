@@ -164,8 +164,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  console.log("POST HANDLER CALLED");
+  
   try {
-    const body = await request.json();
+    const body = await request.clone().json();
+    console.log("REQUEST BODY:", JSON.stringify(body));
+    console.log("ACTION:", body.action);
+
     const { action, email, password, username, displayName, provider } = body;
 
     if (!action) {
@@ -236,14 +241,20 @@ export async function POST(request: NextRequest) {
       case "demo-login": {
         console.log("DEMO LOGIN ENTERED");
         const result = await authService.loginAsDemo();
-        console.log("DEMO LOGIN result.sessionToken:", result.sessionToken);
+        console.log("demoLogin result =", JSON.stringify({ userId: result.user?.id, sessionToken: result.sessionToken?.substring(0, 30) }));
+        console.log("sessionToken =", result.sessionToken);
         
         // Generate CSRF token for demo session
         const csrfToken = generateCsrfToken(result.sessionToken);
         const response = NextResponse.json({ user: result.user, csrfToken });
         
+        // Unique marker header to prove THIS handler is running
+        response.headers.set('X-Debug-Handler', 'mock-auth-route-ts');
+        
         setSessionCookie(response, result.sessionToken);
         setCsrfCookie(response, result.sessionToken, csrfToken);
+        
+        console.log("response.cookies.getAll() =", JSON.stringify(response.cookies.getAll().map(c => ({ name: c.name, value: c.value.substring(0, 20), httpOnly: c.httpOnly, secure: c.secure }))));
         
         return response;
       }
