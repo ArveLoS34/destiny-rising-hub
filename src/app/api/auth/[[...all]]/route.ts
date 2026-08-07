@@ -217,17 +217,41 @@ export async function POST(request: NextRequest) {
       }
       
       case "sign-out": {
+        console.log("=== SIGN-OUT CSRF DEBUG ===");
+        
+        const rawCookieHeader = request.headers.get("cookie");
+        console.log("Raw cookie header:", rawCookieHeader);
+        
         const sessionToken = getSessionToken(request);
+        console.log("getSessionToken():", sessionToken ? sessionToken.substring(0, 30) + "..." : "NULL");
+        
         const csrfFromCookie = getCsrfTokenFromCookie(request);
+        console.log("getCsrfTokenFromCookie():", csrfFromCookie ? csrfFromCookie.substring(0, 30) + "..." : "NULL");
+        
+        const csrfFromHeader = request.headers.get("x-csrf-token");
+        console.log("X-CSRF-Token header:", csrfFromHeader ? csrfFromHeader.substring(0, 30) + "..." : "NULL");
         
         // CSRF validation is mandatory when a CSRF cookie exists,
         // regardless of whether a session token is present.
         // This prevents logout CSRF attacks and ensures the client
         // explicitly provides the CSRF token via header.
+        let csrfValidationResult = "SKIPPED (no csrf cookie)";
         if (csrfFromCookie) {
-          if (!sessionToken || !validateCsrfHeader(request, sessionToken)) {
+          if (!sessionToken) {
+            csrfValidationResult = "FAILED (no session token)";
+            console.log("CSRF validation:", csrfValidationResult);
             return createErrorResponse('CSRF validation failed', 403);
           }
+          
+          const isValid = validateCsrfHeader(request, sessionToken);
+          csrfValidationResult = isValid ? "PASSED" : "FAILED (token mismatch)";
+          console.log("CSRF validation:", csrfValidationResult);
+          
+          if (!isValid) {
+            return createErrorResponse('CSRF validation failed', 403);
+          }
+        } else {
+          console.log("CSRF validation:", csrfValidationResult);
         }
         
         await authService.signOut(sessionToken || undefined);
