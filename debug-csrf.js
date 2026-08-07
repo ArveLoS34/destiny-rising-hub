@@ -1,5 +1,45 @@
 const http = require('http');
 
+// Wait for server to be ready
+async function waitForServer(maxRetries = 30, delay = 1000) {
+  console.log('Waiting for server to be ready...');
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      await new Promise((resolve, reject) => {
+        const req = http.request({
+          hostname: 'localhost',
+          port: 3000,
+          path: '/api/health',
+          method: 'GET',
+          timeout: 2000,
+        }, (res) => {
+          if (res.statusCode === 200) {
+            resolve();
+          } else {
+            reject(new Error(`Status ${res.statusCode}`));
+          }
+        });
+        req.on('error', reject);
+        req.on('timeout', () => {
+          req.destroy();
+          reject(new Error('Timeout'));
+        });
+        req.end();
+      });
+      
+      console.log('✅ Server is ready!\n');
+      return true;
+    } catch (err) {
+      console.log(`  Attempt ${i + 1}/${maxRetries}: Server not ready (${err.message}), waiting ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  console.error('❌ Server did not become ready in time');
+  return false;
+}
+
 // Helper: Parse Set-Cookie headers from rawHeaders
 function parseCookies(rawHeaders) {
   const cookies = {};
@@ -63,6 +103,12 @@ async function login() {
 // Test runner
 async function runTests() {
   console.log('=== CSRF VALIDATION TEST SUITE ===\n');
+  
+  // Wait for server
+  const ready = await waitForServer();
+  if (!ready) {
+    process.exit(1);
+  }
   
   let passed = 0;
   let failed = 0;
