@@ -181,9 +181,16 @@ async function main() {
   await testCsrfWithoutHeader(auth);
   await testCsrfWithHeader(auth);
   
+  const overall = failed === 0 ? 'PASS' : 'FAIL';
   console.log('\n═══════════════════════════════════════');
   console.log(`  Results: ${passed} passed, ${failed} failed`);
+  console.log(`  OVERALL: ${overall}`);
   console.log('═══════════════════════════════════════');
+  
+  // Machine-readable JSON output
+  console.log('\n--- JSON_SUMMARY_START ---');
+  console.log(JSON.stringify({ overall, passed, failed, timestamp: new Date().toISOString() }, null, 2));
+  console.log('--- JSON_SUMMARY_END ---\n');
   
   process.exit(failed > 0 ? 1 : 0);
 }

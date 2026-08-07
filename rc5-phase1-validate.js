@@ -20,19 +20,26 @@ const client = new Client({
 
 let passed = 0;
 let failed = 0;
-let sectionResults = [];
+const sections = {};
+let currentSection = '';
 
 function assert(condition, message) {
   if (condition) {
     console.log(`  ✅ ${message}`);
     passed++;
+    if (currentSection && !sections[currentSection]) sections[currentSection] = { pass: 0, fail: 0 };
+    if (currentSection) sections[currentSection].pass++;
   } else {
     console.log(`  ❌ ${message}`);
     failed++;
+    if (currentSection && !sections[currentSection]) sections[currentSection] = { pass: 0, fail: 0 };
+    if (currentSection) sections[currentSection].fail++;
   }
 }
 
 function section(name) {
+  currentSection = name;
+  if (!sections[name]) sections[name] = { pass: 0, fail: 0 };
   console.log(`\n═══ ${name} ═══\n`);
 }
 
@@ -400,15 +407,36 @@ async function main() {
   
   await client.end();
   
+  // Build summary
+  const sectionStatuses = {};
+  for (const [name, result] of Object.entries(sections)) {
+    sectionStatuses[name] = result.fail === 0 ? 'PASS' : 'FAIL';
+  }
+  const overall = failed === 0 ? 'PASS' : 'FAIL';
+  
+  // Human-readable summary
   console.log('\n═══════════════════════════════════════════════════════');
   console.log(`  TOTAL: ${passed} passed, ${failed} failed`);
-  
-  if (failed === 0) {
-    console.log('  🎉 ALL CHECKS PASSED — Phase 1 is READY');
-  } else {
-    console.log('  ⚠️  SOME CHECKS FAILED — Review above');
+  console.log('');
+  console.log('  SUMMARY');
+  for (const [name, status] of Object.entries(sectionStatuses)) {
+    const shortName = name.split(':')[0].trim();
+    console.log(`    ${shortName}: ${status}`);
   }
-  console.log('═══════════════════════════════════════════════════════\n');
+  console.log(`\n  OVERALL: ${overall}`);
+  console.log('═══════════════════════════════════════════════════════');
+  
+  // Machine-readable JSON output
+  const jsonSummary = {
+    overall,
+    passed,
+    failed,
+    sections: sectionStatuses,
+    timestamp: new Date().toISOString(),
+  };
+  console.log('\n--- JSON_SUMMARY_START ---');
+  console.log(JSON.stringify(jsonSummary, null, 2));
+  console.log('--- JSON_SUMMARY_END ---\n');
   
   process.exit(failed > 0 ? 1 : 0);
 }

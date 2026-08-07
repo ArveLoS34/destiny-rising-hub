@@ -1,5 +1,14 @@
 # RC-5 Phase 1: Complete Docker Validation Guide
 
+## Principles
+
+- **`prisma migrate deploy`** is the primary migration flow
+- Manual SQL is **fallback only** (recovery/manual repair)
+- Both scripts return proper **exit codes** for CI/CD integration
+- Validation output includes **machine-readable JSON summary**
+
+---
+
 ## Prerequisites
 
 ```bash
@@ -7,7 +16,7 @@ git pull origin feature/rc3-performance
 docker compose down -v
 docker compose up --build -d
 sleep 20
-docker compose ps  # Verify all containers are running
+docker compose ps
 ```
 
 ---
@@ -16,9 +25,10 @@ docker compose ps  # Verify all containers are running
 
 ```bash
 docker compose exec app npx prisma validate
+echo "Exit code: $?"
 ```
 
-**Expected:** `The schema at prisma/schema.prisma is valid`
+**Expected:** Exit code `0`, output: `The schema is valid`
 
 ---
 
@@ -31,25 +41,25 @@ docker compose exec app sh -c "
 "
 ```
 
-**Expected:** 3 test accounts inserted (Google, GitHub, Discord)
-
 ---
 
-## Step 3: Run Migration
+## Step 3: Migration (Primary Flow: prisma migrate deploy)
 
 ```bash
+# Check status first
 docker compose exec app npx prisma migrate status
+
+# Apply migration via Prisma's official flow
 docker compose exec app npx prisma migrate deploy
+echo "Exit code: $?"
+
+# Verify status after
+docker compose exec app npx prisma migrate status
 ```
 
-**Expected:**
+**Expected:** Exit code `0`, migration applied, status shows "applied"
 
-```
-Applying migration `20260807000000_better_auth_schema_alignment`
-1 migration applied
-```
-
-### If migrate deploy fails (migration history conflict):
+### Fallback (only if migrate deploy fails):
 
 ```bash
 docker compose exec app sh -c "
@@ -60,82 +70,53 @@ docker compose exec app sh -c "
 
 ---
 
-## Step 4: Validate Everything
+## Step 4: Full Validation
 
 ```bash
 docker compose exec app node /app/rc5-phase1-validate.js
+echo "Exit code: $?"
 ```
 
-**Expected output:**
+**Expected:** Exit code `0`
 
-```
-╔═══════════════════════════════════════════════════════╗
-║  RC-5 PHASE 1: COMPLETE VALIDATION SUITE             ║
-╚═══════════════════════════════════════════════════════╝
+**Expected JSON output:**
 
-═══ BETTER AUTH: User Model Compatibility ═══
-  ✅ User.email exists (required by Better Auth)
-  ✅ User.emailVerified exists (required by Better Auth)
-  ...
-  → User model is COMPATIBLE with Better Auth via field mapping
-
-═══ BETTER AUTH: Session Model Compatibility ═══
-  ✅ Session.token has UNIQUE index
-  ✅ Session.userId FK has ON DELETE CASCADE
-  → Session model is an EXACT MATCH with Better Auth
-
-═══ BETTER AUTH: Account Model Compatibility ═══
-  ✅ Account.providerId exists (required by Better Auth)
-  ✅ Account.accountId exists (required by Better Auth)
-  ...
-  → Account model is an EXACT MATCH with Better Auth
-
-═══ BETTER AUTH: Verification Model Compatibility ═══
-  ✅ Verification.createdAt is nullable (matches Better Auth)
-  ✅ Verification.updatedAt is nullable (matches Better Auth)
-  → Verification model is an EXACT MATCH with Better Auth
-
-═══ ACCOUNT: Constraint Validation ═══
-  ✅ Account: Primary Key on id
-  ✅ Account: FK ON DELETE CASCADE
-  ✅ Account: Composite UNIQUE (providerId, accountId)
-
-═══ DATA PRESERVATION ═══
-  ✅ Google accountId preserved
-  ✅ GitHub refreshToken preserved
-  ✅ Discord idToken preserved
-
-═══ MIGRATION HISTORY ═══
-  ✅ _prisma_migrations has records
-  ✅ Migration finished_at is set
-  ✅ Migration rolled_back_at is NULL
-
-═══════════════════════════════════════════════════════════════
-  TOTAL: XX passed, 0 failed
-  🎉 ALL CHECKS PASSED — Phase 1 is READY
-═══════════════════════════════════════════════════════════════
+```json
+{
+  "overall": "PASS",
+  "passed": 42,
+  "failed": 0,
+  "sections": {
+    "BETTER AUTH: User Model Compatibility": "PASS",
+    "BETTER AUTH: Session Model Compatibility": "PASS",
+    "BETTER AUTH: Account Model Compatibility": "PASS",
+    "BETTER AUTH: Verification Model Compatibility": "PASS",
+    "ACCOUNT: Constraint Validation": "PASS",
+    "DATA PRESERVATION: Multi-Provider Test": "PASS",
+    "MIGRATION HISTORY: Prisma Consistency": "PASS"
+  },
+  "timestamp": "2026-08-07T..."
+}
 ```
 
 ---
 
-## Step 5: Migration Idempotency Test
+## Step 5: Idempotency Test
 
 ```bash
-# Run migration again — should succeed without errors
+# Run migration SQL again (idempotent)
 docker compose exec app sh -c "
   PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
     -f /app/prisma/migrations/20260807000000_better_auth_schema_alignment/migration.sql
 "
-```
+echo "Exit code: $?"
 
-**Expected:** No errors. All `IF NOT EXISTS` / `IF EXISTS` checks prevent duplicate operations.
-
-```bash
-# Re-validate after second run
+# Re-validate
 docker compose exec app node /app/rc5-phase1-validate.js
+echo "Exit code: $?"
 ```
 
-**Expected:** Same results — all checks still pass.
+**Expected:** Both exit code `0` — no errors, all checks still pass.
 
 ---
 
@@ -148,33 +129,24 @@ docker compose exec app sh -c "
 "
 ```
 
-**Expected:**
-
-```
-                     migration_name                      |       finished_at       | rolled_back_at
----------------------------------------------------------+-------------------------+----------------
- 20260807000000_better_auth_schema_alignment             | 2026-08-07 XX:XX:XX.XX  |
-```
-
-- `finished_at` is set ✅
-- `rolled_back_at` is NULL ✅
+**Expected:** `finished_at` is SET, `rolled_back_at` is NULL.
 
 ---
 
 ## Step 7: Rollback Test
 
 ```bash
-# Run rollback
+# Rollback
 docker compose exec app sh -c "
   PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
     -f /app/prisma/migrations/20260807000000_better_auth_schema_alignment/rollback.sql
 "
+echo "Exit code: $?"
 ```
 
 ### 7a. Verify rollback
 
 ```bash
-# Account table should have original columns
 docker compose exec app sh -c "
   PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
     -c '\d \"Account\"'
@@ -183,7 +155,7 @@ docker compose exec app sh -c "
 
 **Expected:** Original columns restored (provider, providerAccountId, etc.)
 
-### 7b. Verify data preserved after rollback
+### 7b. Verify data preserved
 
 ```bash
 docker compose exec app sh -c "
@@ -192,9 +164,7 @@ docker compose exec app sh -c "
 "
 ```
 
-**Expected:** Data preserved — all tokens intact with original column names.
-
-### 7c. Verify _prisma_migrations updated
+### 7c. Verify _prisma_migrations
 
 ```bash
 docker compose exec app sh -c "
@@ -203,55 +173,61 @@ docker compose exec app sh -c "
 "
 ```
 
-**Expected:** `rolled_back_at` is NOW SET (not NULL) — migration history consistent.
+**Expected:** `rolled_back_at` is SET.
 
 ---
 
-## Step 8: Re-apply Migration After Rollback
+## Step 8: Re-apply After Rollback (Primary Flow: prisma migrate deploy)
 
 ```bash
-docker compose exec app sh -c "
-  PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
-    -f /app/prisma/migrations/20260807000000_better_auth_schema_alignment/migration.sql
-"
+# Re-apply via Prisma's official flow
+docker compose exec app npx prisma migrate deploy
+echo "Exit code: $?"
 
-# Reset the rollback flag in _prisma_migrations
-docker compose exec app sh -c "
-  PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
-    -c \"UPDATE _prisma_migrations SET rolled_back_at = NULL, finished_at = NOW() WHERE migration_name = '20260807000000_better_auth_schema_alignment';\"
-"
+# Verify
+docker compose exec app npx prisma migrate status
 
-# Re-validate
+# Full validation
 docker compose exec app node /app/rc5-phase1-validate.js
+echo "Exit code: $?"
 ```
 
-**Expected:** All checks pass again. Data preserved.
+**Expected:** All exit code `0`. If `migrate deploy` reports the migration is already applied (because rollback.sql didn't remove the _prisma_migrations record), use:
+
+```bash
+# Mark migration as rolled back, then re-deploy
+docker compose exec app sh -c "
+  PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
+    -c \"DELETE FROM _prisma_migrations WHERE migration_name = '20260807000000_better_auth_schema_alignment';\"
+"
+docker compose exec app npx prisma migrate deploy
+```
 
 ---
 
-## Step 9: RC-4 Smoke Test (Regression)
+## Step 9: RC-4 Regression Test
 
 ```bash
 docker compose exec app node /app/rc4-smoke-test.js
+echo "Exit code: $?"
 ```
 
-**Expected:** 17/17 passed — no RC-4 features broken.
+**Expected:** Exit code `0`, 17/17 passed
 
-```
-═══ RC-4 PRODUCTION SMOKE TEST ═══
+**Expected JSON output:**
 
-1/5 Health check: ✅
-2/5 Security headers: ✅
-3/5 Login + cookie validation: ✅
-4/5 CSRF: sign-out WITHOUT header → 403: ✅
-5/5 CSRF: sign-out WITH header → 200: ✅
-
-Results: 17 passed, 0 failed
+```json
+{
+  "overall": "PASS",
+  "passed": 17,
+  "failed": 0,
+  "timestamp": "2026-08-07T..."
+}
 ```
 
 ---
 
-## Step 10: Clean Up Test Data
+## Step 10: Cleanup
 
 ```bash
 docker compose exec app sh -c "
@@ -264,31 +240,50 @@ docker compose exec app sh -c "
 
 ## Phase 1 PASS Checklist
 
-| # | Criterion | Command | Status |
-|---|-----------|---------|--------|
-| 1 | `prisma validate` passes | `npx prisma validate` | ☐ |
-| 2 | `prisma migrate deploy` succeeds | `npx prisma migrate deploy` | ☐ |
-| 3 | `prisma migrate status` clean | `npx prisma migrate status` | ☐ |
-| 4 | `_prisma_migrations` consistent | SQL query | ☐ |
-| 5 | Better Auth schema (4 models) | `node rc5-phase1-validate.js` | ☐ |
-| 6 | Constraints validated | `node rc5-phase1-validate.js` | ☐ |
-| 7 | Multi-provider data preserved | `node rc5-phase1-validate.js` | ☐ |
-| 8 | Migration idempotent (2nd run) | Run migration.sql twice | ☐ |
-| 9 | Rollback succeeds | `rollback.sql` | ☐ |
-| 10 | Rollback → re-apply succeeds | migration.sql + validate | ☐ |
-| 11 | `_prisma_migrations` after rollback | `rolled_back_at` set | ☐ |
-| 12 | RC-4 smoke test 17/17 | `node rc4-smoke-test.js` | ☐ |
+| # | Criterion | Expected Exit Code | Status |
+|---|-----------|--------------------|--------|
+| 1 | `prisma validate` | 0 | ☐ |
+| 2 | `prisma migrate deploy` | 0 | ☐ |
+| 3 | `prisma migrate status` | Clean | ☐ |
+| 4 | `_prisma_migrations` consistent | Applied | ☐ |
+| 5 | Better Auth schema (4 models) | 0 | ☐ |
+| 6 | Constraints validated | 0 | ☐ |
+| 7 | Multi-provider data preserved | 0 | ☐ |
+| 8 | Migration idempotent (2nd run) | 0 | ☐ |
+| 9 | Rollback succeeds | 0 | ☐ |
+| 10 | Rollback → `migrate deploy` | 0 | ☐ |
+| 11 | `_prisma_migrations` after rollback | rolled_back_at set | ☐ |
+| 12 | RC-4 smoke test 17/17 | 0 | ☐ |
 
 ---
 
-## Files Reference
+## CI/CD Integration
 
-| File | Purpose |
-|------|---------|
-| `prisma/schema.prisma` | Better Auth compatible schema |
-| `prisma/migrations/.../migration.sql` | Safe, idempotent migration |
-| `prisma/migrations/.../rollback.sql` | Idempotent rollback + migration history |
-| `rc5-phase1-validate.js` | Complete validation suite |
-| `rc5-phase1-test-data.sql` | Multi-provider test data |
-| `rc4-smoke-test.js` | RC-4 regression test |
-| `RC5-PHASE1-SCHEMA-COMPARISON.md` | Schema diff documentation |
+Both scripts are designed for pipeline integration:
+
+```bash
+# In CI/CD pipeline:
+docker compose exec -T app node /app/rc5-phase1-validate.js
+if [ $? -ne 0 ]; then
+  echo "Phase 1 validation FAILED"
+  exit 1
+fi
+
+docker compose exec -T app node /app/rc4-smoke-test.js
+if [ $? -ne 0 ]; then
+  echo "RC-4 regression FAILED"
+  exit 1
+fi
+
+echo "All validations PASSED"
+```
+
+JSON summaries can be parsed for reporting:
+
+```bash
+# Extract JSON summary from output
+docker compose exec -T app node /app/rc5-phase1-validate.js | \
+  sed -n '/JSON_SUMMARY_START/,/JSON_SUMMARY_END/p' | \
+  grep -v JSON_SUMMARY | \
+  jq '.overall'
+```
