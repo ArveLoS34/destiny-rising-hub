@@ -14,6 +14,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authService, generateCsrfToken, validateCsrfToken } from "@/features/user/services/auth-service";
 
+// Debug: Bu log her istekte çalışmalı
+console.log("===== AUTH ROUTE LOADED =====");
+
 // ─── Environment Detection ───
 // Secure flag is only applied over HTTPS.
 // In development/Docker (HTTP), Secure is omitted so cookies are set correctly.
@@ -231,30 +234,16 @@ export async function POST(request: NextRequest) {
       }
       
       case "demo-login": {
+        console.log("DEMO LOGIN ENTERED");
         const result = await authService.loginAsDemo();
-        
-        console.log('[demo-login] result.sessionToken:', result.sessionToken);
-        console.log('[demo-login] result.user.id:', result.user?.id);
+        console.log("DEMO LOGIN result.sessionToken:", result.sessionToken);
         
         // Generate CSRF token for demo session
         const csrfToken = generateCsrfToken(result.sessionToken);
-        console.log('[demo-login] csrfToken:', csrfToken);
-        
         const response = NextResponse.json({ user: result.user, csrfToken });
         
         setSessionCookie(response, result.sessionToken);
         setCsrfCookie(response, result.sessionToken, csrfToken);
-        
-        // Debug: Log all cookies set on the response
-        const allCookies = response.cookies.getAll();
-        console.log('[demo-login] response.cookies.getAll():', JSON.stringify(allCookies.map(c => ({ name: c.name, value: c.value.substring(0, 20) + '...', path: c.path, httpOnly: c.httpOnly, secure: c.secure, sameSite: c.sameSite, maxAge: c.maxAge }))));
-        
-        // Debug: Log all response headers
-        const headersObj: Record<string, string> = {};
-        response.headers.forEach((value, key) => {
-          headersObj[key] = key === 'set-cookie' ? value.substring(0, 100) + '...' : value;
-        });
-        console.log('[demo-login] response.headers:', JSON.stringify(headersObj));
         
         return response;
       }
