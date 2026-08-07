@@ -10,19 +10,11 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
-# Copy package files
-COPY package.json ./
+# Copy package files (package-lock.json is tracked in Git)
+COPY package.json package-lock.json ./
 
-# Copy lock file if it exists, otherwise npm install will generate it
-COPY package-lock.json* ./
-
-# Install dependencies
-# Use npm ci if lock file exists (faster, more reliable), otherwise npm install
-RUN if [ -f package-lock.json ]; then \
-      npm ci && npm cache clean --force; \
-    else \
-      npm install && npm cache clean --force; \
-    fi
+# Install dependencies with npm ci for deterministic builds
+RUN npm ci && npm cache clean --force
 
 # ─── Stage 2: Generate Prisma Client ──────────────────────────
 FROM deps AS prisma
