@@ -1,3 +1,4 @@
+
 /**
  * Authentication Service
  * 
@@ -14,16 +15,21 @@
  */
 
 import type { User, UserRole, AuthProvider, ThemePreference } from "@/types/domain";
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 // ─── Mock Auth System (Development) ───
 // This will be replaced by Better Auth + Prisma in production
 
-const mockUsers: User[] = [];
+interface MockUser extends User {
+  passwordHash: string;
+}
+
+const mockUsers: MockUser[] = [];
 const sessions: Map<string, { userId: string; expiresAt: Date }> = new Map();
 
-// Create a demo user for development
-const demoUser: User = {
+// Create a demo user for development with hashed password
+const demoUserPasswordHash = bcrypt.hashSync('demo123', 10);
+const demoUser: MockUser = {
   id: "user_demo_001",
   username: "guardian",
   displayName: "Guardian",
@@ -39,6 +45,7 @@ const demoUser: User = {
   createdAt: "2025-01-15T00:00:00Z",
   updatedAt: new Date().toISOString(),
   lastLoginAt: new Date().toISOString(),
+  passwordHash: demoUserPasswordHash,
 };
 
 mockUsers.push(demoUser);
@@ -135,7 +142,12 @@ export const authService = {
       return null;
     }
     
-    return mockUsers.find((u) => u.id === session.userId) || null;
+    const mockUser = mockUsers.find((u) => u.id === session.userId);
+    if (!mockUser) return null;
+    
+    // Return user without password hash
+    const { passwordHash, ...user } = mockUser;
+    return user;
   },
 
   /**
@@ -153,24 +165,29 @@ export const authService = {
       return { user: null, error: "Too many login attempts. Please try again later." };
     }
 
-    const user = mockUsers.find((u) => u.email === email);
-    if (!user) {
+    const mockUser = mockUsers.find((u) => u.email === email);
+    if (!mockUser) {
       recordLoginAttempt(email);
       return { user: null, error: "Invalid credentials" };
     }
 
-    // In production, verify password hash
-    // For now, accept any password in development
-    // TODO: Implement bcrypt password verification
+    // Verify password with bcrypt
+    const passwordMatch = await bcrypt.compare(password, mockUser.passwordHash);
+    if (!passwordMatch) {
+      recordLoginAttempt(email);
+      return { user: null, error: "Invalid credentials" };
+    }
     
     clearLoginAttempts(email);
     
     const sessionToken = generateSessionToken();
     sessions.set(sessionToken, {
-      userId: user.id,
+      userId: mockUser.id,
       expiresAt: new Date(Date.now() + SESSION_DURATION_MS)
     });
     
+    // Return user without password hash
+    const { passwordHash, ...user } = mockUser;
     return { user, sessionToken };
   },
 
@@ -213,13 +230,14 @@ export const authService = {
 
     // Sanitize inputs
     const sanitizedDisplayName = sanitizeInput(displayName);
+    const sanitizedEmail = sanitizeInput(email);
 
-    // In production, hash password with bcrypt
-    // const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    // Hash password with bcrypt
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    const newUser: User = {
+    const newUser: MockUser = {
       id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      email: sanitizeInput(email),
+      email: sanitizedEmail,
       emailVerified: false,
       username: sanitizeInput(username),
       displayName: sanitizedDisplayName,
@@ -233,6 +251,7 @@ export const authService = {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       lastLoginAt: new Date().toISOString(),
+      passwordHash,
     };
 
     mockUsers.push(newUser);
@@ -243,7 +262,9 @@ export const authService = {
       expiresAt: new Date(Date.now() + SESSION_DURATION_MS)
     });
     
-    return { user: newUser, sessionToken };
+    // Return user without password hash
+    const { passwordHash: _, ...user } = newUser;
+    return { user, sessionToken };
   },
 
   /**
@@ -259,8 +280,8 @@ export const authService = {
    * Update user profile.
    */
   async updateProfile(userId: string, updates: Partial<Pick<User, "displayName" | "avatar" | "bio" | "locale" | "theme">>): Promise<User | null> {
-    const user = mockUsers.find((u) => u.id === userId);
-    if (!user) return null;
+    const mockUser = mockUsers.find((u) => u.id === userId);
+    if (!mockUser) return null;
 
     // Sanitize inputs
     if (updates.displayName) {
@@ -270,7 +291,10 @@ export const authService = {
       updates.bio = sanitizeInput(updates.bio);
     }
 
-    Object.assign(user, updates, { updatedAt: new Date().toISOString() });
+    Object.assign(mockUser, updates, { updatedAt: new Date().toISOString() });
+    
+    // Return user without password hash
+    const { passwordHash, ...user } = mockUser;
     return user;
   },
 
@@ -278,8 +302,8 @@ export const authService = {
    * Check if user has a specific role.
    */
   async hasRole(userId: string, requiredRole: UserRole): Promise<boolean> {
-    const user = mockUsers.find((u) => u.id === userId);
-    if (!user) return false;
+    const mockUser = mockUsers.find((u) => u.id === userId);
+    if (!mockUser) return false;
 
     const roleHierarchy: Record<string, number> = {
       user: 1,
@@ -288,14 +312,15 @@ export const authService = {
       superadmin: 4,
     };
 
-    return (roleHierarchy[user.role] || 0) >= (roleHierarchy[requiredRole] || 0);
+    return (roleHierarchy[mockUser.role] || 0) >= (roleHierarchy[requiredRole] || 0);
   },
 
   /**
    * Get the demo user (for development).
    */
   getDemoUser(): User {
-    return demoUser;
+    const { passwordHash, ...user } = demoUser;
+    return user;
   },
 
   /**
@@ -307,7 +332,9 @@ export const authService = {
       userId: demoUser.id,
       expiresAt: new Date(Date.now() + SESSION_DURATION_MS)
     });
-    return { user: demoUser, sessionToken };
+    
+    const { passwordHash, ...user } = demoUser;
+    return { user, sessionToken };
   },
 
   /**
