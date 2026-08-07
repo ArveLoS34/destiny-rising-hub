@@ -37,7 +37,40 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 RUN npm run build
 
-# ─── Stage 4: Production runner ───────────────────────────────
+# ─── Stage 4: Development runner ──────────────────────────────
+FROM node:20-alpine AS development
+WORKDIR /app
+
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Install required tools
+RUN apk add --no-cache dumb-init curl postgresql-client
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package.json ./package.json
+
+# Copy Prisma client
+COPY --from=prisma /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=prisma /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=prisma /app/node_modules/prisma ./node_modules/prisma
+
+# Copy source code
+COPY . .
+
+# Copy entrypoint
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
+
+EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# ─── Stage 5: Production runner ───────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
 

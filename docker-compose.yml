@@ -68,7 +68,11 @@ services:
       - destiny-network
 
   app:
-    image: node:20-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    image: destiny-rising-hub-app:dev
     restart: unless-stopped
     working_dir: /app
     environment:
@@ -109,9 +113,10 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:
+      # Mount source code for hot reload (excluding node_modules and .next)
       - .:/app
-      - node_modules_data:/app/node_modules
-      - next_cache:/app/.next
+      - /app/node_modules
+      - /app/.next
     depends_on:
       postgres:
         condition: service_healthy
