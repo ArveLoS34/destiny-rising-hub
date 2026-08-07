@@ -87,6 +87,19 @@ services:
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Destiny Rising Hub}
       NODE_ENV: ${NODE_ENV:-development}
+      # Performance testing rate limits (used when NODE_ENV=test)
+      RATE_LIMIT_PUBLIC_WINDOW_MS: ${RATE_LIMIT_PUBLIC_WINDOW_MS:-60000}
+      RATE_LIMIT_PUBLIC_MAX_REQUESTS: ${RATE_LIMIT_PUBLIC_MAX_REQUESTS:-10000}
+      RATE_LIMIT_AUTHENTICATED_WINDOW_MS: ${RATE_LIMIT_AUTHENTICATED_WINDOW_MS:-60000}
+      RATE_LIMIT_AUTHENTICATED_MAX_REQUESTS: ${RATE_LIMIT_AUTHENTICATED_MAX_REQUESTS:-20000}
+      RATE_LIMIT_AUTH_WINDOW_MS: ${RATE_LIMIT_AUTH_WINDOW_MS:-900000}
+      RATE_LIMIT_AUTH_MAX_REQUESTS: ${RATE_LIMIT_AUTH_MAX_REQUESTS:-1000}
+      RATE_LIMIT_WRITE_WINDOW_MS: ${RATE_LIMIT_WRITE_WINDOW_MS:-60000}
+      RATE_LIMIT_WRITE_MAX_REQUESTS: ${RATE_LIMIT_WRITE_MAX_REQUESTS:-5000}
+      RATE_LIMIT_SEARCH_WINDOW_MS: ${RATE_LIMIT_SEARCH_WINDOW_MS:-60000}
+      RATE_LIMIT_SEARCH_MAX_REQUESTS: ${RATE_LIMIT_SEARCH_MAX_REQUESTS:-5000}
+      RATE_LIMIT_ADMIN_WINDOW_MS: ${RATE_LIMIT_ADMIN_WINDOW_MS:-60000}
+      RATE_LIMIT_ADMIN_MAX_REQUESTS: ${RATE_LIMIT_ADMIN_MAX_REQUESTS:-10000}
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:
@@ -104,16 +117,11 @@ services:
       - destiny-network
     command: >
       sh -c "
-        echo 'Step 1: npm install' &&
         npm install &&
-        echo 'Step 2: Prisma generate' &&
         npx prisma generate &&
-        echo 'Step 3: Prisma db push' &&
         npx prisma db push --accept-data-loss &&
-        echo 'Step 4: Seed (optional)' &&
-        (npx tsx prisma/seed.ts || echo 'Seed failed, continuing...') &&
-        echo 'Step 5: Starting Next.js' &&
-        exec npm run dev
+        (npx tsx prisma/seed.ts || echo 'Seed failed but continuing...') &&
+        npm run dev
       "
 
   redis-commander:

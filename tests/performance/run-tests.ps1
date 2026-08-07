@@ -83,15 +83,15 @@ Write-Host "  VUs: 1" -ForegroundColor Gray
 Write-Host ""
 
 $baselineOutput = "$OutputDir/baseline-output.txt"
+$baselineJson = "$OutputDir/baseline-output.json"
 $baselineHtml = "$OutputDir/baseline.html"
 
-k6 run --out json=$baselineOutput.replace('.txt', '.json') $ScriptsDir/baseline.js 2>&1 | Tee-Object -FilePath $baselineOutput
+# Run test and capture output
+$output = k6 run --out "json=$baselineJson" "$ScriptsDir/baseline.js" 2>&1
+$output | Tee-Object -FilePath $baselineOutput
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "[OK] Baseline test completed" -ForegroundColor Green
-    # Generate HTML report
-    k6 run --out html=$baselineHtml $ScriptsDir/baseline.js 2>&1 | Out-Null
-    Write-Host "[OK] HTML report generated: $baselineHtml" -ForegroundColor Green
 } else {
     Write-Host "[FAIL] Baseline test failed" -ForegroundColor Red
 }
@@ -104,14 +104,14 @@ Write-Host "  VUs: 10 (peak)" -ForegroundColor Gray
 Write-Host ""
 
 $moderateOutput = "$OutputDir/moderate-output.txt"
+$moderateJson = "$OutputDir/moderate-output.json"
 $moderateHtml = "$OutputDir/moderate.html"
 
-k6 run --out json=$moderateOutput.replace('.txt', '.json') $ScriptsDir/moderate-load.js 2>&1 | Tee-Object -FilePath $moderateOutput
+$output = k6 run --out "json=$moderateJson" "$ScriptsDir/moderate-load.js" 2>&1
+$output | Tee-Object -FilePath $moderateOutput
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "[OK] Moderate load test completed" -ForegroundColor Green
-    k6 run --out html=$moderateHtml $ScriptsDir/moderate-load.js 2>&1 | Out-Null
-    Write-Host "[OK] HTML report generated: $moderateHtml" -ForegroundColor Green
 } else {
     Write-Host "[FAIL] Moderate load test failed" -ForegroundColor Red
 }
@@ -124,14 +124,14 @@ Write-Host "  VUs: 50 (peak)" -ForegroundColor Gray
 Write-Host ""
 
 $peakOutput = "$OutputDir/peak-output.txt"
+$peakJson = "$OutputDir/peak-output.json"
 $peakHtml = "$OutputDir/peak.html"
 
-k6 run --out json=$peakOutput.replace('.txt', '.json') $ScriptsDir/peak-load.js 2>&1 | Tee-Object -FilePath $peakOutput
+$output = k6 run --out "json=$peakJson" "$ScriptsDir/peak-load.js" 2>&1
+$output | Tee-Object -FilePath $peakOutput
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "[OK] Peak load test completed" -ForegroundColor Green
-    k6 run --out html=$peakHtml $ScriptsDir/peak-load.js 2>&1 | Out-Null
-    Write-Host "[OK] HTML report generated: $peakHtml" -ForegroundColor Green
 } else {
     Write-Host "[FAIL] Peak load test failed" -ForegroundColor Red
 }
@@ -144,14 +144,14 @@ Write-Host "  VUs: 100 (peak)" -ForegroundColor Gray
 Write-Host ""
 
 $stressOutput = "$OutputDir/stress-output.txt"
+$stressJson = "$OutputDir/stress-output.json"
 $stressHtml = "$OutputDir/stress.html"
 
-k6 run --out json=$stressOutput.replace('.txt', '.json') $ScriptsDir/stress-test.js 2>&1 | Tee-Object -FilePath $stressOutput
+$output = k6 run --out "json=$stressJson" "$ScriptsDir/stress-test.js" 2>&1
+$output | Tee-Object -FilePath $stressOutput
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "[OK] Stress test completed" -ForegroundColor Green
-    k6 run --out html=$stressHtml $ScriptsDir/stress-test.js 2>&1 | Out-Null
-    Write-Host "[OK] HTML report generated: $stressHtml" -ForegroundColor Green
 } else {
     Write-Host "[FAIL] Stress test failed" -ForegroundColor Red
 }
@@ -164,22 +164,16 @@ Write-Host "==================================================================" 
 Write-Host ""
 Write-Host "Generated files:" -ForegroundColor Yellow
 Write-Host "  [OK] $baselineOutput" -ForegroundColor White
-Write-Host "  [OK] $baselineHtml" -ForegroundColor White
+Write-Host "  [OK] $baselineJson" -ForegroundColor White
 Write-Host "  [OK] $moderateOutput" -ForegroundColor White
-Write-Host "  [OK] $moderateHtml" -ForegroundColor White
+Write-Host "  [OK] $moderateJson" -ForegroundColor White
 Write-Host "  [OK] $peakOutput" -ForegroundColor White
-Write-Host "  [OK] $peakHtml" -ForegroundColor White
+Write-Host "  [OK] $peakJson" -ForegroundColor White
 Write-Host "  [OK] $stressOutput" -ForegroundColor White
-Write-Host "  [OK] $stressHtml" -ForegroundColor White
+Write-Host "  [OK] $stressJson" -ForegroundColor White
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  1. Review the output files in $OutputDir" -ForegroundColor White
 Write-Host "  2. Share the output files for analysis" -ForegroundColor White
 Write-Host "  3. RC-3 final report will be generated based on results" -ForegroundColor White
-Write-Host ""
-Write-Host "To view HTML reports:" -ForegroundColor Yellow
-Write-Host "  start $baselineHtml" -ForegroundColor White
-Write-Host "  start $moderateHtml" -ForegroundColor White
-Write-Host "  start $peakHtml" -ForegroundColor White
-Write-Host "  start $stressHtml" -ForegroundColor White
 Write-Host ""

@@ -3,7 +3,7 @@ import { createErrorResponse } from './errors';
 
 /**
  * API Rate Limiting
- * Endpoint-based rate limiting
+ * Endpoint-based rate limiting with environment-based configuration
  */
 
 export interface RateLimitConfig {
@@ -24,47 +24,48 @@ const store: RateLimitStore = {};
 
 /**
  * Default rate limit configurations per endpoint type
+ * Can be overridden via environment variables for different environments
  */
 export const RATE_LIMITS: Record<string, RateLimitConfig> = {
   // Public endpoints
   'public': {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 60,
+    windowMs: parseInt(process.env.RATE_LIMIT_PUBLIC_WINDOW_MS || '60000'), // Default: 1 minute
+    maxRequests: parseInt(process.env.RATE_LIMIT_PUBLIC_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '10000' : '60')), // Default: 60 (10000 for testing)
     message: 'Too many requests, please try again later',
   },
   
   // Authenticated endpoints
   'authenticated': {
-    windowMs: 60 * 1000,
-    maxRequests: 120,
+    windowMs: parseInt(process.env.RATE_LIMIT_AUTHENTICATED_WINDOW_MS || '60000'),
+    maxRequests: parseInt(process.env.RATE_LIMIT_AUTHENTICATED_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '20000' : '120')),
     message: 'Rate limit exceeded',
   },
   
   // Authentication endpoints (stricter)
   'auth': {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 5,
+    windowMs: parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS || '900000'), // 15 minutes
+    maxRequests: parseInt(process.env.RATE_LIMIT_AUTH_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '1000' : '5')),
     message: 'Too many authentication attempts, please try again later',
   },
   
   // Write operations
   'write': {
-    windowMs: 60 * 1000,
-    maxRequests: 30,
+    windowMs: parseInt(process.env.RATE_LIMIT_WRITE_WINDOW_MS || '60000'),
+    maxRequests: parseInt(process.env.RATE_LIMIT_WRITE_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '5000' : '30')),
     message: 'Too many write operations',
   },
   
   // Search operations
   'search': {
-    windowMs: 60 * 1000,
-    maxRequests: 30,
+    windowMs: parseInt(process.env.RATE_LIMIT_SEARCH_WINDOW_MS || '60000'),
+    maxRequests: parseInt(process.env.RATE_LIMIT_SEARCH_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '5000' : '30')),
     message: 'Too many search requests',
   },
   
   // Admin operations
   'admin': {
-    windowMs: 60 * 1000,
-    maxRequests: 100,
+    windowMs: parseInt(process.env.RATE_LIMIT_ADMIN_WINDOW_MS || '60000'),
+    maxRequests: parseInt(process.env.RATE_LIMIT_ADMIN_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '10000' : '100')),
     message: 'Admin rate limit exceeded',
   },
 };
