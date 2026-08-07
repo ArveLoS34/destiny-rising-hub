@@ -3,47 +3,45 @@ import { getRateLimitStats } from '@/lib/api/rate-limit';
 import { databaseService } from '@/lib/database';
 
 /**
+ * Helper function to safely parse environment variables
+ */
+function getEnvNumber(key: string, defaultValue: number): number {
+  const value = process.env[key];
+  if (!value) return defaultValue;
+  const parsed = parseInt(value, 10);
+  return isNaN(parsed) ? defaultValue : parsed;
+}
+
+/**
  * GET /api/debug/performance
  * Diagnostic endpoint for performance investigation
- * Shows rate limit stats, database connection pool status, etc.
  */
 
 export async function GET() {
   try {
-    // Get rate limit statistics
     const rateLimitStats = getRateLimitStats();
     
-    // Get database connection pool stats
     const prisma = databaseService.getClient();
     let dbStats = {
       connected: false,
-      poolSize: 0,
-      activeConnections: 0,
-      idleConnections: 0,
-      waitingRequests: 0,
     };
     
     try {
-      // Test database connection
       await prisma.$queryRaw`SELECT 1`;
       dbStats.connected = true;
-      
-      // Note: Prisma doesn't expose pool stats directly, but we can track this via logs
-      // For now, we'll just confirm the connection is working
     } catch (error) {
       dbStats.connected = false;
     }
     
-    // Get application stats
     const appStats = {
-      nodeEnv: process.env.NODE_ENV,
+      nodeEnv: process.env.NODE_ENV || 'development',
       uptime: process.uptime(),
       memoryUsage: process.memoryUsage(),
       rateLimits: {
-        public: parseInt(process.env.RATE_LIMIT_PUBLIC_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '10000' : '60')),
-        authenticated: parseInt(process.env.RATE_LIMIT_AUTHENTICATED_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '20000' : '120')),
-        write: parseInt(process.env.RATE_LIMIT_WRITE_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '5000' : '30')),
-        search: parseInt(process.env.RATE_LIMIT_SEARCH_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '5000' : '30')),
+        public: getEnvNumber('RATE_LIMIT_PUBLIC_MAX_REQUESTS', process.env.NODE_ENV === 'test' ? 10000 : 60),
+        authenticated: getEnvNumber('RATE_LIMIT_AUTHENTICATED_MAX_REQUESTS', process.env.NODE_ENV === 'test' ? 20000 : 120),
+        write: getEnvNumber('RATE_LIMIT_WRITE_MAX_REQUESTS', process.env.NODE_ENV === 'test' ? 5000 : 30),
+        search: getEnvNumber('RATE_LIMIT_SEARCH_MAX_REQUESTS', process.env.NODE_ENV === 'test' ? 5000 : 30),
       },
     };
     

@@ -17,45 +17,72 @@ export interface RateLimitStore {
   [key: string]: {
     count: number;
     resetAt: number;
-    blocked: number; // Track blocked requests for diagnostics
+    blocked: number;
   };
 }
 
-// In-memory store
 const store: RateLimitStore = {};
+
+/**
+ * Helper function to safely parse environment variables
+ */
+function getEnvNumber(key: string, defaultValue: number): number {
+  const value = process.env[key];
+  if (!value) return defaultValue;
+  const parsed = parseInt(value, 10);
+  return isNaN(parsed) ? defaultValue : parsed;
+}
 
 /**
  * Default rate limit configurations per endpoint type
  */
 export const RATE_LIMITS: Record<string, RateLimitConfig> = {
   'public': {
-    windowMs: parseInt(process.env.RATE_LIMIT_PUBLIC_WINDOW_MS || '60000'),
-    maxRequests: parseInt(process.env.RATE_LIMIT_PUBLIC_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '10000' : '60')),
+    windowMs: getEnvNumber('RATE_LIMIT_PUBLIC_WINDOW_MS', 60000),
+    maxRequests: getEnvNumber(
+      'RATE_LIMIT_PUBLIC_MAX_REQUESTS',
+      process.env.NODE_ENV === 'test' ? 10000 : 60
+    ),
     message: 'Too many requests, please try again later',
   },
   'authenticated': {
-    windowMs: parseInt(process.env.RATE_LIMIT_AUTHENTICATED_WINDOW_MS || '60000'),
-    maxRequests: parseInt(process.env.RATE_LIMIT_AUTHENTICATED_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '20000' : '120')),
+    windowMs: getEnvNumber('RATE_LIMIT_AUTHENTICATED_WINDOW_MS', 60000),
+    maxRequests: getEnvNumber(
+      'RATE_LIMIT_AUTHENTICATED_MAX_REQUESTS',
+      process.env.NODE_ENV === 'test' ? 20000 : 120
+    ),
     message: 'Rate limit exceeded',
   },
   'auth': {
-    windowMs: parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS || '900000'),
-    maxRequests: parseInt(process.env.RATE_LIMIT_AUTH_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '1000' : '5')),
+    windowMs: getEnvNumber('RATE_LIMIT_AUTH_WINDOW_MS', 900000),
+    maxRequests: getEnvNumber(
+      'RATE_LIMIT_AUTH_MAX_REQUESTS',
+      process.env.NODE_ENV === 'test' ? 1000 : 5
+    ),
     message: 'Too many authentication attempts, please try again later',
   },
   'write': {
-    windowMs: parseInt(process.env.RATE_LIMIT_WRITE_WINDOW_MS || '60000'),
-    maxRequests: parseInt(process.env.RATE_LIMIT_WRITE_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '5000' : '30')),
+    windowMs: getEnvNumber('RATE_LIMIT_WRITE_WINDOW_MS', 60000),
+    maxRequests: getEnvNumber(
+      'RATE_LIMIT_WRITE_MAX_REQUESTS',
+      process.env.NODE_ENV === 'test' ? 5000 : 30
+    ),
     message: 'Too many write operations',
   },
   'search': {
-    windowMs: parseInt(process.env.RATE_LIMIT_SEARCH_WINDOW_MS || '60000'),
-    maxRequests: parseInt(process.env.RATE_LIMIT_SEARCH_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '5000' : '30')),
+    windowMs: getEnvNumber('RATE_LIMIT_SEARCH_WINDOW_MS', 60000),
+    maxRequests: getEnvNumber(
+      'RATE_LIMIT_SEARCH_MAX_REQUESTS',
+      process.env.NODE_ENV === 'test' ? 5000 : 30
+    ),
     message: 'Too many search requests',
   },
   'admin': {
-    windowMs: parseInt(process.env.RATE_LIMIT_ADMIN_WINDOW_MS || '60000'),
-    maxRequests: parseInt(process.env.RATE_LIMIT_ADMIN_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '10000' : '100')),
+    windowMs: getEnvNumber('RATE_LIMIT_ADMIN_WINDOW_MS', 60000),
+    maxRequests: getEnvNumber(
+      'RATE_LIMIT_ADMIN_MAX_REQUESTS',
+      process.env.NODE_ENV === 'test' ? 10000 : 100
+    ),
     message: 'Admin rate limit exceeded',
   },
 };
@@ -85,7 +112,6 @@ export function checkRateLimit(
   const key = getRateLimitKey(request, endpointType);
   const now = Date.now();
   
-  // Get or create entry
   if (!store[key]) {
     store[key] = {
       count: 0,
@@ -96,9 +122,7 @@ export function checkRateLimit(
   
   const entry = store[key];
   
-  // Reset if window has passed
   if (now > entry.resetAt) {
-    // Log diagnostic info before reset
     if (entry.blocked > 0) {
       logger.warn('RateLimit', `Rate limit diagnostics for ${key}: ${entry.blocked} requests blocked in last window`, {
         endpointType,
@@ -114,16 +138,13 @@ export function checkRateLimit(
     entry.blocked = 0;
   }
   
-  // Check limit
   entry.count++;
   const allowed = entry.count <= config.maxRequests;
   const remaining = Math.max(0, config.maxRequests - entry.count);
   
-  // Track blocked requests
   if (!allowed) {
     entry.blocked++;
     
-    // Log every 100th blocked request to avoid log spam
     if (entry.blocked % 100 === 0) {
       logger.warn('RateLimit', `Rate limit exceeded for ${key}`, {
         endpointType,
@@ -180,7 +201,6 @@ export async function withRateLimit(
   
   const response = await handler(request);
   
-  // Add rate limit headers
   response.headers.set('X-RateLimit-Limit', String(config.maxRequests));
   response.headers.set('X-RateLimit-Remaining', String(remaining));
   response.headers.set('X-RateLimit-Reset', String(resetAt));
