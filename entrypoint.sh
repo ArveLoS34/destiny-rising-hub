@@ -51,48 +51,33 @@ if ! npx prisma migrate deploy; then
     
     # Try deploy again
     if ! npx prisma migrate deploy; then
-      echo "Deploy still failed after reset"
-      
-      # Check if schema is already up to date (manual SQL was run)
-      if npx prisma migrate status 2>&1 | grep -q "already been applied"; then
-        echo "Schema appears up to date, marking migration as applied..."
-        npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment || true
-      else
-        # db push fallback only in development
-        if [ "$NODE_ENV" = "development" ]; then
-          echo "Using db push as development fallback"
-          npx prisma db push --accept-data-loss
-        else
-          echo "Migration failed in production/CI - exiting with error"
-          exit 1
-        fi
-      fi
+      echo ""
+      echo "❌ Migration still failed after reset."
+      echo ""
+      echo "Manual intervention required:"
+      echo "  1. Check _prisma_migrations table state"
+      echo "  2. Verify database schema compatibility"
+      echo "  3. If schema is compatible, run manually:"
+      echo "     npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment"
+      echo "  4. Then run: npx prisma migrate deploy"
+      echo ""
+      exit 1
     fi
     
   # Check if it's P3005 error (database schema not empty)
   elif npx prisma migrate status 2>&1 | grep -q "P3005\|not empty"; then
-    echo "Database has tables but no migration history - baselining..."
-    npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment || true
-    # Try migrate deploy again after baseline
-    if ! npx prisma migrate deploy; then
-      # db push fallback only in development
-      if [ "$NODE_ENV" = "development" ]; then
-        echo "Migration still failed - using db push as development fallback"
-        npx prisma db push --accept-data-loss
-      else
-        echo "Migration failed in production/CI - exiting with error"
-        exit 1
-      fi
-    fi
+    echo "Database has tables but no migration history"
+    echo ""
+    echo "Manual baseline required:"
+    echo "  npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment"
+    echo ""
+    exit 1
   else
-    # Non-P3005/P3009 error - only use db push in development
-    if [ "$NODE_ENV" = "development" ]; then
-      echo "Migration failed for other reasons - using db push as development fallback"
-      npx prisma db push --accept-data-loss
-    else
-      echo "Migration failed in production/CI - exiting with error"
-      exit 1
-    fi
+    echo "Migration failed for unknown reason"
+    echo ""
+    echo "Manual intervention required."
+    echo ""
+    exit 1
   fi
 fi
 

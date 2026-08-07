@@ -98,112 +98,24 @@ async function main() {
         runStep('Retry Migrate Deploy', 'npx prisma migrate deploy');
         
       } catch (recoveryErr) {
-        // If still failing, check if schema is up to date
-        console.log('\n   Step 3: Deploy still failed, checking schema state...');
-        
-        try {
-          const { Client } = require('pg');
-          const client = new Client({
-            connectionString: process.env.DATABASE_URL || 'postgresql://destiny_user:destiny_password@postgres:5432/destiny_rising_hub'
-          });
-          
-          await client.connect();
-          
-          // Check if Account table has new columns (schema is up to date)
-          const accountCheck = await client.query(`
-            SELECT column_name FROM information_schema.columns 
-            WHERE table_name = 'Account' AND column_name IN ('providerId', 'accountId', 'accessToken', 'refreshToken')
-          `);
-          
-          await client.end();
-          
-          if (accountCheck.rows.length >= 4) {
-            console.log('   Schema appears up to date, marking migration as applied...');
-            runStep('Mark Migration Applied', 
-              'npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment');
-          } else {
-            throw new Error('Schema not up to date and migration failed');
-          }
-          
-        } catch (schemaErr) {
-          console.log('\n❌ P3009 recovery failed.');
-          console.log('   Manual intervention required:');
-          console.log('   1. Check _prisma_migrations table');
-          console.log('   2. Reset failed migration: npx prisma migrate resolve --rolled-back 20260807000000_better_auth_schema_alignment');
-          console.log('   3. Run migration again: npx prisma migrate deploy');
-          console.log('\n   Error:', recoveryErr.message);
-          throw recoveryErr;
-        }
+        console.log('\n❌ P3009 recovery failed after reset.');
+        console.log('\n   Manual intervention required:');
+        console.log('   1. Check _prisma_migrations table state');
+        console.log('   2. Verify database schema compatibility');
+        console.log('   3. Schema appears compatible.');
+        console.log('   4. You may now run:');
+        console.log('      npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment');
+        console.log('\n   Error:', recoveryErr.message);
+        throw recoveryErr;
       }
       
     // Check if it's P3005 error (database schema not empty)
     } else if (errorOutput.includes('P3005')) {
-      console.log('\n⚠️  P3005 Error: Database schema is not empty');
-      console.log('   This means tables exist but migration history is missing.');
-      console.log('   Attempting to apply migration manually and baseline...\n');
-      
-      try {
-        // Step 1: Apply migration SQL manually to ensure schema is correct
-        console.log('   Step 1: Applying migration SQL manually...');
-        const fs = require('fs');
-        const migrationPath = '/app/prisma/migrations/20260807000000_better_auth_schema_alignment/migration.sql';
-        
-        if (!fs.existsSync(migrationPath)) {
-          throw new Error(`Migration file not found: ${migrationPath}`);
-        }
-        
-        runStep('Apply Migration SQL', 
-          `sh -c "PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub -f ${migrationPath}"`);
-        
-        // Step 2: Verify schema has expected tables/columns
-        console.log('\n   Step 2: Verifying schema...');
-        const { Client } = require('pg');
-        const client = new Client({
-          connectionString: process.env.DATABASE_URL || 'postgresql://destiny_user:destiny_password@postgres:5432/destiny_rising_hub'
-        });
-        
-        await client.connect();
-        
-        // Check Account table has new columns
-        const accountCheck = await client.query(`
-          SELECT column_name FROM information_schema.columns 
-          WHERE table_name = 'Account' AND column_name IN ('providerId', 'accountId', 'accessToken', 'refreshToken')
-        `);
-        
-        if (accountCheck.rows.length < 4) {
-          throw new Error('Schema verification failed: Account table missing expected columns');
-        }
-        
-        // Check Verification table exists
-        const verificationCheck = await client.query(`
-          SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'Verification')
-        `);
-        
-        if (!verificationCheck.rows[0].exists) {
-          throw new Error('Schema verification failed: Verification table not found');
-        }
-        
-        await client.end();
-        console.log('   ✅ Schema verification passed');
-        
-        // Step 3: Baseline the migration
-        console.log('\n   Step 3: Baseline migration...');
-        runStep('Baseline Migration', 
-          'npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment');
-        
-        // Step 4: Verify with migrate status
-        console.log('\n   Step 4: Verify migration status...');
-        runStep('Prisma Migrate Status', 'npx prisma migrate status');
-        
-      } catch (recoveryErr) {
-        console.log('\n❌ P3005 recovery failed.');
-        console.log('   Manual intervention required:');
-        console.log('   1. Check database state');
-        console.log('   2. Apply migration manually if needed');
-        console.log('   3. Run: docker compose exec app sh scripts/baseline-migration.sh');
-        console.log('\n   Error:', recoveryErr.message);
-        throw recoveryErr;
-      }
+      console.log('\n❌ P3005 Error: Database schema is not empty');
+      console.log('   Tables exist but migration history is missing.');
+      console.log('\n   Manual baseline required:');
+      console.log('   npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment');
+      throw err;
     } else {
       throw err;
     }
