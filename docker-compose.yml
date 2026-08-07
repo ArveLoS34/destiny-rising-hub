@@ -4,20 +4,23 @@ services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-destiny_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-destiny_password}
       POSTGRES_DB: ${POSTGRES_DB:-destiny_rising_hub}
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-destiny_user}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-destiny_user} -d ${POSTGRES_DB:-destiny_rising_hub}"]
       interval: 10s
       timeout: 5s
       retries: 5
+
     networks:
       - destiny-network
-
   redis:
     image: redis:7-alpine
     restart: unless-stopped
