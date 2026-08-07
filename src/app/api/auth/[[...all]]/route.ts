@@ -14,6 +14,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authService, generateCsrfToken, validateCsrfToken } from "@/features/user/services/auth-service";
 
+// ─── Environment Detection ───
+// Secure flag is only applied over HTTPS.
+// In development/Docker (HTTP), Secure is omitted so cookies are set correctly.
+const isSecure = process.env.NODE_ENV === 'production' || process.env.FORCE_HTTPS === 'true';
+const secureFlag = isSecure ? ' Secure;' : '';
+
 // ─── Helper Functions ───
 
 function getSessionToken(request: NextRequest): string | null {
@@ -77,19 +83,19 @@ function validateCsrfHeader(request: NextRequest, sessionToken: string): boolean
 }
 
 function setCsrfCookie(response: NextResponse, sessionId: string, token: string): void {
-  response.headers.set('Set-Cookie', `csrf_token=${token}; Path=/; SameSite=Strict; Secure; Max-Age=${24 * 60 * 60}`);
+  response.headers.set('Set-Cookie', `csrf_token=${token}; Path=/; SameSite=Strict;${secureFlag} Max-Age=${24 * 60 * 60}`);
 }
 
 function setSessionCookie(response: NextResponse, sessionToken: string): void {
-  response.headers.set('Set-Cookie', `session_token=${sessionToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}; Path=/`);
+  response.headers.set('Set-Cookie', `session_token=${sessionToken}; HttpOnly;${secureFlag} SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}; Path=/`);
 }
 
 function clearSessionCookie(response: NextResponse): void {
-  response.headers.set('Set-Cookie', 'session_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/');
+  response.headers.set('Set-Cookie', `session_token=; HttpOnly;${secureFlag} SameSite=Strict; Max-Age=0; Path=/`);
 }
 
 function clearCsrfCookie(response: NextResponse): void {
-  response.headers.set('Set-Cookie', 'csrf_token=; Path=/; SameSite=Strict; Secure; Max-Age=0');
+  response.headers.set('Set-Cookie', `csrf_token=; Path=/; SameSite=Strict;${secureFlag} Max-Age=0`);
 }
 
 function createErrorResponse(message: string, status: number = 400): NextResponse {
@@ -182,10 +188,16 @@ export async function POST(request: NextRequest) {
       
       case "sign-out": {
         const sessionToken = getSessionToken(request);
+        const csrfFromCookie = getCsrfTokenFromCookie(request);
         
-        // CSRF validation for state-changing operation
-        if (sessionToken && !validateCsrfHeader(request, sessionToken)) {
-          return createErrorResponse('CSRF validation failed', 403);
+        // CSRF validation is mandatory when a CSRF cookie exists,
+        // regardless of whether a session token is present.
+        // This prevents logout CSRF attacks and ensures the client
+        // explicitly provides the CSRF token via header.
+        if (csrfFromCookie) {
+          if (!sessionToken || !validateCsrfHeader(request, sessionToken)) {
+            return createErrorResponse('CSRF validation failed', 403);
+          }
         }
         
         await authService.signOut(sessionToken || undefined);
