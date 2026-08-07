@@ -49,9 +49,6 @@ RUN apk add --no-cache dumb-init curl postgresql-client && \
     addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Install Prisma CLI (needed for migrations in production)
-RUN npm install -g prisma
-
 # Copy built assets
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
