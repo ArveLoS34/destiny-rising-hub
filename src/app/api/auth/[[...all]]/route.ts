@@ -17,19 +17,26 @@ import { authService, generateCsrfToken, validateCsrfToken } from "@/features/us
 // ─── Helper Functions ───
 
 function getSessionToken(request: NextRequest): string | null {
+  // Check Authorization header first (Bearer token)
   const authHeader = request.headers.get('authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
     return authHeader.substring(7);
   }
   
+  // Parse cookie header manually using indexOf (safe for values containing '=')
   const cookieHeader = request.headers.get('cookie');
   if (cookieHeader) {
-    const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
-      const [key, value] = cookie.trim().split('=');
-      acc[key] = value;
-      return acc;
-    }, {} as Record<string, string>);
-    return cookies['session_token'] || null;
+    const cookiePairs = cookieHeader.split(';');
+    for (const pair of cookiePairs) {
+      const trimmed = pair.trim();
+      const eqIndex = trimmed.indexOf('=');
+      if (eqIndex === -1) continue;
+      const key = trimmed.substring(0, eqIndex).trim();
+      const value = trimmed.substring(eqIndex + 1).trim();
+      if (key === 'session_token' && value) {
+        return value;
+      }
+    }
   }
   
   return null;
@@ -38,25 +45,34 @@ function getSessionToken(request: NextRequest): string | null {
 function getCsrfTokenFromCookie(request: NextRequest): string | null {
   const cookieHeader = request.headers.get('cookie');
   if (!cookieHeader) return null;
-  const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
-    const [key, value] = cookie.trim().split('=');
-    acc[key] = value;
-    return acc;
-  }, {} as Record<string, string>);
-  return cookies['csrf_token'] || null;
+  const cookiePairs = cookieHeader.split(';');
+  for (const pair of cookiePairs) {
+    const trimmed = pair.trim();
+    const eqIndex = trimmed.indexOf('=');
+    if (eqIndex === -1) continue;
+    const key = trimmed.substring(0, eqIndex).trim();
+    const value = trimmed.substring(eqIndex + 1).trim();
+    if (key === 'csrf_token' && value) {
+      return value;
+    }
+  }
+  return null;
 }
 
 /**
  * Validate CSRF token for state-changing operations.
  * Compares cookie-stored token with header-provided token.
+ * Returns true only when BOTH match AND server-side validation passes.
  */
 function validateCsrfHeader(request: NextRequest, sessionToken: string): boolean {
   const csrfFromCookie = getCsrfTokenFromCookie(request);
   const csrfFromHeader = request.headers.get('x-csrf-token');
   
+  // Both must be present
   if (!csrfFromCookie || !csrfFromHeader) return false;
+  // Both must match
   if (csrfFromCookie !== csrfFromHeader) return false;
-  
+  // Server-side validation (timing-safe comparison)
   return validateCsrfToken(sessionToken, csrfFromCookie);
 }
 
