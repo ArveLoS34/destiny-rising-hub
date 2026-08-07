@@ -76,7 +76,31 @@ async function main() {
   runStep('Prisma Validate', 'npx prisma validate');
   
   // Step 2: Prisma Migrate Deploy
-  runStep('Prisma Migrate Deploy', 'npx prisma migrate deploy', { fatal: false });
+  try {
+    runStep('Prisma Migrate Deploy', 'npx prisma migrate deploy');
+  } catch (err) {
+    // Check if it's P3005 error (database schema not empty)
+    if (err.stdout && err.stdout.includes('P3005')) {
+      console.log('\n⚠️  P3005 Error: Database schema is not empty');
+      console.log('   This means tables exist but migration history is missing.');
+      console.log('   Attempting to baseline the migration...\n');
+      
+      try {
+        // Try to baseline the migration
+        runStep('Baseline Migration', 
+          'npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment');
+        
+        // Retry migrate deploy
+        runStep('Prisma Migrate Deploy (retry)', 'npx prisma migrate deploy');
+      } catch (baselineErr) {
+        console.log('\n❌ Baseline failed. Manual intervention required.');
+        console.log('   Run: docker compose exec app sh scripts/baseline-migration.sh');
+        throw baselineErr;
+      }
+    } else {
+      throw err;
+    }
+  }
   
   // Step 3: Phase 1 Validation
   runStep('Phase 1 Validation', 'node /app/rc5-phase1-validate.js');

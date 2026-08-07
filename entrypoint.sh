@@ -36,8 +36,25 @@ echo "Step 3: Generating Prisma Client..."
 npx prisma generate
 
 echo ""
-echo "Step 4: Pushing database schema..."
-npx prisma db push --accept-data-loss
+echo "Step 4: Running database migrations..."
+# Try migrate deploy first (proper migration management)
+if ! npx prisma migrate deploy; then
+  echo "migrate deploy failed - checking if baseline is needed..."
+  
+  # Check if it's P3005 error (database schema not empty)
+  if npx prisma migrate status 2>&1 | grep -q "P3005\|not empty"; then
+    echo "Database has tables but no migration history - baselining..."
+    npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment || true
+    # Try migrate deploy again after baseline
+    if ! npx prisma migrate deploy; then
+      echo "Migration still failed - using db push as fallback"
+      npx prisma db push --accept-data-loss
+    fi
+  else
+    echo "Migration failed for other reasons - using db push as fallback"
+    npx prisma db push --accept-data-loss
+  fi
+fi
 
 echo ""
 echo "Step 5: Running seed (optional)..."

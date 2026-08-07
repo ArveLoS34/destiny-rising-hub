@@ -274,11 +274,21 @@ async function validateAccountConstraints() {
   assert(userIdFk && userIdFk.foreign_column === 'id', 'Account: FK references User.id');
   assert(userIdFk && userIdFk.delete_rule === 'CASCADE', 'Account: FK ON DELETE CASCADE');
   
-  // Unique Constraint
+  // Unique Constraint - check for composite unique on (providerId, accountId)
   const uniques = await getUniqueConstraints('Account');
-  const uniqueCols = uniques.map(u => u.column_name).sort();
-  assert(uniqueCols.includes('providerId') && uniqueCols.includes('accountId'),
-    'Account: Composite UNIQUE (providerId, accountId)');
+  // Group by constraint_name to find composite constraints
+  const constraintsByName = {};
+  for (const u of uniques) {
+    if (!constraintsByName[u.constraint_name]) {
+      constraintsByName[u.constraint_name] = [];
+    }
+    constraintsByName[u.constraint_name].push(u.column_name);
+  }
+  // Find a constraint that includes both providerId and accountId
+  const hasCompositeUnique = Object.values(constraintsByName).some(cols => 
+    cols.includes('providerId') && cols.includes('accountId')
+  );
+  assert(hasCompositeUnique, 'Account: Composite UNIQUE (providerId, accountId)');
   
   // Indexes
   const indexes = await getIndexes('Account');

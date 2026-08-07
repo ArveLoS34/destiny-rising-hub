@@ -77,7 +77,35 @@ docker compose exec app npx prisma migrate status
 
 **Expected:** Exit code `0`, migration applied, status shows "applied"
 
-### Fallback (only if migrate deploy fails):
+### If you get P3005 error ("database schema is not empty"):
+
+This happens when the database has tables but no migration history (from previous `prisma db push`).
+
+**Solution 1: Baseline the migration**
+
+```bash
+# Mark migration as already applied (without running SQL)
+docker compose exec app npx prisma migrate resolve --applied 20260807000000_better_auth_schema_alignment
+
+# Then run migrate deploy again
+docker compose exec app npx prisma migrate deploy
+```
+
+**Solution 2: Use baseline script**
+
+```bash
+docker compose exec app sh scripts/baseline-migration.sh
+```
+
+**Solution 3: Clean database (development only)**
+
+```bash
+docker compose down -v  # -v removes volumes (deletes database)
+docker compose up --build -d
+# Now migrate deploy will work on fresh database
+```
+
+### If migrate deploy still fails (fallback):
 
 ```bash
 docker compose exec app sh -c "
