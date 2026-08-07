@@ -1,12 +1,13 @@
 -- ============================================================
 -- RC-5 Phase 1: Better Auth Schema Alignment
--- SAFE, IDEMPOTENT MIGRATION
+-- SAFE, IDEMPOTENT, TRANSACTIONAL MIGRATION
 -- Uses RENAME COLUMN to preserve existing data
--- Safe to run multiple times (IF EXISTS / IF NOT EXISTS)
+-- Wrapped in transaction for atomic execution
 -- ============================================================
 
+BEGIN;
+
 -- Step 1: Rename Account columns (preserve existing data)
--- IF EXISTS ensures idempotency — safe if already renamed
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Account' AND column_name = 'provider' AND table_schema = 'public') THEN
     ALTER TABLE "Account" RENAME COLUMN "provider" TO "providerId";
@@ -25,7 +26,7 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- Step 2: Drop unused Account columns (not needed by Better Auth)
+-- Step 2: Drop unused Account columns
 ALTER TABLE "Account" DROP COLUMN IF EXISTS "expires_at";
 ALTER TABLE "Account" DROP COLUMN IF EXISTS "session_state";
 ALTER TABLE "Account" DROP COLUMN IF EXISTS "token_type";
@@ -36,12 +37,15 @@ ALTER TABLE "Account" ADD COLUMN IF NOT EXISTS "accessTokenExpiresAt" TIMESTAMP(
 ALTER TABLE "Account" ADD COLUMN IF NOT EXISTS "refreshTokenExpiresAt" TIMESTAMP(3);
 ALTER TABLE "Account" ADD COLUMN IF NOT EXISTS "password" TEXT;
 
--- Step 4: Update unique constraint (idempotent)
+-- Step 4: Update unique constraint
+-- Note: RENAME COLUMN preserves associated indexes automatically,
+-- but the unique constraint name references old column names.
+-- We drop the old and create new to ensure correct column references.
 DROP INDEX IF EXISTS "Account_provider_providerAccountId_key";
 DROP INDEX IF EXISTS "Account_providerId_accountId_key";
 CREATE UNIQUE INDEX IF NOT EXISTS "Account_providerId_accountId_key" ON "Account"("providerId", "accountId");
 
--- Step 5: Create Verification table (idempotent)
+-- Step 5: Create Verification table
 CREATE TABLE IF NOT EXISTS "Verification" (
     "id" TEXT NOT NULL,
     "identifier" TEXT NOT NULL,
@@ -52,6 +56,8 @@ CREATE TABLE IF NOT EXISTS "Verification" (
     CONSTRAINT "Verification_pkey" PRIMARY KEY ("id")
 );
 
--- Step 6: Create indexes for Verification table (idempotent)
+-- Step 6: Create indexes for Verification table
 CREATE INDEX IF NOT EXISTS "Verification_identifier_idx" ON "Verification"("identifier");
 CREATE INDEX IF NOT EXISTS "Verification_expiresAt_idx" ON "Verification"("expiresAt");
+
+COMMIT;

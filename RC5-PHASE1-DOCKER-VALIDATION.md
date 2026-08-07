@@ -1,5 +1,23 @@
 # RC-5 Phase 1: Complete Docker Validation Guide
 
+## Quick Start (Single Command)
+
+```bash
+# Run complete Phase 1 verification in one command
+docker compose exec app npm run rc5:phase1:verify
+echo "Exit code: $?"
+```
+
+This runs:
+1. `prisma validate`
+2. `prisma migrate deploy`
+3. Phase 1 validation (schema, constraints, Better Auth, data, migration history)
+4. RC-4 smoke test (regression)
+
+**Expected:** Exit code `0`, JSON summary with `"overall": "PASS"`
+
+---
+
 ## Principles
 
 - **`prisma migrate deploy`** is the primary migration flow

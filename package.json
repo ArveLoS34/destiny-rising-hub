@@ -16,6 +16,9 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
+    "rc5:phase1:verify": "node scripts/verify-phase1.js",
+    "rc4:smoke-test": "node rc4-smoke-test.js",
+    "rc5:validate": "node rc5-phase1-validate.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed"

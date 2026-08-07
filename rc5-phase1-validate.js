@@ -428,6 +428,9 @@ async function main() {
   
   // Machine-readable JSON output
   const jsonSummary = {
+    phase: 'RC5-Phase1',
+    migration: '20260807000000_better_auth_schema_alignment',
+    schemaVersion: 'better-auth-v1',
     overall,
     passed,
     failed,

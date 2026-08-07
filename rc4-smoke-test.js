@@ -1,3 +1,17 @@
+/**
+ * RC-4 Production Smoke Test
+ * 
+ * This test validates HTTP-level behavior and is auth-implementation agnostic.
+ * It works with both mock auth and Better Auth as long as:
+ * - /api/health returns 200 with { status: "healthy" }
+ * - /api/auth POST handles sign-in, sign-out, demo-login
+ * - Set-Cookie headers include session_token and csrf_token
+ * - CSRF validation returns 403 without X-CSRF-Token header
+ * - CSRF validation returns 200 with valid X-CSRF-Token header
+ * 
+ * No changes needed when migrating from mock auth to Better Auth.
+ */
+
 const http = require('http');
 
 const HOST = 'localhost';
@@ -189,7 +203,13 @@ async function main() {
   
   // Machine-readable JSON output
   console.log('\n--- JSON_SUMMARY_START ---');
-  console.log(JSON.stringify({ overall, passed, failed, timestamp: new Date().toISOString() }, null, 2));
+  console.log(JSON.stringify({ 
+    phase: 'RC4-SmokeTest',
+    overall, 
+    passed, 
+    failed, 
+    timestamp: new Date().toISOString() 
+  }, null, 2));
   console.log('--- JSON_SUMMARY_END ---\n');
   
   process.exit(failed > 0 ? 1 : 0);
