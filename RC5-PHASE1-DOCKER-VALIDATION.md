@@ -1,23 +1,13 @@
-# RC-5 Phase 1: Docker Validation Guide
+# RC-5 Phase 1: Complete Docker Validation Guide
 
-## Overview
-
-This guide walks through the complete Phase 1 validation in Docker environment.
-Run each step in order and verify the expected output.
-
----
-
-## Step 0: Setup
+## Prerequisites
 
 ```bash
 git pull origin feature/rc3-performance
 docker compose down -v
 docker compose up --build -d
 sleep 20
-
-# Verify app is running
-docker compose ps
-curl -s http://localhost:3000/api/health | head -1
+docker compose ps  # Verify all containers are running
 ```
 
 ---
@@ -41,41 +31,25 @@ docker compose exec app sh -c "
 "
 ```
 
-**Expected output:**
-
-```
-     id      | provider | providerAccountId |    access_token     |    refresh_token     |    id_token
-─────────────┼──────────┼───────────────────┼─────────────────────┼──────────────────────┼───────────────────
- test-disc.. | discord  | discord-11111     | discord-access-t..  | discord-refresh-t..  |
- test-gith.. | github   | github-67890      | github-access-token | github-refresh-token |
- test-goog.. | google   | google-12345      | google-access-token | google-refresh-token | google-id-token-123
-```
+**Expected:** 3 test accounts inserted (Google, GitHub, Discord)
 
 ---
 
 ## Step 3: Run Migration
 
 ```bash
-# Check migration status first
 docker compose exec app npx prisma migrate status
-
-# Apply migration (uses our RENAME COLUMN SQL)
 docker compose exec app npx prisma migrate deploy
 ```
 
-**Expected migrate deploy output:**
+**Expected:**
 
 ```
-Environment variables loaded from .env
-Prisma schema loaded from prisma/schema.prisma
-Datasource "db": PostgreSQL database "destiny_rising_hub"
-
 Applying migration `20260807000000_better_auth_schema_alignment`
-
 1 migration applied
 ```
 
-**If migrate deploy fails** (e.g., due to existing migration history), use manual SQL:
+### If migrate deploy fails (migration history conflict):
 
 ```bash
 docker compose exec app sh -c "
@@ -86,23 +60,86 @@ docker compose exec app sh -c "
 
 ---
 
-## Step 4: Validate Migration
-
-### 4a. Prisma validate (post-migration)
+## Step 4: Validate Everything
 
 ```bash
-docker compose exec app npx prisma validate
+docker compose exec app node /app/rc5-phase1-validate.js
 ```
 
-### 4b. Prisma migrate status (should be "already applied")
+**Expected output:**
+
+```
+╔═══════════════════════════════════════════════════════╗
+║  RC-5 PHASE 1: COMPLETE VALIDATION SUITE             ║
+╚═══════════════════════════════════════════════════════╝
+
+═══ BETTER AUTH: User Model Compatibility ═══
+  ✅ User.email exists (required by Better Auth)
+  ✅ User.emailVerified exists (required by Better Auth)
+  ...
+  → User model is COMPATIBLE with Better Auth via field mapping
+
+═══ BETTER AUTH: Session Model Compatibility ═══
+  ✅ Session.token has UNIQUE index
+  ✅ Session.userId FK has ON DELETE CASCADE
+  → Session model is an EXACT MATCH with Better Auth
+
+═══ BETTER AUTH: Account Model Compatibility ═══
+  ✅ Account.providerId exists (required by Better Auth)
+  ✅ Account.accountId exists (required by Better Auth)
+  ...
+  → Account model is an EXACT MATCH with Better Auth
+
+═══ BETTER AUTH: Verification Model Compatibility ═══
+  ✅ Verification.createdAt is nullable (matches Better Auth)
+  ✅ Verification.updatedAt is nullable (matches Better Auth)
+  → Verification model is an EXACT MATCH with Better Auth
+
+═══ ACCOUNT: Constraint Validation ═══
+  ✅ Account: Primary Key on id
+  ✅ Account: FK ON DELETE CASCADE
+  ✅ Account: Composite UNIQUE (providerId, accountId)
+
+═══ DATA PRESERVATION ═══
+  ✅ Google accountId preserved
+  ✅ GitHub refreshToken preserved
+  ✅ Discord idToken preserved
+
+═══ MIGRATION HISTORY ═══
+  ✅ _prisma_migrations has records
+  ✅ Migration finished_at is set
+  ✅ Migration rolled_back_at is NULL
+
+═══════════════════════════════════════════════════════════════
+  TOTAL: XX passed, 0 failed
+  🎉 ALL CHECKS PASSED — Phase 1 is READY
+═══════════════════════════════════════════════════════════════
+```
+
+---
+
+## Step 5: Migration Idempotency Test
 
 ```bash
-docker compose exec app npx prisma migrate status
+# Run migration again — should succeed without errors
+docker compose exec app sh -c "
+  PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
+    -f /app/prisma/migrations/20260807000000_better_auth_schema_alignment/migration.sql
+"
 ```
 
-**Expected:** `20260807000000_better_auth_schema_alignment (applied)`
+**Expected:** No errors. All `IF NOT EXISTS` / `IF EXISTS` checks prevent duplicate operations.
 
-### 4c. _prisma_migrations table
+```bash
+# Re-validate after second run
+docker compose exec app node /app/rc5-phase1-validate.js
+```
+
+**Expected:** Same results — all checks still pass.
+
+---
+
+## Step 6: _prisma_migrations Verification
 
 ```bash
 docker compose exec app sh -c "
@@ -111,127 +148,66 @@ docker compose exec app sh -c "
 "
 ```
 
-**Expected:** Migration record exists with `finished_at` set, `rolled_back_at` NULL.
-
-### 4d. Constraint validation script
-
-```bash
-docker compose exec app node /app/rc5-phase1-validate.js
-```
-
-**Expected:** All checks pass ✅ (data preservation test will fail here since we haven't run test data yet — that's expected in step 4e)
-
----
-
-## Step 5: Data Preservation
-
-```bash
-# Run validation script (includes data preservation checks)
-docker compose exec app node /app/rc5-phase1-validate.js
-```
-
-**Expected output:**
+**Expected:**
 
 ```
-═══ DATA PRESERVATION VALIDATION ═══
-
-1. Google Account:
-  ✅ Google account exists
-  ✅ Google accountId preserved
-  ✅ Google accessToken preserved
-  ✅ Google refreshToken preserved
-  ✅ Google idToken preserved
-
-2. GitHub Account:
-  ✅ GitHub account exists
-  ✅ GitHub accountId preserved
-  ✅ GitHub accessToken preserved
-
-3. Discord Account:
-  ✅ Discord account exists
-  ✅ Discord accountId preserved
-  ✅ Discord accessToken preserved
+                     migration_name                      |       finished_at       | rolled_back_at
+---------------------------------------------------------+-------------------------+----------------
+ 20260807000000_better_auth_schema_alignment             | 2026-08-07 XX:XX:XX.XX  |
 ```
 
-### Alternative: Manual SQL check
-
-```bash
-docker compose exec app sh -c "
-  PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
-    -c 'SELECT id, \"providerId\", \"accountId\", \"accessToken\", \"refreshToken\", \"idToken\" FROM \"Account\" WHERE id LIKE '\''test-%'\'' ORDER BY id;'
-"
-```
-
----
-
-## Step 6: Table Structure
-
-### Account table
-
-```bash
-docker compose exec app sh -c "
-  PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
-    -c '\d \"Account\"'
-"
-```
-
-**Expected columns:**
-- id (PK)
-- providerId, accountId (renamed)
-- userId (FK → User, CASCADE)
-- accessToken, refreshToken, idToken (renamed)
-- accessTokenExpiresAt, refreshTokenExpiresAt, password (NEW)
-- scope
-- createdAt, updatedAt
-- Unique: (providerId, accountId)
-
-### Verification table
-
-```bash
-docker compose exec app sh -c "
-  PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
-    -c '\d \"Verification\"'
-"
-```
-
-**Expected columns:**
-- id (PK)
-- identifier, value
-- expiresAt
-- createdAt (nullable), updatedAt (nullable)
-- Indexes: identifier, expiresAt
+- `finished_at` is set ✅
+- `rolled_back_at` is NULL ✅
 
 ---
 
 ## Step 7: Rollback Test
 
 ```bash
-# Apply rollback
+# Run rollback
 docker compose exec app sh -c "
   PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
     -f /app/prisma/migrations/20260807000000_better_auth_schema_alignment/rollback.sql
 "
+```
 
-# Verify Account table reverted
+### 7a. Verify rollback
+
+```bash
+# Account table should have original columns
 docker compose exec app sh -c "
   PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
     -c '\d \"Account\"'
 "
 ```
 
-**Expected:** Columns back to original names (provider, providerAccountId, etc.)
+**Expected:** Original columns restored (provider, providerAccountId, etc.)
+
+### 7b. Verify data preserved after rollback
 
 ```bash
-# Verify test data still intact after rollback
 docker compose exec app sh -c "
   PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
     -c 'SELECT id, provider, \"providerAccountId\", access_token FROM \"Account\" WHERE id LIKE '\''test-%'\'';'
 "
 ```
 
-**Expected:** Original column names with preserved data.
+**Expected:** Data preserved — all tokens intact with original column names.
 
-### Re-apply migration after rollback
+### 7c. Verify _prisma_migrations updated
+
+```bash
+docker compose exec app sh -c "
+  PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
+    -c 'SELECT migration_name, finished_at, rolled_back_at FROM _prisma_migrations;'
+"
+```
+
+**Expected:** `rolled_back_at` is NOW SET (not NULL) — migration history consistent.
+
+---
+
+## Step 8: Re-apply Migration After Rollback
 
 ```bash
 docker compose exec app sh -c "
@@ -239,18 +215,48 @@ docker compose exec app sh -c "
     -f /app/prisma/migrations/20260807000000_better_auth_schema_alignment/migration.sql
 "
 
-# Verify data still preserved
+# Reset the rollback flag in _prisma_migrations
+docker compose exec app sh -c "
+  PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
+    -c \"UPDATE _prisma_migrations SET rolled_back_at = NULL, finished_at = NOW() WHERE migration_name = '20260807000000_better_auth_schema_alignment';\"
+"
+
+# Re-validate
 docker compose exec app node /app/rc5-phase1-validate.js
+```
+
+**Expected:** All checks pass again. Data preserved.
+
+---
+
+## Step 9: RC-4 Smoke Test (Regression)
+
+```bash
+docker compose exec app node /app/rc4-smoke-test.js
+```
+
+**Expected:** 17/17 passed — no RC-4 features broken.
+
+```
+═══ RC-4 PRODUCTION SMOKE TEST ═══
+
+1/5 Health check: ✅
+2/5 Security headers: ✅
+3/5 Login + cookie validation: ✅
+4/5 CSRF: sign-out WITHOUT header → 403: ✅
+5/5 CSRF: sign-out WITH header → 200: ✅
+
+Results: 17 passed, 0 failed
 ```
 
 ---
 
-## Step 8: Cleanup Test Data
+## Step 10: Clean Up Test Data
 
 ```bash
 docker compose exec app sh -c "
   PGPASSWORD=destiny_password psql -h postgres -U destiny_user -d destiny_rising_hub \
-    -c 'DELETE FROM \"Account\" WHERE id LIKE '\''test-%'\''; DELETE FROM \"User\" WHERE id = '\''test-user-001'\'';'
+    -c \"DELETE FROM \\\"Account\\\" WHERE id LIKE 'test-%'; DELETE FROM \\\"User\\\" WHERE id = 'test-user-001';\"
 "
 ```
 
@@ -258,18 +264,20 @@ docker compose exec app sh -c "
 
 ## Phase 1 PASS Checklist
 
-| # | Criterion | Status |
-|---|-----------|--------|
-| 1 | `prisma validate` passes | ☐ |
-| 2 | `prisma migrate deploy` succeeds | ☐ |
-| 3 | `prisma migrate status` shows "applied" | ☐ |
-| 4 | `_prisma_migrations` record exists | ☐ |
-| 5 | Better Auth schema compatibility (all 4 models) | ☐ |
-| 6 | Constraint validation script passes | ☐ |
-| 7 | Multi-provider data preserved (Google, GitHub, Discord) | ☐ |
-| 8 | Rollback test succeeds | ☐ |
-| 9 | Re-apply migration after rollback succeeds | ☐ |
-| 10 | Mock auth still works after rollback | ☐ |
+| # | Criterion | Command | Status |
+|---|-----------|---------|--------|
+| 1 | `prisma validate` passes | `npx prisma validate` | ☐ |
+| 2 | `prisma migrate deploy` succeeds | `npx prisma migrate deploy` | ☐ |
+| 3 | `prisma migrate status` clean | `npx prisma migrate status` | ☐ |
+| 4 | `_prisma_migrations` consistent | SQL query | ☐ |
+| 5 | Better Auth schema (4 models) | `node rc5-phase1-validate.js` | ☐ |
+| 6 | Constraints validated | `node rc5-phase1-validate.js` | ☐ |
+| 7 | Multi-provider data preserved | `node rc5-phase1-validate.js` | ☐ |
+| 8 | Migration idempotent (2nd run) | Run migration.sql twice | ☐ |
+| 9 | Rollback succeeds | `rollback.sql` | ☐ |
+| 10 | Rollback → re-apply succeeds | migration.sql + validate | ☐ |
+| 11 | `_prisma_migrations` after rollback | `rolled_back_at` set | ☐ |
+| 12 | RC-4 smoke test 17/17 | `node rc4-smoke-test.js` | ☐ |
 
 ---
 
@@ -277,9 +285,10 @@ docker compose exec app sh -c "
 
 | File | Purpose |
 |------|---------|
-| `prisma/schema.prisma` | Updated schema (Account + Verification) |
-| `prisma/migrations/20260807000000_better_auth_schema_alignment/migration.sql` | Safe migration (RENAME COLUMN) |
-| `prisma/migrations/20260807000000_better_auth_schema_alignment/rollback.sql` | Rollback migration |
-| `rc5-phase1-validate.js` | Constraint + data validation script |
+| `prisma/schema.prisma` | Better Auth compatible schema |
+| `prisma/migrations/.../migration.sql` | Safe, idempotent migration |
+| `prisma/migrations/.../rollback.sql` | Idempotent rollback + migration history |
+| `rc5-phase1-validate.js` | Complete validation suite |
 | `rc5-phase1-test-data.sql` | Multi-provider test data |
-| `RC5-PHASE1-SCHEMA-COMPARISON.md` | Schema diff with Better Auth official |
+| `rc4-smoke-test.js` | RC-4 regression test |
+| `RC5-PHASE1-SCHEMA-COMPARISON.md` | Schema diff documentation |
