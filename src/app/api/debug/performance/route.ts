@@ -33,8 +33,15 @@ export async function GET() {
       dbStats.connected = false;
     }
     
+    // Check if rate limiting is enabled
+    const rateLimitEnabled = 
+      process.env.RATE_LIMIT_ENABLED !== 'false' && 
+      process.env.PERFORMANCE_MODE !== 'true';
+    
     const appStats = {
       nodeEnv: process.env.NODE_ENV || 'development',
+      performanceMode: process.env.PERFORMANCE_MODE === 'true',
+      rateLimitEnabled,
       uptime: process.uptime(),
       memoryUsage: process.memoryUsage(),
       rateLimits: {

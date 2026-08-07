@@ -87,6 +87,9 @@ services:
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Destiny Rising Hub}
       NODE_ENV: ${NODE_ENV:-development}
+      # Performance testing configuration
+      PERFORMANCE_MODE: ${PERFORMANCE_MODE:-false}
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
       # Performance testing rate limits (used when NODE_ENV=test)
       RATE_LIMIT_PUBLIC_WINDOW_MS: ${RATE_LIMIT_PUBLIC_WINDOW_MS:-60000}
       RATE_LIMIT_PUBLIC_MAX_REQUESTS: ${RATE_LIMIT_PUBLIC_MAX_REQUESTS:-10000}

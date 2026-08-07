@@ -5,6 +5,10 @@ import { logger } from '@/lib/logger';
 /**
  * API Rate Limiting with Diagnostic Logging
  * Endpoint-based rate limiting with environment-based configuration
+ * 
+ * PERFORMANCE MODE:
+ * Set RATE_LIMIT_ENABLED=false or PERFORMANCE_MODE=true to disable rate limiting
+ * This is useful for performance testing where rate limits interfere with measurements
  */
 
 export interface RateLimitConfig {
@@ -22,6 +26,24 @@ export interface RateLimitStore {
 }
 
 const store: RateLimitStore = {};
+
+/**
+ * Check if rate limiting is enabled
+ * Can be disabled via environment variables for performance testing
+ */
+function isRateLimitEnabled(): boolean {
+  // Disable if explicitly disabled
+  if (process.env.RATE_LIMIT_ENABLED === 'false') {
+    return false;
+  }
+  
+  // Disable in performance mode
+  if (process.env.PERFORMANCE_MODE === 'true') {
+    return false;
+  }
+  
+  return true;
+}
 
 /**
  * Helper function to safely parse environment variables
@@ -108,6 +130,15 @@ export function checkRateLimit(
   request: NextRequest,
   endpointType: string = 'public'
 ): { allowed: boolean; remaining: number; resetAt: number } {
+  // If rate limiting is disabled, always allow
+  if (!isRateLimitEnabled()) {
+    return {
+      allowed: true,
+      remaining: 999999,
+      resetAt: Date.now() + 60000,
+    };
+  }
+  
   const config = RATE_LIMITS[endpointType] || RATE_LIMITS.public;
   const key = getRateLimitKey(request, endpointType);
   const now = Date.now();
@@ -172,6 +203,11 @@ export async function withRateLimit(
   endpointType: string,
   handler: (request: NextRequest) => Promise<NextResponse>
 ): Promise<NextResponse> {
+  // If rate limiting is disabled, skip directly to handler
+  if (!isRateLimitEnabled()) {
+    return handler(request);
+  }
+  
   const { allowed, remaining, resetAt } = checkRateLimit(request, endpointType);
   const config = RATE_LIMITS[endpointType] || RATE_LIMITS.public;
   
