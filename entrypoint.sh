@@ -47,5 +47,11 @@ echo ""
 echo "Step 6: Starting Next.js development server..."
 echo "═══════════════════════════════════════════════════════════"
 echo ""
+# npm run dev öncesi ekle
+if pgrep -f "next dev" >/dev/null 2>&1; then
+  echo "Stopping existing Next.js dev server..."
+  pkill -f "next dev" || true
+  sleep 2
+fi
 
 exec npm run dev
