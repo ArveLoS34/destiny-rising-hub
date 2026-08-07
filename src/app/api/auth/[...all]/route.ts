@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { authService } from "@/features/user/services/auth-service";
+import { authService, generateCsrfToken, validateCsrfToken } from "@/features/user/services/auth-service";
 
 // ─── Helper Functions ───
 
@@ -33,6 +33,47 @@ function getSessionToken(request: NextRequest): string | null {
   }
   
   return null;
+}
+
+function getCsrfTokenFromCookie(request: NextRequest): string | null {
+  const cookieHeader = request.headers.get('cookie');
+  if (!cookieHeader) return null;
+  const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+    const [key, value] = cookie.trim().split('=');
+    acc[key] = value;
+    return acc;
+  }, {} as Record<string, string>);
+  return cookies['csrf_token'] || null;
+}
+
+/**
+ * Validate CSRF token for state-changing operations.
+ * Compares cookie-stored token with header-provided token.
+ */
+function validateCsrfHeader(request: NextRequest, sessionToken: string): boolean {
+  const csrfFromCookie = getCsrfTokenFromCookie(request);
+  const csrfFromHeader = request.headers.get('x-csrf-token');
+  
+  if (!csrfFromCookie || !csrfFromHeader) return false;
+  if (csrfFromCookie !== csrfFromHeader) return false;
+  
+  return validateCsrfToken(sessionToken, csrfFromCookie);
+}
+
+function setCsrfCookie(response: NextResponse, sessionId: string, token: string): void {
+  response.headers.set('Set-Cookie', `csrf_token=${token}; Path=/; SameSite=Strict; Secure; Max-Age=${24 * 60 * 60}`);
+}
+
+function setSessionCookie(response: NextResponse, sessionToken: string): void {
+  response.headers.set('Set-Cookie', `session_token=${sessionToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}; Path=/`);
+}
+
+function clearSessionCookie(response: NextResponse): void {
+  response.headers.set('Set-Cookie', 'session_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/');
+}
+
+function clearCsrfCookie(response: NextResponse): void {
+  response.headers.set('Set-Cookie', 'csrf_token=; Path=/; SameSite=Strict; Secure; Max-Age=0');
 }
 
 function createErrorResponse(message: string, status: number = 400): NextResponse {
@@ -70,8 +111,11 @@ export async function POST(request: NextRequest) {
         const result = await authService.signInWithEmail(email, password);
         
         if (result.user && result.sessionToken) {
-          const response = NextResponse.json({ user: result.user });
-          response.headers.set('Set-Cookie', `session_token=${result.sessionToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`);
+          // Generate CSRF token for authenticated session
+          const csrfToken = generateCsrfToken(result.sessionToken);
+          const response = NextResponse.json({ user: result.user, csrfToken });
+          setSessionCookie(response, result.sessionToken);
+          setCsrfCookie(response, result.sessionToken, csrfToken);
           return response;
         }
         
@@ -86,8 +130,11 @@ export async function POST(request: NextRequest) {
         const result = await authService.signUp(email, username, displayName, password);
         
         if (result.user && result.sessionToken) {
-          const response = NextResponse.json({ user: result.user });
-          response.headers.set('Set-Cookie', `session_token=${result.sessionToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`);
+          // Generate CSRF token for authenticated session
+          const csrfToken = generateCsrfToken(result.sessionToken);
+          const response = NextResponse.json({ user: result.user, csrfToken });
+          setSessionCookie(response, result.sessionToken);
+          setCsrfCookie(response, result.sessionToken, csrfToken);
           return response;
         }
         
@@ -96,18 +143,28 @@ export async function POST(request: NextRequest) {
       
       case "sign-out": {
         const sessionToken = getSessionToken(request);
+        
+        // CSRF validation for state-changing operation
+        if (sessionToken && !validateCsrfHeader(request, sessionToken)) {
+          return createErrorResponse('CSRF validation failed', 403);
+        }
+        
         await authService.signOut(sessionToken || undefined);
         
         const response = NextResponse.json({ success: true });
-        response.headers.set('Set-Cookie', 'session_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0');
+        clearSessionCookie(response);
+        clearCsrfCookie(response);
         return response;
       }
       
       case "demo-login": {
         const result = await authService.loginAsDemo();
         
-        const response = NextResponse.json({ user: result.user });
-        response.headers.set('Set-Cookie', `session_token=${result.sessionToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`);
+        // Generate CSRF token for demo session
+        const csrfToken = generateCsrfToken(result.sessionToken);
+        const response = NextResponse.json({ user: result.user, csrfToken });
+        setSessionCookie(response, result.sessionToken);
+        setCsrfCookie(response, result.sessionToken, csrfToken);
         return response;
       }
       
@@ -127,13 +184,21 @@ export async function POST(request: NextRequest) {
           return createErrorResponse('No session token provided');
         }
         
+        // CSRF validation for state-changing operation
+        if (!validateCsrfHeader(request, sessionToken)) {
+          return createErrorResponse('CSRF validation failed', 403);
+        }
+        
         const newToken = await authService.refreshSession(sessionToken);
         if (!newToken) {
           return createErrorResponse('Session expired or invalid');
         }
         
-        const response = NextResponse.json({ success: true });
-        response.headers.set('Set-Cookie', `session_token=${newToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`);
+        // Generate new CSRF token for refreshed session
+        const newCsrfToken = generateCsrfToken(newToken);
+        const response = NextResponse.json({ success: true, csrfToken: newCsrfToken });
+        setSessionCookie(response, newToken);
+        setCsrfCookie(response, newToken, newCsrfToken);
         return response;
       }
       

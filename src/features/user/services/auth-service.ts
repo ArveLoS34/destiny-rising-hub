@@ -56,9 +56,59 @@ const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const CSRF_TOKEN_LENGTH = 32;
+const CSRF_TOKEN_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 // Login attempt tracking
 const loginAttempts: Map<string, { count: number; firstAttempt: number }> = new Map();
+
+// CSRF token storage (in-memory for mock auth)
+const csrfTokens: Map<string, { token: string; expiresAt: Date }> = new Map();
+
+// ─── CSRF Protection ───
+
+/**
+ * Generate CSRF token for a user session
+ * Uses crypto.randomUUID() for secure random generation
+ */
+export function generateCsrfToken(sessionId: string): string {
+  const crypto = require('crypto');
+  const token = crypto.randomBytes(CSRF_TOKEN_LENGTH).toString('hex');
+  csrfTokens.set(sessionId, {
+    token,
+    expiresAt: new Date(Date.now() + CSRF_TOKEN_DURATION_MS)
+  });
+  return token;
+}
+
+/**
+ * Validate CSRF token
+ * Compares provided token with stored token for the session
+ */
+export function validateCsrfToken(sessionId: string, token: string): boolean {
+  const stored = csrfTokens.get(sessionId);
+  if (!stored) return false;
+  
+  // Check expiration
+  if (new Date() > stored.expiresAt) {
+    csrfTokens.delete(sessionId);
+    return false;
+  }
+  
+  // Secure comparison to prevent timing attacks
+  const crypto = require('crypto');
+  return crypto.timingSafeEqual(
+    Buffer.from(stored.token, 'hex'),
+    Buffer.from(token, 'hex')
+  );
+}
+
+/**
+ * Remove CSRF token after use (single-use tokens for state-changing operations)
+ */
+export function revokeCsrfToken(sessionId: string): void {
+  csrfTokens.delete(sessionId);
+}
 
 // ─── Helper Functions ───
 
