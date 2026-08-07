@@ -80,6 +80,29 @@ function createErrorResponse(message: string, status: number = 400): NextRespons
   return NextResponse.json({ error: message }, { status });
 }
 
+/**
+ * Map auth service error messages to appropriate HTTP status codes.
+ * REST semantics:
+ * - 401 Unauthorized: Authentication failures (invalid credentials)
+ * - 409 Conflict: Resource already exists (duplicate email/username)
+ * - 422 Unprocessable Entity: Validation failures (format, strength)
+ * - 429 Too Many Requests: Rate limiting
+ */
+function getAuthErrorStatus(error: string | undefined): number {
+  if (!error) return 400;
+  
+  if (error.includes("Invalid credentials")) return 401;
+  if (error.includes("already in use") || error.includes("already taken")) return 409;
+  if (error.includes("Too many login attempts")) return 429;
+  if (
+    error.includes("Invalid email") ||
+    error.includes("Username must be") ||
+    error.includes("Password must be")
+  ) return 422;
+  
+  return 400;
+}
+
 // ─── Mock Auth API (Development) ───
 
 export async function GET(request: NextRequest) {
@@ -119,7 +142,7 @@ export async function POST(request: NextRequest) {
           return response;
         }
         
-        return NextResponse.json({ error: result.error });
+        return createErrorResponse(result.error || 'Sign in failed', getAuthErrorStatus(result.error));
       }
       
       case "sign-up": {
@@ -138,7 +161,7 @@ export async function POST(request: NextRequest) {
           return response;
         }
         
-        return NextResponse.json({ error: result.error });
+        return createErrorResponse(result.error || 'Sign up failed', getAuthErrorStatus(result.error));
       }
       
       case "sign-out": {
