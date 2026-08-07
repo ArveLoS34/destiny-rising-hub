@@ -1,68 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createErrorResponse } from './errors';
+import { logger } from '@/lib/logger';
 
 /**
- * API Rate Limiting
+ * API Rate Limiting with Diagnostic Logging
  * Endpoint-based rate limiting with environment-based configuration
  */
 
 export interface RateLimitConfig {
-  windowMs: number; // Time window in milliseconds
-  maxRequests: number; // Maximum requests per window
-  message?: string; // Custom error message
+  windowMs: number;
+  maxRequests: number;
+  message?: string;
 }
 
 export interface RateLimitStore {
   [key: string]: {
     count: number;
     resetAt: number;
+    blocked: number; // Track blocked requests for diagnostics
   };
 }
 
-// In-memory store (use Redis in production)
+// In-memory store
 const store: RateLimitStore = {};
 
 /**
  * Default rate limit configurations per endpoint type
- * Can be overridden via environment variables for different environments
  */
 export const RATE_LIMITS: Record<string, RateLimitConfig> = {
-  // Public endpoints
   'public': {
-    windowMs: parseInt(process.env.RATE_LIMIT_PUBLIC_WINDOW_MS || '60000'), // Default: 1 minute
-    maxRequests: parseInt(process.env.RATE_LIMIT_PUBLIC_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '10000' : '60')), // Default: 60 (10000 for testing)
+    windowMs: parseInt(process.env.RATE_LIMIT_PUBLIC_WINDOW_MS || '60000'),
+    maxRequests: parseInt(process.env.RATE_LIMIT_PUBLIC_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '10000' : '60')),
     message: 'Too many requests, please try again later',
   },
-  
-  // Authenticated endpoints
   'authenticated': {
     windowMs: parseInt(process.env.RATE_LIMIT_AUTHENTICATED_WINDOW_MS || '60000'),
     maxRequests: parseInt(process.env.RATE_LIMIT_AUTHENTICATED_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '20000' : '120')),
     message: 'Rate limit exceeded',
   },
-  
-  // Authentication endpoints (stricter)
   'auth': {
-    windowMs: parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS || '900000'), // 15 minutes
+    windowMs: parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS || '900000'),
     maxRequests: parseInt(process.env.RATE_LIMIT_AUTH_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '1000' : '5')),
     message: 'Too many authentication attempts, please try again later',
   },
-  
-  // Write operations
   'write': {
     windowMs: parseInt(process.env.RATE_LIMIT_WRITE_WINDOW_MS || '60000'),
     maxRequests: parseInt(process.env.RATE_LIMIT_WRITE_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '5000' : '30')),
     message: 'Too many write operations',
   },
-  
-  // Search operations
   'search': {
     windowMs: parseInt(process.env.RATE_LIMIT_SEARCH_WINDOW_MS || '60000'),
     maxRequests: parseInt(process.env.RATE_LIMIT_SEARCH_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '5000' : '30')),
     message: 'Too many search requests',
   },
-  
-  // Admin operations
   'admin': {
     windowMs: parseInt(process.env.RATE_LIMIT_ADMIN_WINDOW_MS || '60000'),
     maxRequests: parseInt(process.env.RATE_LIMIT_ADMIN_MAX_REQUESTS || (process.env.NODE_ENV === 'test' ? '10000' : '100')),
@@ -74,12 +64,10 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
  * Generate rate limit key from request
  */
 function getRateLimitKey(request: NextRequest, endpointType: string): string {
-  // Use IP address for public endpoints
   const ip = request.headers.get('x-forwarded-for') || 
              request.headers.get('x-real-ip') || 
              'unknown';
   
-  // Use user ID for authenticated endpoints
   const authHeader = request.headers.get('authorization');
   const userId = authHeader ? authHeader.substring(7, 20) : ip;
   
@@ -87,7 +75,7 @@ function getRateLimitKey(request: NextRequest, endpointType: string): string {
 }
 
 /**
- * Check rate limit
+ * Check rate limit with diagnostic logging
  */
 export function checkRateLimit(
   request: NextRequest,
@@ -102,6 +90,7 @@ export function checkRateLimit(
     store[key] = {
       count: 0,
       resetAt: now + config.windowMs,
+      blocked: 0,
     };
   }
   
@@ -109,14 +98,43 @@ export function checkRateLimit(
   
   // Reset if window has passed
   if (now > entry.resetAt) {
+    // Log diagnostic info before reset
+    if (entry.blocked > 0) {
+      logger.warn('RateLimit', `Rate limit diagnostics for ${key}: ${entry.blocked} requests blocked in last window`, {
+        endpointType,
+        blocked: entry.blocked,
+        allowed: entry.count,
+        limit: config.maxRequests,
+        windowMs: config.windowMs,
+      });
+    }
+    
     entry.count = 0;
     entry.resetAt = now + config.windowMs;
+    entry.blocked = 0;
   }
   
   // Check limit
   entry.count++;
   const allowed = entry.count <= config.maxRequests;
   const remaining = Math.max(0, config.maxRequests - entry.count);
+  
+  // Track blocked requests
+  if (!allowed) {
+    entry.blocked++;
+    
+    // Log every 100th blocked request to avoid log spam
+    if (entry.blocked % 100 === 0) {
+      logger.warn('RateLimit', `Rate limit exceeded for ${key}`, {
+        endpointType,
+        blocked: entry.blocked,
+        current: entry.count,
+        limit: config.maxRequests,
+        remaining: 0,
+        resetAt: entry.resetAt,
+      });
+    }
+  }
   
   return {
     allowed,
@@ -126,7 +144,7 @@ export function checkRateLimit(
 }
 
 /**
- * Middleware to apply rate limiting
+ * Middleware to apply rate limiting with detailed error responses
  */
 export async function withRateLimit(
   request: NextRequest,
@@ -142,6 +160,8 @@ export async function withRateLimit(
       config.message || 'Rate limit exceeded',
       {
         retryAfter: Math.ceil((resetAt - Date.now()) / 1000),
+        limit: config.maxRequests,
+        endpointType,
       },
       request.headers.get('x-request-id') || `req_${Date.now()}`,
       request.nextUrl.pathname
@@ -169,8 +189,30 @@ export async function withRateLimit(
 }
 
 /**
+ * Get current rate limit statistics (for diagnostics)
+ */
+export function getRateLimitStats(): {
+  totalKeys: number;
+  totalBlocked: number;
+  topBlocked: Array<{ key: string; blocked: number; count: number }>;
+} {
+  const entries = Object.entries(store);
+  const totalBlocked = entries.reduce((sum, [, entry]) => sum + entry.blocked, 0);
+  
+  const topBlocked = entries
+    .map(([key, entry]) => ({ key, blocked: entry.blocked, count: entry.count }))
+    .sort((a, b) => b.blocked - a.blocked)
+    .slice(0, 10);
+  
+  return {
+    totalKeys: entries.length,
+    totalBlocked,
+    topBlocked,
+  };
+}
+
+/**
  * Clean up old entries from store
- * Call this periodically in production
  */
 export function cleanupRateLimitStore(): void {
   const now = Date.now();
@@ -193,7 +235,6 @@ export function getRateLimitStatus(key: string): {
   const entry = store[key];
   if (!entry) return null;
   
-  // Determine endpoint type from key
   const endpointType = key.split(':')[0];
   const config = RATE_LIMITS[endpointType] || RATE_LIMITS.public;
   
