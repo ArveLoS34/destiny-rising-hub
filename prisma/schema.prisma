@@ -215,12 +215,12 @@ model Account {
 }
 
 model Verification {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   identifier String
-  value      String   @db.Text
+  value      String    @db.Text
   expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
   
   @@index([identifier])
   @@index([expiresAt])
