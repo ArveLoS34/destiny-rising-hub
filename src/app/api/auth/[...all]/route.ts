@@ -14,36 +14,140 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authService } from "@/features/user/services/auth-service";
 
+// ─── Helper Functions ───
+
+function getSessionToken(request: NextRequest): string | null {
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+  
+  const cookieHeader = request.headers.get('cookie');
+  if (cookieHeader) {
+    const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+      const [key, value] = cookie.trim().split('=');
+      acc[key] = value;
+      return acc;
+    }, {} as Record<string, string>);
+    return cookies['session_token'] || null;
+  }
+  
+  return null;
+}
+
+function createErrorResponse(message: string, status: number = 400): NextResponse {
+  return NextResponse.json({ error: message }, { status });
+}
+
 // ─── Mock Auth API (Development) ───
 
 export async function GET(request: NextRequest) {
-  const user = await authService.getCurrentUser();
-  return NextResponse.json({ user });
+  try {
+    const sessionToken = getSessionToken(request);
+    const user = await authService.getCurrentUser(sessionToken || undefined);
+    return NextResponse.json({ user });
+  } catch (error) {
+    console.error('GET /api/auth error:', error);
+    return createErrorResponse('Internal server error', 500);
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const { action, email, password, username, displayName, provider } = body;
+  try {
+    const body = await request.json();
+    const { action, email, password, username, displayName, provider } = body;
 
-  switch (action) {
-    case "sign-in": {
-      const result = await authService.signInWithEmail(email, password);
-      return NextResponse.json(result);
+    if (!action) {
+      return createErrorResponse('Action is required');
     }
-    case "sign-up": {
-      const result = await authService.signUp(email, username, displayName, password);
-      return NextResponse.json(result);
+
+    switch (action) {
+      case "sign-in": {
+        if (!email || !password) {
+          return createErrorResponse('Email and password are required');
+        }
+        
+        const result = await authService.signInWithEmail(email, password);
+        
+        if (result.user && result.sessionToken) {
+          const response = NextResponse.json({ user: result.user });
+          response.headers.set('Set-Cookie', `session_token=${result.sessionToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`);
+          return response;
+        }
+        
+        return NextResponse.json({ error: result.error });
+      }
+      
+      case "sign-up": {
+        if (!email || !password || !username || !displayName) {
+          return createErrorResponse('Email, password, username, and displayName are required');
+        }
+        
+        const result = await authService.signUp(email, username, displayName, password);
+        
+        if (result.user && result.sessionToken) {
+          const response = NextResponse.json({ user: result.user });
+          response.headers.set('Set-Cookie', `session_token=${result.sessionToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`);
+          return response;
+        }
+        
+        return NextResponse.json({ error: result.error });
+      }
+      
+      case "sign-out": {
+        const sessionToken = getSessionToken(request);
+        await authService.signOut(sessionToken || undefined);
+        
+        const response = NextResponse.json({ success: true });
+        response.headers.set('Set-Cookie', 'session_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0');
+        return response;
+      }
+      
+      case "demo-login": {
+        const result = await authService.loginAsDemo();
+        
+        const response = NextResponse.json({ user: result.user });
+        response.headers.set('Set-Cookie', `session_token=${result.sessionToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`);
+        return response;
+      }
+      
+      case "validate-session": {
+        const sessionToken = getSessionToken(request);
+        if (!sessionToken) {
+          return NextResponse.json({ valid: false });
+        }
+        
+        const isValid = await authService.validateSession(sessionToken);
+        return NextResponse.json({ valid: isValid });
+      }
+      
+      case "refresh-session": {
+        const sessionToken = getSessionToken(request);
+        if (!sessionToken) {
+          return createErrorResponse('No session token provided');
+        }
+        
+        const newToken = await authService.refreshSession(sessionToken);
+        if (!newToken) {
+          return createErrorResponse('Session expired or invalid');
+        }
+        
+        const response = NextResponse.json({ success: true });
+        response.headers.set('Set-Cookie', `session_token=${newToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`);
+        return response;
+      }
+      
+      default:
+        return createErrorResponse('Unknown action');
     }
-    case "sign-out": {
-      await authService.signOut();
-      return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('POST /api/auth error:', error);
+    
+    if (error instanceof SyntaxError) {
+      return createErrorResponse('Invalid JSON in request body');
     }
-    case "demo-login": {
-      const user = await authService.loginAsDemo();
-      return NextResponse.json({ user });
-    }
-    default:
-      return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+    
+    return createErrorResponse('Internal server error', 500);
   }
 }
 

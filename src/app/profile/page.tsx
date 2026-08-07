@@ -39,16 +39,16 @@ export default function ProfilePage() {
       const currentUser = await authService.getCurrentUser();
       if (!currentUser) {
         // Auto-login as demo user in development
-        const demoUser = await authService.loginAsDemo();
-        setUser(demoUser);
+        const demoResult = await authService.loginAsDemo();
+        setUser(demoResult.user);
         
         // Load data for demo user
         const [fav, bld, tm, col, act] = await Promise.all([
-          favoritesService.getUserFavorites(demoUser.id),
-          savedBuildsService.getUserBuilds(demoUser.id),
-          savedTeamsService.getUserTeams(demoUser.id),
-          collectionsService.getUserCollections(demoUser.id),
-          activityService.getUserActivities(demoUser.id),
+          favoritesService.getUserFavorites(demoResult.user.id),
+          savedBuildsService.getUserBuilds(demoResult.user.id),
+          savedTeamsService.getUserTeams(demoResult.user.id),
+          collectionsService.getUserCollections(demoResult.user.id),
+          activityService.getUserActivities(demoResult.user.id),
         ]);
         
         setFavorites(fav);
@@ -61,8 +61,8 @@ export default function ProfilePage() {
           totalSavedBuilds: bld.length,
           totalSavedTeams: tm.length,
           totalCollections: col.length,
-          memberSince: demoUser.createdAt,
-          lastActive: demoUser.lastLoginAt,
+          memberSince: demoResult.user.createdAt,
+          lastActive: demoResult.user.lastLoginAt,
         });
       } else {
         setUser(currentUser);

@@ -23,7 +23,7 @@ interface TestResult {
 
 const results: TestResult[] = [];
 
-async function test(name: string, fn: () => Promise<{ passed: boolean; details: string; severity?: any }>) {
+async function runTest(name: string, fn: () => Promise<{ passed: boolean; details: string; severity?: any }>) {
   try {
     const result = await fn();
     results.push({ test: name, ...result });
@@ -47,7 +47,7 @@ async function runTests() {
   console.log('═══════════════════════════════════════════════════════════\n');
 
   // Test 1: Health endpoint accessibility
-  await test('Health endpoint is accessible without auth', async () => {
+  await runTest('Health endpoint is accessible without auth', async () => {
     const res = await fetch(`${BASE_URL}/api/health`);
     const data = await res.json();
     return {
@@ -57,7 +57,7 @@ async function runTests() {
   });
 
   // Test 2: Get current user without authentication
-  await test('Get current user returns null without auth', async () => {
+  await runTest('Get current user returns null without auth', async () => {
     const res = await fetch(`${BASE_URL}/api/auth`);
     const data = await res.json();
     return {
@@ -67,7 +67,7 @@ async function runTests() {
   });
 
   // Test 3: Sign up with valid credentials
-  await test('Sign up creates new user', async () => {
+  await runTest('Sign up creates new user', async () => {
     const res = await fetch(`${BASE_URL}/api/auth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -87,7 +87,7 @@ async function runTests() {
   });
 
   // Test 4: Sign up with duplicate email
-  await test('Sign up rejects duplicate email', async () => {
+  await runTest('Sign up rejects duplicate email', async () => {
     const email = `duplicate_${Date.now()}@example.com`;
     
     // First sign up
@@ -123,7 +123,7 @@ async function runTests() {
   });
 
   // Test 5: Sign in with valid credentials
-  await test('Sign in with valid credentials', async () => {
+  await runTest('Sign in with valid credentials', async () => {
     const email = `signin_${Date.now()}@example.com`;
     
     // Sign up first
@@ -157,7 +157,7 @@ async function runTests() {
   });
 
   // Test 6: Sign in with invalid credentials
-  await test('Sign in rejects invalid credentials', async () => {
+  await runTest('Sign in rejects invalid credentials', async () => {
     const res = await fetch(`${BASE_URL}/api/auth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -175,7 +175,7 @@ async function runTests() {
   });
 
   // Test 7: Sign out
-  await test('Sign out clears session', async () => {
+  await runTest('Sign out clears session', async () => {
     // Sign in first
     await fetch(`${BASE_URL}/api/auth`, {
       method: 'POST',
@@ -206,7 +206,7 @@ async function runTests() {
   });
 
   // Test 8: Demo login
-  await test('Demo login works', async () => {
+  await runTest('Demo login works', async () => {
     const res = await fetch(`${BASE_URL}/api/auth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -222,7 +222,7 @@ async function runTests() {
   });
 
   // Test 9: Characters API accessible without auth
-  await test('Characters API accessible without auth', async () => {
+  await runTest('Characters API accessible without auth', async () => {
     const res = await fetch(`${BASE_URL}/api/v1/characters`);
     const data = await res.json();
     return {
@@ -232,7 +232,7 @@ async function runTests() {
   });
 
   // Test 10: Invalid action handling
-  await test('Invalid action returns 400', async () => {
+  await runTest('Invalid action returns 400', async () => {
     const res = await fetch(`${BASE_URL}/api/auth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -248,7 +248,7 @@ async function runTests() {
   });
 
   // Test 11: SQL Injection attempt in email
-  await test('SQL Injection attempt in email is handled', async () => {
+  await runTest('SQL Injection attempt in email is handled', async () => {
     const res = await fetch(`${BASE_URL}/api/auth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -267,7 +267,7 @@ async function runTests() {
   });
 
   // Test 12: XSS attempt in username
-  await test('XSS attempt in username is handled', async () => {
+  await runTest('XSS attempt in username is handled', async () => {
     const res = await fetch(`${BASE_URL}/api/auth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
