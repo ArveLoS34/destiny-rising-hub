@@ -14,25 +14,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authService, generateCsrfToken, validateCsrfToken } from "@/features/user/services/auth-service";
 
-// Debug: Bu log her istekte çalışmalı
-console.log("===== AUTH ROUTE LOADED =====");
-
 // ─── Environment Detection ───
 // Secure flag is only applied over HTTPS.
 // In development/Docker (HTTP), Secure is omitted so cookies are set correctly.
 const isSecure = process.env.NODE_ENV === 'production' || process.env.FORCE_HTTPS === 'true';
-const secureFlag = isSecure ? ' Secure;' : '';
 
 // ─── Helper Functions ───
 
 function getSessionToken(request: NextRequest): string | null {
-  // Check Authorization header first (Bearer token)
   const authHeader = request.headers.get('authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
     return authHeader.substring(7);
   }
   
-  // Parse cookie header manually using indexOf (safe for values containing '=')
   const cookieHeader = request.headers.get('cookie');
   if (cookieHeader) {
     const cookiePairs = cookieHeader.split(';');
@@ -70,22 +64,21 @@ function getCsrfTokenFromCookie(request: NextRequest): string | null {
 
 /**
  * Validate CSRF token for state-changing operations.
- * Compares cookie-stored token with header-provided token.
- * Returns true only when BOTH match AND server-side validation passes.
+ * Uses double-submit cookie pattern:
+ * - csrf_token cookie (non-HttpOnly, client-readable)
+ * - X-CSRF-Token header (client sends on state-changing requests)
+ * - Server compares both + timing-safe validation against session
  */
 function validateCsrfHeader(request: NextRequest, sessionToken: string): boolean {
   const csrfFromCookie = getCsrfTokenFromCookie(request);
   const csrfFromHeader = request.headers.get('x-csrf-token');
   
-  // Both must be present
   if (!csrfFromCookie || !csrfFromHeader) return false;
-  // Both must match
   if (csrfFromCookie !== csrfFromHeader) return false;
-  // Server-side validation (timing-safe comparison)
   return validateCsrfToken(sessionToken, csrfFromCookie);
 }
 
-function setCsrfCookie(response: NextResponse, sessionId: string, token: string): void {
+function setCsrfCookie(response: NextResponse, token: string): void {
   response.cookies.set('csrf_token', token, {
     path: '/',
     sameSite: 'strict',
@@ -129,15 +122,13 @@ function createErrorResponse(message: string, status: number = 400): NextRespons
 
 /**
  * Map auth service error messages to appropriate HTTP status codes.
- * REST semantics:
- * - 401 Unauthorized: Authentication failures (invalid credentials)
- * - 409 Conflict: Resource already exists (duplicate email/username)
- * - 422 Unprocessable Entity: Validation failures (format, strength)
- * - 429 Too Many Requests: Rate limiting
+ * - 401: Authentication failures (invalid credentials)
+ * - 409: Resource already exists (duplicate email/username)
+ * - 422: Validation failures (format, strength)
+ * - 429: Rate limiting
  */
 function getAuthErrorStatus(error: string | undefined): number {
   if (!error) return 400;
-  
   if (error.includes("Invalid credentials")) return 401;
   if (error.includes("already in use") || error.includes("already taken")) return 409;
   if (error.includes("Too many login attempts")) return 429;
@@ -146,11 +137,10 @@ function getAuthErrorStatus(error: string | undefined): number {
     error.includes("Username must be") ||
     error.includes("Password must be")
   ) return 422;
-  
   return 400;
 }
 
-// ─── Mock Auth API (Development) ───
+// ─── Auth API Handlers ───
 
 export async function GET(request: NextRequest) {
   try {
@@ -164,14 +154,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  console.log("POST HANDLER CALLED");
-  
   try {
-    const body = await request.clone().json();
-    console.log("REQUEST BODY:", JSON.stringify(body));
-    console.log("ACTION:", body.action);
-
-    const { action, email, password, username, displayName, provider } = body;
+    const body = await request.json();
+    const { action, email, password, username, displayName } = body;
 
     if (!action) {
       return createErrorResponse('Action is required');
@@ -186,11 +171,10 @@ export async function POST(request: NextRequest) {
         const result = await authService.signInWithEmail(email, password);
         
         if (result.user && result.sessionToken) {
-          // Generate CSRF token for authenticated session
           const csrfToken = generateCsrfToken(result.sessionToken);
           const response = NextResponse.json({ user: result.user, csrfToken });
           setSessionCookie(response, result.sessionToken);
-          setCsrfCookie(response, result.sessionToken, csrfToken);
+          setCsrfCookie(response, csrfToken);
           return response;
         }
         
@@ -205,11 +189,10 @@ export async function POST(request: NextRequest) {
         const result = await authService.signUp(email, username, displayName, password);
         
         if (result.user && result.sessionToken) {
-          // Generate CSRF token for authenticated session
           const csrfToken = generateCsrfToken(result.sessionToken);
           const response = NextResponse.json({ user: result.user, csrfToken });
           setSessionCookie(response, result.sessionToken);
-          setCsrfCookie(response, result.sessionToken, csrfToken);
+          setCsrfCookie(response, csrfToken);
           return response;
         }
         
@@ -217,41 +200,14 @@ export async function POST(request: NextRequest) {
       }
       
       case "sign-out": {
-        console.log("=== SIGN-OUT CSRF DEBUG ===");
-        
-        const rawCookieHeader = request.headers.get("cookie");
-        console.log("Raw cookie header:", rawCookieHeader);
-        
         const sessionToken = getSessionToken(request);
-        console.log("getSessionToken():", sessionToken ? sessionToken.substring(0, 30) + "..." : "NULL");
-        
         const csrfFromCookie = getCsrfTokenFromCookie(request);
-        console.log("getCsrfTokenFromCookie():", csrfFromCookie ? csrfFromCookie.substring(0, 30) + "..." : "NULL");
         
-        const csrfFromHeader = request.headers.get("x-csrf-token");
-        console.log("X-CSRF-Token header:", csrfFromHeader ? csrfFromHeader.substring(0, 30) + "..." : "NULL");
-        
-        // CSRF validation is mandatory when a CSRF cookie exists,
-        // regardless of whether a session token is present.
-        // This prevents logout CSRF attacks and ensures the client
-        // explicitly provides the CSRF token via header.
-        let csrfValidationResult = "SKIPPED (no csrf cookie)";
+        // CSRF validation is mandatory when a CSRF cookie exists
         if (csrfFromCookie) {
-          if (!sessionToken) {
-            csrfValidationResult = "FAILED (no session token)";
-            console.log("CSRF validation:", csrfValidationResult);
+          if (!sessionToken || !validateCsrfHeader(request, sessionToken)) {
             return createErrorResponse('CSRF validation failed', 403);
           }
-          
-          const isValid = validateCsrfHeader(request, sessionToken);
-          csrfValidationResult = isValid ? "PASSED" : "FAILED (token mismatch)";
-          console.log("CSRF validation:", csrfValidationResult);
-          
-          if (!isValid) {
-            return createErrorResponse('CSRF validation failed', 403);
-          }
-        } else {
-          console.log("CSRF validation:", csrfValidationResult);
         }
         
         await authService.signOut(sessionToken || undefined);
@@ -263,23 +219,12 @@ export async function POST(request: NextRequest) {
       }
       
       case "demo-login": {
-        console.log("DEMO LOGIN ENTERED");
         const result = await authService.loginAsDemo();
-        console.log("demoLogin result =", JSON.stringify({ userId: result.user?.id, sessionToken: result.sessionToken?.substring(0, 30) }));
-        console.log("sessionToken =", result.sessionToken);
         
-        // Generate CSRF token for demo session
         const csrfToken = generateCsrfToken(result.sessionToken);
         const response = NextResponse.json({ user: result.user, csrfToken });
-        
-        // Unique marker header to prove THIS handler is running
-        response.headers.set('X-Debug-Handler', 'mock-auth-route-ts');
-        
         setSessionCookie(response, result.sessionToken);
-        setCsrfCookie(response, result.sessionToken, csrfToken);
-        
-        console.log("response.cookies.getAll() =", JSON.stringify(response.cookies.getAll().map(c => ({ name: c.name, value: c.value.substring(0, 20), httpOnly: c.httpOnly, secure: c.secure }))));
-        
+        setCsrfCookie(response, csrfToken);
         return response;
       }
       
@@ -299,7 +244,6 @@ export async function POST(request: NextRequest) {
           return createErrorResponse('No session token provided');
         }
         
-        // CSRF validation for state-changing operation
         if (!validateCsrfHeader(request, sessionToken)) {
           return createErrorResponse('CSRF validation failed', 403);
         }
@@ -309,11 +253,10 @@ export async function POST(request: NextRequest) {
           return createErrorResponse('Session expired or invalid');
         }
         
-        // Generate new CSRF token for refreshed session
         const newCsrfToken = generateCsrfToken(newToken);
         const response = NextResponse.json({ success: true, csrfToken: newCsrfToken });
         setSessionCookie(response, newToken);
-        setCsrfCookie(response, newToken, newCsrfToken);
+        setCsrfCookie(response, newCsrfToken);
         return response;
       }
       
