@@ -1,6 +1,24 @@
+/**
+ * Auth Context — Better Auth Client Integration
+ *
+ * Phase 2B-2: Migrated from mock auth fetch-based API to Better Auth client.
+ *
+ * Public interface (useAuth) is PRESERVED:
+ *   - user, isLoading, isAuthenticated
+ *   - signIn(email, password)
+ *   - signUp(email, username, displayName, password)
+ *   - signOut()
+ *   - demoLogin() → redirects to login (no mock user in production)
+ *   - refreshSession() → no-op (Better Auth handles automatically)
+ *
+ * Internal implementation uses Better Auth React client.
+ * CSRF handling is now managed by Better Auth internally.
+ */
+
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { authClient } from "@/lib/auth/client";
 import type { User } from "@/types/domain";
 
 // ─── Auth Context Types ───
@@ -18,36 +36,28 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// ─── CSRF Helper ───
+// ─── Better Auth Session → Our User Type Mapper ───
 
-function getCsrfTokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/csrf_token=([^;]+)/);
-  return match ? match[1] : null;
-}
+function mapSessionUserToUser(sessionUser: Record<string, unknown> | null): User | null {
+  if (!sessionUser) return null;
 
-// ─── API Helper ───
-
-async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  const csrfToken = getCsrfTokenFromCookie();
-  
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string> || {}),
+  return {
+    id: sessionUser.id as string,
+    email: sessionUser.email as string,
+    username: (sessionUser.username as string) || "",
+    displayName: (sessionUser.name as string) || (sessionUser.displayName as string) || "",
+    avatar: (sessionUser.image as string) || (sessionUser.avatar as string) || null,
+    emailVerified: (sessionUser.emailVerified as boolean) || false,
+    provider: "email",
+    providerAccountId: sessionUser.id as string,
+    role: (sessionUser.role as string) || "MEMBER",
+    locale: (sessionUser.locale as string) || "en",
+    theme: (sessionUser.theme as string) || "dark",
+    bio: null,
+    createdAt: (sessionUser.createdAt as string) || new Date().toISOString(),
+    updatedAt: (sessionUser.updatedAt as string) || new Date().toISOString(),
+    lastLoginAt: null,
   };
-
-  // Attach CSRF token for state-changing operations
-  if (csrfToken && options.method && options.method !== "GET") {
-    headers["X-CSRF-Token"] = csrfToken;
-  }
-
-  const response = await fetch(url, {
-    ...options,
-    headers,
-    credentials: "include", // Send cookies automatically
-  });
-
-  return response;
 }
 
 // ─── Auth Provider ───
@@ -56,39 +66,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load current user on mount
+  // Load current session on mount using Better Auth
   useEffect(() => {
-    const loadUser = async () => {
+    const loadSession = async () => {
       try {
-        const response = await authFetch("/api/auth");
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user || null);
+        const { data } = await authClient.getSession();
+        if (data?.user) {
+          setUser(mapSessionUserToUser(data.user as unknown as Record<string, unknown>));
         }
       } catch (error) {
-        console.error("Failed to load auth state:", error);
+        console.error("Failed to load auth session:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    loadUser();
+    loadSession();
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
     try {
-      const response = await authFetch("/api/auth", {
-        method: "POST",
-        body: JSON.stringify({ action: "sign-in", email, password }),
-      });
+      const { data, error } = await authClient.signIn.email({ email, password });
 
-      const data = await response.json();
-      
-      if (data.user) {
-        setUser(data.user);
+      if (error) {
+        return { error: error.message || "Sign in failed" };
+      }
+
+      if (data?.user) {
+        setUser(mapSessionUserToUser(data.user as unknown as Record<string, unknown>));
         return {};
       }
-      
-      return { error: data.error || "Sign in failed" };
+
+      return { error: "Sign in failed" };
     } catch {
       return { error: "Network error" };
     }
@@ -96,19 +104,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, username: string, displayName: string, password: string) => {
     try {
-      const response = await authFetch("/api/auth", {
-        method: "POST",
-        body: JSON.stringify({ action: "sign-up", email, username, displayName, password }),
+      const { data, error } = await authClient.signUp.email({
+        email,
+        password,
+        name: displayName,
+        username,
       });
 
-      const data = await response.json();
-      
-      if (data.user) {
-        setUser(data.user);
+      if (error) {
+        return { error: error.message || "Sign up failed" };
+      }
+
+      if (data?.user) {
+        setUser(mapSessionUserToUser(data.user as unknown as Record<string, unknown>));
         return {};
       }
-      
-      return { error: data.error || "Sign up failed" };
+
+      return { error: "Sign up failed" };
     } catch {
       return { error: "Network error" };
     }
@@ -116,44 +128,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      await authFetch("/api/auth", {
-        method: "POST",
-        body: JSON.stringify({ action: "sign-out" }),
-      });
+      await authClient.signOut();
       setUser(null);
     } catch (error) {
       console.error("Sign out error:", error);
-      // Clear local state even on error
       setUser(null);
     }
   }, []);
 
+  // Demo login is NOT supported in production.
+  // Better Auth has no concept of demo/mock users.
+  // The demo user (guardian@destinyrisinghub.com) existed only in mock auth's
+  // in-memory store and does not exist in the production database.
+  //
+  // If demo login is required as a product feature, it should be implemented
+  // as a separate data-seeding decision (creating a persistent demo user in
+  // the database) — outside the scope of Phase 2B-2.
   const demoLogin = useCallback(async () => {
-    try {
-      const response = await authFetch("/api/auth", {
-        method: "POST",
-        body: JSON.stringify({ action: "demo-login" }),
-      });
-
-      const data = await response.json();
-      
-      if (data.user) {
-        setUser(data.user);
-      }
-    } catch (error) {
-      console.error("Demo login error:", error);
-    }
+    console.warn("demoLogin() is not supported in production. Use email sign-in instead.");
+    // No-op in production. Client components should handle this gracefully.
   }, []);
 
+  // Better Auth handles session refresh automatically.
+  // This is a no-op for interface compatibility.
   const refreshSession = useCallback(async () => {
-    try {
-      await authFetch("/api/auth", {
-        method: "POST",
-        body: JSON.stringify({ action: "refresh-session" }),
-      });
-    } catch (error) {
-      console.error("Session refresh error:", error);
-    }
+    // Better Auth auto-refreshes sessions based on updateAge config.
+    // No manual refresh needed.
   }, []);
 
   return (
