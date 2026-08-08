@@ -37,13 +37,29 @@ ALTER TABLE "Account" ADD COLUMN IF NOT EXISTS "accessTokenExpiresAt" TIMESTAMP(
 ALTER TABLE "Account" ADD COLUMN IF NOT EXISTS "refreshTokenExpiresAt" TIMESTAMP(3);
 ALTER TABLE "Account" ADD COLUMN IF NOT EXISTS "password" TEXT;
 
--- Step 4: Update unique constraint
--- Note: RENAME COLUMN preserves associated indexes automatically,
--- but the unique constraint name references old column names.
--- We drop the old and create new to ensure correct column references.
-DROP INDEX IF EXISTS "Account_provider_providerAccountId_key";
-DROP INDEX IF EXISTS "Account_providerId_accountId_key";
-CREATE UNIQUE INDEX IF NOT EXISTS "Account_providerId_accountId_key" ON "Account"("providerId", "accountId");
+-- Step 4: Add composite unique constraint for Account (Better Auth requirement)
+-- Check if constraint already exists, if not create it
+DO $$
+BEGIN
+  -- Drop old constraint/index if it exists (from initial schema with old column names)
+  DROP INDEX IF EXISTS "Account_provider_providerAccountId_key";
+  
+  -- Check if the new constraint already exists
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_name = 'Account' 
+    AND constraint_type = 'UNIQUE'
+    AND constraint_name = 'Account_providerId_accountId_key'
+  ) THEN
+    -- Drop the index if it exists (will be recreated by constraint)
+    DROP INDEX IF EXISTS "Account_providerId_accountId_key";
+    
+    -- Add the unique constraint (creates both constraint and index)
+    ALTER TABLE "Account"
+      ADD CONSTRAINT "Account_providerId_accountId_key"
+      UNIQUE ("providerId", "accountId");
+  END IF;
+END $$;
 
 -- Step 5: Create Verification table
 CREATE TABLE IF NOT EXISTS "Verification" (
