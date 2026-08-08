@@ -42,6 +42,7 @@ export const auth = betterAuth({
   // ─── App Configuration ───
   appName: "Destiny Rising Hub",
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+  basePath: "/api/auth-test",
 
   // ─── Secret ───
   secret: process.env.BETTER_AUTH_SECRET || "poc-secret-not-for-production",
