@@ -1,19 +1,22 @@
 /**
  * RC-5 Phase 2A — Better Auth Test Route
+ * DIAGNOSTIC WRAPPER — Temporary
  * 
- * BU ROUTE TEST AMAÇLIDIR. Production /api/auth route'unu 替换 etmez.
- * Mock auth hala aktif. Bu route sadece Better Auth uyumluluğunu test eder.
- * 
- * Endpoint: /api/auth-test/[...all]
- * 
- * Test edilecek akışlar:
- * - POST /api/auth-test/sign-up/email
- * - POST /api/auth-test/sign-in/email
- * - GET  /api/auth-test/get-session
- * - POST /api/auth-test/sign-out
+ * Purpose: Log the exact Request URL reaching this handler
+ * to determine where 404 originates in the request chain.
  */
 
 import { auth } from "@/lib/auth/better-auth-poc";
 import { toNextJsHandler } from "better-auth/next-js";
 
-export const { GET, POST } = toNextJsHandler(auth);
+const originalHandler = toNextJsHandler(auth);
+
+export const GET = async (req: Request) => {
+  console.log(`[POC-DIAG] GET ${req.url}`);
+  return originalHandler.GET(req);
+};
+
+export const POST = async (req: Request) => {
+  console.log(`[POC-DIAG] POST ${req.url}`);
+  return originalHandler.POST(req);
+};
