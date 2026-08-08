@@ -23,9 +23,14 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-// ─── Prisma Client ───
-const prisma = new PrismaClient();
+// ─── Prisma Client (Prisma 7 driver adapter) ───
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL!,
+});
+
+const prisma = new PrismaClient({ adapter });
 
 // ─── Better Auth Instance ───
 export const auth = betterAuth({
