@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn, demoLogin } = useAuth();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("guardian@destinyrisinghub.com");
   const [password, setPassword] = useState("demo123");
   const [isLoading, setIsLoading] = useState(false);
@@ -32,20 +32,6 @@ export default function LoginPage() {
       }
     } catch (err) {
       setError("An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await demoLogin();
-      router.push("/profile");
-    } catch (err) {
-      setError("Demo login failed");
     } finally {
       setIsLoading(false);
     }
@@ -147,18 +133,6 @@ export default function LoginPage() {
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </form>
-
-            {/* Demo Login */}
-            <div className="pt-2 border-t border-[rgb(var(--color-border))]">
-              <Button
-                variant="secondary"
-                className="w-full"
-                onClick={handleDemoLogin}
-                disabled={isLoading}
-              >
-                Continue as Demo User
-              </Button>
-            </div>
 
             {/* Register Link */}
             <div className="text-center pt-2">

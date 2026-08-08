@@ -2,10 +2,11 @@
  * Better Auth — Production Configuration
  *
  * Phase 2B-2: Migration from mock auth to Better Auth.
+ * Phase 2B-3: Atomic Redis rate limiting via @better-auth/redis-storage.
  *
  * Key decisions:
  *   - Session persistence: PostgreSQL (storeSessionInDatabase: true)
- *   - Secondary storage: Redis (rate limiting only, NOT session storage)
+ *   - Secondary storage: Redis via @better-auth/redis-storage (atomic increment)
  *   - Schema: Frozen PascalCase tables, no @@map()
  *   - Cookie contract: session_token (matches Phase 2A proven contract)
  *   - basePath: Default /api/auth (removed /api/auth-test)
@@ -15,6 +16,8 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { Redis } from "ioredis";
+import { redisStorage } from "@better-auth/redis-storage";
 
 // ─── Prisma Client (Prisma 7 driver adapter) ───
 const adapter = new PrismaPg({
@@ -23,46 +26,24 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({ adapter });
 
-// ─── Redis Secondary Storage ───
+// ─── Redis Client (persistent connection) ───
 // Used for rate limiting counters and short-lived data.
 // Session data stays in PostgreSQL (storeSessionInDatabase: true).
-const redisStorage = {
-  get: async (key: string) => {
-    try {
-      const { default: Redis } = await import("ioredis");
-      const redis = new Redis(process.env.REDIS_URL || "redis://redis:6379");
-      const value = await redis.get(key);
-      await redis.quit();
-      return value;
-    } catch {
-      return null;
-    }
-  },
-  set: async (key: string, value: string, ttl?: number) => {
-    try {
-      const { default: Redis } = await import("ioredis");
-      const redis = new Redis(process.env.REDIS_URL || "redis://redis:6379");
-      if (ttl) {
-        await redis.set(key, value, "EX", ttl);
-      } else {
-        await redis.set(key, value);
-      }
-      await redis.quit();
-    } catch {
-      // Redis unavailable — rate limiting degrades gracefully
-    }
-  },
-  delete: async (key: string) => {
-    try {
-      const { default: Redis } = await import("ioredis");
-      const redis = new Redis(process.env.REDIS_URL || "redis://redis:6379");
-      await redis.del(key);
-      await redis.quit();
-    } catch {
-      // Redis unavailable — degrade gracefully
-    }
-  },
-};
+const redis = new Redis(process.env.REDIS_URL || "redis://redis:6379", {
+  maxRetriesPerRequest: 3,
+  lazyConnect: true,
+});
+
+// ─── Redis Secondary Storage (Official Package) ───
+// @better-auth/redis-storage provides:
+//   - Atomic `increment` with Lua script (fixed TTL window)
+//   - Atomic `getAndDelete` (GETDEL or Lua fallback)
+//   - Key prefix support ("better-auth:")
+// This replaces the manual get/set/delete implementation from Phase 2B-2.
+const secondaryStorage = redisStorage({
+  client: redis,
+  keyPrefix: "better-auth:",
+});
 
 // ─── Better Auth Instance ───
 export const auth = betterAuth({
@@ -76,6 +57,9 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
 
   // ─── Secret (production-grade, no fallback) ───
+  // For non-destructive secret rotation, use BETTER_AUTH_SECRETS:
+  //   BETTER_AUTH_SECRETS=2:new-secret,1:old-secret
+  // See: https://better-auth.com/docs/reference/options#secrets
   secret: process.env.BETTER_AUTH_SECRET,
 
   // ─── Email/Password Authentication ───
@@ -129,10 +113,12 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24,        // 1 day
   },
 
-  // ─── Secondary Storage (Redis) ───
-  // Used for rate limiting counters.
+  // ─── Secondary Storage (Redis — Official Package) ───
+  // Used for rate limiting counters and short-lived data.
   // Sessions stay in PostgreSQL (storeSessionInDatabase: true above).
-  secondaryStorage: redisStorage,
+  // The official @better-auth/redis-storage package provides atomic
+  // increment with fixed TTL windows, preventing concurrent bypass.
+  secondaryStorage,
 
   // ─── Cookie Configuration ───
   // Matches Phase 2A proven contract: session_token cookie
@@ -158,7 +144,9 @@ export const auth = betterAuth({
     ? process.env.TRUSTED_ORIGINS.split(",").map((o) => o.trim())
     : ["http://localhost:3000"],
 
-  // ─── Rate Limiting (Redis-backed) ───
+  // ─── Rate Limiting (Redis-backed, atomic) ───
+  // Uses @better-auth/redis-storage for strict enforcement.
+  // Atomic increment ensures concurrent requests cannot bypass limits.
   rateLimit: {
     enabled: true,
     storage: "secondary-storage",

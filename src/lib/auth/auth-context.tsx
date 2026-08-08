@@ -46,17 +46,17 @@ function mapSessionUserToUser(sessionUser: Record<string, unknown> | null): User
     email: sessionUser.email as string,
     username: (sessionUser.username as string) || "",
     displayName: (sessionUser.name as string) || (sessionUser.displayName as string) || "",
-    avatar: (sessionUser.image as string) || (sessionUser.avatar as string) || null,
+    avatar: ((sessionUser.image as string) || (sessionUser.avatar as string)) || null,
     emailVerified: (sessionUser.emailVerified as boolean) || false,
-    provider: "email",
+    provider: "email" as const,
     providerAccountId: sessionUser.id as string,
-    role: (sessionUser.role as string) || "MEMBER",
+    role: ((sessionUser.role as string) || "user") as User["role"],
     locale: (sessionUser.locale as string) || "en",
-    theme: (sessionUser.theme as string) || "dark",
-    bio: null,
+    theme: ((sessionUser.theme as string) || "dark") as User["theme"],
+    bio: (sessionUser.bio as string) || null,
     createdAt: (sessionUser.createdAt as string) || new Date().toISOString(),
     updatedAt: (sessionUser.updatedAt as string) || new Date().toISOString(),
-    lastLoginAt: null,
+    lastLoginAt: (sessionUser.lastLoginAt as string) || new Date().toISOString(),
   };
 }
 
@@ -104,12 +104,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, username: string, displayName: string, password: string) => {
     try {
+      // Better Auth signUp.email accepts additional fields via spread
       const { data, error } = await authClient.signUp.email({
         email,
         password,
         name: displayName,
-        username,
-      });
+        ...{ username }, // username is configured as additionalField
+      } as Parameters<typeof authClient.signUp.email>[0]);
 
       if (error) {
         return { error: error.message || "Sign up failed" };

@@ -25,7 +25,7 @@ import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, isLoading: isAuthLoading, signOut, demoLogin } = useAuth();
+  const { user, isLoading: isAuthLoading, signOut } = useAuth();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [builds, setBuilds] = useState<SavedBuild[]>([]);
@@ -69,13 +69,10 @@ export default function ProfilePage() {
       });
       loadProfileData(user.id).finally(() => setIsLoading(false));
     } else {
-      // Not authenticated - auto-login as demo
-      demoLogin().finally(() => {
-        // demoLogin triggers user state change via AuthContext
-        setIsLoading(false);
-      });
+      // Not authenticated — show sign-in prompt
+      setIsLoading(false);
     }
-  }, [user, isAuthLoading, demoLogin, loadProfileData]);
+  }, [user, isAuthLoading, loadProfileData]);
 
   // Reload data when user changes (e.g. after demo login)
   useEffect(() => {
