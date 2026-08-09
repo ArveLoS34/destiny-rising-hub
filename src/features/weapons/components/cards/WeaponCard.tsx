@@ -24,41 +24,33 @@ interface WeaponCardProps {
 }
 
 const elementIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  Fire: Flame,
-  Water: Droplets,
-  Wind: Wind,
-  Earth: Mountain,
-  Lightning: Zap,
-  Ice: Snowflake,
-  Light: Sun,
-  Dark: Moon,
-  Physical: Crosshair,
+  Solar: Flame,
+  Arc: Zap,
+  Void: Moon,
+  Stasis: Snowflake,
+  Strand: Wind,
 };
 
 const rarityColors: Record<string, string> = {
-  SSR: "from-yellow-500/20 to-amber-600/20 border-yellow-500/30",
-  SR: "from-purple-500/20 to-violet-600/20 border-purple-500/30",
-  R: "from-blue-500/20 to-indigo-600/20 border-blue-500/30",
-  N: "from-gray-500/20 to-gray-600/20 border-gray-500/30",
+  Exotic: "from-yellow-500/20 to-amber-600/20 border-yellow-500/30",
+  Mythic: "from-purple-500/20 to-violet-600/20 border-purple-500/30",
+  Legendary: "from-blue-500/20 to-indigo-600/20 border-blue-500/30",
+  Rare: "from-green-500/20 to-emerald-600/20 border-green-500/30",
 };
 
 const rarityBadgeVariant: Record<string, "warning" | "primary" | "secondary" | "default"> = {
-  SSR: "warning",
-  SR: "primary",
-  R: "secondary",
-  N: "default",
+  Exotic: "warning",
+  Mythic: "primary",
+  Legendary: "secondary",
+  Rare: "default",
 };
 
 const elementColors: Record<string, string> = {
-  Fire: "text-red-400",
-  Water: "text-blue-400",
-  Wind: "text-emerald-400",
-  Earth: "text-amber-600",
-  Lightning: "text-yellow-400",
-  Ice: "text-cyan-400",
-  Light: "text-amber-300",
-  Dark: "text-violet-400",
-  Physical: "text-gray-400",
+  Solar: "text-orange-400",
+  Arc: "text-blue-400",
+  Void: "text-purple-400",
+  Stasis: "text-cyan-400",
+  Strand: "text-green-400",
 };
 
 export function WeaponCard({ weapon, index = 0, viewMode = "grid" }: WeaponCardProps) {

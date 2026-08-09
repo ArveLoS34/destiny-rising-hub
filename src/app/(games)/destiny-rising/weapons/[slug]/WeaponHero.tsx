@@ -20,22 +20,18 @@ interface WeaponHeroProps {
 }
 
 const elementIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  Fire: Flame,
-  Water: Droplets,
-  Wind: Wind,
-  Earth: Mountain,
-  Lightning: Zap,
-  Ice: Snowflake,
-  Light: Sun,
-  Dark: Moon,
-  Physical: Crosshair,
+  Solar: Flame,
+  Arc: Zap,
+  Void: Moon,
+  Stasis: Snowflake,
+  Strand: Wind,
 };
 
 const rarityColors: Record<string, string> = {
-  SSR: "from-yellow-500/20 to-amber-600/20 border-yellow-500/30",
-  SR: "from-purple-500/20 to-violet-600/20 border-purple-500/30",
-  R: "from-blue-500/20 to-indigo-600/20 border-blue-500/30",
-  N: "from-gray-500/20 to-gray-600/20 border-gray-500/30",
+  Exotic: "from-yellow-500/20 to-amber-600/20 border-yellow-500/30",
+  Mythic: "from-purple-500/20 to-violet-600/20 border-purple-500/30",
+  Legendary: "from-blue-500/20 to-indigo-600/20 border-blue-500/30",
+  Rare: "from-green-500/20 to-emerald-600/20 border-green-500/30",
 };
 
 export function WeaponHero({ weapon }: WeaponHeroProps) {
@@ -64,7 +60,7 @@ export function WeaponHero({ weapon }: WeaponHeroProps) {
         {/* Weapon Info */}
         <div className="flex-1 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={weapon.rarity === "SSR" ? "warning" : weapon.rarity === "SR" ? "primary" : "secondary"}>
+            <Badge variant={weapon.rarity === "Exotic" ? "warning" : weapon.rarity === "Mythic" ? "primary" : "secondary"}>
               {weapon.rarity}
             </Badge>
             <Badge variant="outline">{weapon.weaponType}</Badge>

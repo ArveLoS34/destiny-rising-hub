@@ -83,7 +83,7 @@ export function BuildCard({ build, index = 0 }: BuildCardProps) {
             <div className="flex-1 min-w-0">
               <Typography variant="caption" weight="medium" className="truncate block">{build.weapon.name}</Typography>
             </div>
-            <Badge variant={build.weapon.rarity === "SSR" ? "warning" : build.weapon.rarity === "SR" ? "primary" : "default"} className="text-[10px]">
+            <Badge variant={build.weapon.rarity === "Exotic" ? "warning" : build.weapon.rarity === "Mythic" ? "primary" : "default"} className="text-[10px]">
               {build.weapon.rarity}
             </Badge>
           </div>

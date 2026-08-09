@@ -90,7 +90,7 @@ export function AdvisorClient() {
                     {character.element} • {character.role}
                   </Typography>
                 </div>
-                <Badge variant={character.rarity === "SSR" ? "warning" : character.rarity === "SR" ? "primary" : "default"} className="text-[10px]">
+                <Badge variant={character.rarity === "Exotic" ? "warning" : character.rarity === "Mythic" ? "primary" : "default"} className="text-[10px]">
                   {character.rarity}
                 </Badge>
               </button>
@@ -254,7 +254,7 @@ function AdvisorResults({ recommendation, onReset }: AdvisorResultsProps) {
                 {bestWeapon.bestWeapon.rarity} • ATK {bestWeapon.bestWeapon.stats.baseATK} • {bestWeapon.bestWeapon.element}
               </Typography>
             </div>
-            <Badge variant={bestWeapon.bestWeapon.rarity === "SSR" ? "warning" : "primary"}>
+            <Badge variant={bestWeapon.bestWeapon.rarity === "Exotic" ? "warning" : "primary"}>
               {bestWeapon.bestWeapon.rarity}
             </Badge>
           </div>

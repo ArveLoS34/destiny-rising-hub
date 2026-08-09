@@ -20,22 +20,18 @@ interface CharacterHeroProps {
 }
 
 const elementIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  Fire: Flame,
-  Water: Droplets,
-  Wind: Wind,
-  Earth: Mountain,
-  Lightning: Zap,
-  Ice: Snowflake,
-  Light: Sun,
-  Dark: Moon,
-  Physical: Crosshair,
+  Solar: Flame,
+  Arc: Zap,
+  Void: Moon,
+  Stasis: Snowflake,
+  Strand: Wind,
 };
 
 const rarityBadgeVariant: Record<string, "warning" | "primary" | "secondary" | "default"> = {
-  SSR: "warning",
-  SR: "primary",
-  R: "secondary",
-  N: "default",
+  Exotic: "warning",
+  Mythic: "primary",
+  Legendary: "secondary",
+  Rare: "default",
 };
 
 export function CharacterHero({ character }: CharacterHeroProps) {

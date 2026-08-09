@@ -27,12 +27,11 @@ interface CharacterFilterBarProps {
 }
 
 const elementIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  Fire: Flame, Water: Droplets, Wind: Wind, Earth: Mountain,
-  Lightning: Zap, Ice: Snowflake, Light: Sun, Dark: Moon, Physical: Crosshair,
+  Solar: Flame, Arc: Zap, Void: Moon, Stasis: Snowflake, Strand: Wind,
 };
 
 const roleIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  DPS: Sword, "Sub-DPS": Wand2, Support: Shield, Tank: Shield, Healer: Heart, Utility: Crosshair,
+  Offense: Sword, Defense: Shield, Support: Heart,
 };
 
 export function CharacterFilterBar({

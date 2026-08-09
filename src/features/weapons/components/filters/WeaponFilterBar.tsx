@@ -27,8 +27,7 @@ interface WeaponFilterBarProps {
 }
 
 const elementIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  Fire: Flame, Water: Droplets, Wind: Wind, Earth: Mountain,
-  Lightning: Zap, Ice: Snowflake, Light: Sun, Dark: Moon, Physical: Crosshair,
+  Solar: Flame, Arc: Zap, Void: Moon, Stasis: Snowflake, Strand: Wind,
 };
 
 export function WeaponFilterBar({
