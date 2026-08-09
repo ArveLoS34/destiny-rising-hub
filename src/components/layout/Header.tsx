@@ -6,9 +6,11 @@ import { Search as SearchInput } from "@/components/ui/Search";
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
 import { useState } from "react";
+import { useAuth } from "@/lib/auth/auth-context";
 
 export function Header() {
   const [searchValue, setSearchValue] = useState("");
+  const { user, isAuthenticated } = useAuth();
 
   return (
     <header className="sticky top-0 z-[var(--z-sticky)] h-[var(--header-height)] border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-background)/0.8)] backdrop-blur-xl">
@@ -61,11 +63,19 @@ export function Header() {
 
           <div className="hidden sm:block h-6 w-px bg-[rgb(var(--color-border))] mx-1" />
 
-          <Button variant="ghost" size="sm" className="gap-2">
-            <div className="h-6 w-6 rounded-full bg-gradient-to-br from-[rgb(var(--color-primary))] to-[rgb(var(--color-accent))]" />
-            <span className="hidden sm:inline text-xs">Guardian</span>
-            <ChevronDown className="h-3 w-3" />
-          </Button>
+          {isAuthenticated && user ? (
+            <Button variant="ghost" size="sm" className="gap-2">
+              <div className="h-6 w-6 rounded-full bg-gradient-to-br from-[rgb(var(--color-primary))] to-[rgb(var(--color-accent))]" />
+              <span className="hidden sm:inline text-xs">{user.displayName || user.username || user.email}</span>
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          ) : (
+            <Link href="/login">
+              <Button variant="outline" size="sm">
+                Sign In
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </header>

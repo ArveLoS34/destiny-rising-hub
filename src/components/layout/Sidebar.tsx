@@ -10,6 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/Tooltip";
+import { useAuth } from "@/lib/auth/auth-context";
 
 interface SidebarProps {
   className?: string;
@@ -18,6 +19,7 @@ interface SidebarProps {
 
 export function Sidebar({ className, isCollapsed = false }: SidebarProps) {
   const pathname = usePathname();
+  const { user, isAuthenticated } = useAuth();
 
   return (
     <aside
@@ -39,21 +41,26 @@ export function Sidebar({ className, isCollapsed = false }: SidebarProps) {
         ))}
       </div>
 
-      {/* Footer */}
+      {/* Footer - User Info */}
       <div className="border-t border-[rgb(var(--color-border))] p-4">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[rgb(var(--color-primary))] to-[rgb(var(--color-accent))]" />
-          {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-[rgb(var(--color-text-primary))] truncate">
-                Guardian
-              </p>
-              <p className="text-[10px] text-[rgb(var(--color-text-tertiary))] truncate">
-                Level 50
-              </p>
-            </div>
-          )}
-        </div>
+        {isAuthenticated && user ? (
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[rgb(var(--color-primary))] to-[rgb(var(--color-accent))]" />
+            {!isCollapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-[rgb(var(--color-text-primary))] truncate">
+                  {user.displayName || user.username || user.email}
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          !isCollapsed && (
+            <Link href="/login" className="text-xs text-[rgb(var(--color-primary))] hover:underline">
+              Sign In
+            </Link>
+          )
+        )}
       </div>
     </aside>
   );
