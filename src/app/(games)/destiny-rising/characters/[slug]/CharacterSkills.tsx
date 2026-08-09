@@ -92,7 +92,7 @@ export function CharacterSkills({ character }: CharacterSkillsProps) {
       <div>
         <Typography variant="h3" className="mb-4">Skill</Typography>
         {character.skills
-          .filter((s) => s.type === "skill")
+          .filter((s) => s.type === "ability-1" || s.type === "ability-2")
           .map((skill) => (
             <SkillCard key={skill.id} skill={skill} />
           ))}
