@@ -3,7 +3,16 @@ import type { Artifact, ArtifactSummary, ArtifactFilters, ArtifactSet } from "@/
 
 /**
  * Artifact Service
- * Handles artifact data operations and optimization recommendations.
+ * 
+ * Handles artifact data operations for Destiny: Rising.
+ * 
+ * v7.3 Baseline:
+ * - 80 artifacts with verified name, slot, type, effect
+ * - Set bonus system confirmed but artifact→set mapping unavailable
+ * - No verified optimization data exists
+ * 
+ * Functions that would require verified DR optimization data
+ * return empty/unavailable results rather than fabricated recommendations.
  */
 
 export function getAllArtifacts(): Artifact[] {
@@ -11,37 +20,38 @@ export function getAllArtifacts(): Artifact[] {
 }
 
 export function getArtifactSummaries(): ArtifactSummary[] {
-  return artifacts.map((a) => ({
+  return artifacts.map((a: any) => ({
     id: a.id,
     slug: a.slug,
     name: a.name,
     icon: a.icon,
     rarity: a.rarity,
     slot: a.slot,
-    setId: a.setId,
-    setName: a.setName,
-    mainStat: a.mainStat,
+    setId: a.setId || "",
+    setName: a.setName || "",
+    mainStat: a.mainStat || "",
     verification: {
-      verified: a.verification.verified,
-      gameVersion: a.verification.gameVersion,
+      verified: a.verification?.verified ?? false,
+      gameVersion: a.verification?.gameVersion ?? "",
     },
   }));
 }
 
 export function getArtifactBySlug(slug: string): Artifact | undefined {
-  return artifacts.find((a) => a.slug === slug);
+  return artifacts.find((a: any) => a.slug === slug);
 }
 
 export function getArtifactById(id: string): Artifact | undefined {
-  return artifacts.find((a) => a.id === id);
+  return artifacts.find((a: any) => a.id === id);
 }
 
 export function getArtifactSets(): ArtifactSet[] {
+  // DR has no verified artifact set data
   return artifactSets;
 }
 
 export function getArtifactSetById(id: string): ArtifactSet | undefined {
-  return artifactSets.find((s) => s.id === id);
+  return artifactSets.find((s: any) => s.id === id);
 }
 
 export function filterArtifacts(list: Artifact[], filters: ArtifactFilters): Artifact[] {
@@ -50,100 +60,71 @@ export function filterArtifacts(list: Artifact[], filters: ArtifactFilters): Art
   if (filters.search) {
     const search = filters.search.toLowerCase();
     result = result.filter(
-      (a) =>
-        a.name.toLowerCase().includes(search) ||
-        a.setName.toLowerCase().includes(search) ||
-        a.mainStat.toLowerCase().includes(search)
+      (a: any) =>
+        (a.name || "").toLowerCase().includes(search) ||
+        (a.setName || "").toLowerCase().includes(search) ||
+        (a.attributeType || "").toLowerCase().includes(search) ||
+        (a.effect || "").toLowerCase().includes(search)
     );
   }
 
   if (filters.sets.length > 0) {
-    result = result.filter((a) => filters.sets.includes(a.setId));
+    result = result.filter((a: any) => filters.sets.includes(a.setId || ""));
   }
 
   if (filters.slots.length > 0) {
-    result = result.filter((a) => filters.slots.includes(a.slot));
+    result = result.filter((a: any) => filters.slots.includes(a.slot || ""));
   }
 
   if (filters.rarities.length > 0) {
-    result = result.filter((a) => filters.rarities.includes(a.rarity));
+    result = result.filter((a: any) => filters.rarities.includes(a.rarity || ""));
   }
 
   if (filters.mainStats.length > 0) {
-    result = result.filter((a) => filters.mainStats.includes(a.mainStat));
+    result = result.filter((a: any) => filters.mainStats.includes(a.mainStat || ""));
   }
 
   return result;
 }
 
 export function getArtifactsBySet(setId: string): Artifact[] {
-  return artifacts.filter((a) => a.setId === setId);
+  return artifacts.filter((a: any) => (a.setId || "") === setId);
 }
 
 export function getArtifactsBySlot(slot: string): Artifact[] {
-  return artifacts.filter((a) => a.slot === slot);
-}
-
-export function getArtifactsForCharacter(characterId: string): Artifact[] {
-  return artifacts.filter((a) => a.recommendedFor.includes(characterId));
-}
-
-export function getOptimalArtifactSet(characterId: string, goal: "damage" | "survivability" | "support"): string {
-  // Simplified optimization logic
-  const charArtifacts = artifacts.filter((a) => a.recommendedFor.includes(characterId));
-
-  if (charArtifacts.length === 0) {
-    return "set-berserker"; // Default
-  }
-
-  // Count sets
-  const setCounts: Record<string, number> = {};
-  charArtifacts.forEach((a) => {
-    setCounts[a.setId] = (setCounts[a.setId] || 0) + 1;
+  return artifacts.filter((a: any) => {
+    // Support both DR slot numbers (1-4) and legacy slot names
+    if (a.slotNumber !== undefined) {
+      return String(a.slotNumber) === slot;
+    }
+    return (a.slot || "") === slot;
   });
+}
 
-  // Return most common set
-  return Object.entries(setCounts).sort((a, b) => b[1] - a[1])[0][0];
+export function getArtifactsForCharacter(_characterId: string): Artifact[] {
+  // No verified character→artifact mapping exists in v7.3 baseline
+  return [];
+}
+
+export function getOptimalArtifactSet(_characterId: string, _goal: "damage" | "survivability" | "support"): string {
+  // No verified DR artifact optimization data exists
+  // DR artifacts have individual effects, not Genshin-style set bonuses
+  // Set bonus system is confirmed but mapping is unavailable
+  return "";
 }
 
 export function getOptimalMainStats(
-  setId: string,
-  slot: "sands" | "goblet" | "crown",
-  goal: "damage" | "survivability" | "support"
+  _setId: string,
+  _slot: string,
+  _goal: "damage" | "survivability" | "support"
 ): string {
-  // Simplified logic based on goal
-  if (slot === "sands") {
-    return goal === "damage" ? "ATK%" : goal === "support" ? "Energy Recharge%" : "HP%";
-  }
-
-  if (slot === "goblet") {
-    // Return element damage bonus based on set
-    const set = artifactSets.find((s) => s.id === setId);
-    if (set?.name.includes("Inferno")) return "Fire Damage Bonus%";
-    if (set?.name.includes("Glacier")) return "Ice Damage Bonus%";
-    if (set?.name.includes("Void")) return "Dark Damage Bonus%";
-    return "ATK%";
-  }
-
-  if (slot === "crown") {
-    return goal === "damage" ? "Crit Rate%" : goal === "support" ? "Healing Bonus%" : "Crit Damage%";
-  }
-
-  return "ATK%";
+  // No verified DR artifact main stat optimization data exists
+  // DR artifacts use attribute types (Survival, Movement, Ability, etc.)
+  // not Genshin-style main stats (ATK%, Crit Rate%, etc.)
+  return "";
 }
 
-export function getOptimalSubStats(goal: "damage" | "survivability" | "support"): string[] {
-  if (goal === "damage") {
-    return ["Crit Rate%", "Crit Damage%", "ATK%", "Elemental Mastery"];
-  }
-
-  if (goal === "survivability") {
-    return ["HP%", "DEF%", "Energy Recharge%", "Elemental Mastery"];
-  }
-
-  if (goal === "support") {
-    return ["Energy Recharge%", "ATK%", "Elemental Mastery", "HP%"];
-  }
-
-  return ["ATK%", "Crit Rate%", "Crit Damage%", "Elemental Mastery"];
+export function getOptimalSubStats(_goal: "damage" | "survivability" | "support"): string[] {
+  // No verified DR artifact sub stat optimization data exists
+  return [];
 }

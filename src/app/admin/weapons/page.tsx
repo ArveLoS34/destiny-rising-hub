@@ -11,7 +11,7 @@ import { Save, ArrowLeft, History, Shield, CheckCircle } from 'lucide-react';
 // Mock data - will be replaced with API call
 const mockWeapon = {
   id: 'dr-weap-001',
-  name: 'Stellar Inferno',
+  name: 'Sweet Business',
   slug: 'stellar-inferno',
   rarity: 'SSR',
   type: 'Greatsword',
@@ -135,14 +135,14 @@ export default function WeaponEditorPage() {
                     onChange={(e) => setWeapon({ ...weapon, element: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="Fire">Fire</option>
+                    <option value="Solar">Solar</option>
                     <option value="Water">Water</option>
-                    <option value="Wind">Wind</option>
-                    <option value="Earth">Earth</option>
-                    <option value="Lightning">Lightning</option>
-                    <option value="Ice">Ice</option>
-                    <option value="Light">Light</option>
-                    <option value="Dark">Dark</option>
+                    
+                    
+                    <option value="Arc">Arc</option>
+                    <option value="Void">Void</option>
+                    
+                    
                   </select>
                 </div>
               </div>
@@ -202,11 +202,11 @@ export default function WeaponEditorPage() {
                   >
                     <option value="Crit Rate">Crit Rate</option>
                     <option value="Crit Damage">Crit Damage</option>
-                    <option value="ATK%">ATK%</option>
-                    <option value="HP%">HP%</option>
-                    <option value="DEF%">DEF%</option>
+                    <option value="">None</option>
+                    
+                    
                     <option value="Energy Recharge">Energy Recharge</option>
-                    <option value="Elemental Mastery">Elemental Mastery</option>
+                    
                   </select>
                 </div>
               </div>

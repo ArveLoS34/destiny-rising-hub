@@ -241,7 +241,7 @@ function analyzeBestWeapon(character: CharacterSummary): WeaponAnalysis {
   scored.sort((a, b) => b.score - a.score);
 
   const best = scored[0];
-  const alternatives = scored.slice(1, 4).map((s) => s.weapon);
+  const alternatives = scored.slice(1, 4).map((s: any) => s.weapon);
 
   return {
     bestWeapon: best.weapon,
@@ -258,7 +258,7 @@ function analyzeBestWeapon(character: CharacterSummary): WeaponAnalysis {
 function analyzeBestTeam(character: CharacterSummary): TeamAnalysis {
   // Find teams that include this character
   const characterTeams = teams.filter((t) =>
-    t.members.some((m) => m.characterId === character.id)
+    t.members.some((m: any) => m.characterId === character.id)
   );
 
   if (characterTeams.length > 0) {
@@ -266,10 +266,10 @@ function analyzeBestTeam(character: CharacterSummary): TeamAnalysis {
     characterTeams.sort((a, b) => b.score.overall - a.score.overall);
     const best = characterTeams[0];
 
-    const mainCarry = best.members.find((m) => m.slot === "mainCarry");
-    const subCarry = best.members.find((m) => m.slot === "subCarry");
-    const support = best.members.find((m) => m.slot === "support");
-    const healer = best.members.find((m) => m.slot === "healer");
+    const mainCarry = best.members.find((m: any) => m.slot === "mainCarry");
+    const subCarry = best.members.find((m: any) => m.slot === "subCarry");
+    const support = best.members.find((m: any) => m.slot === "support");
+    const healer = best.members.find((m: any) => m.slot === "healer");
 
     return {
       bestTeam: best,
@@ -604,19 +604,19 @@ function generateQuickTips(character: CharacterSummary): string[] {
 
   // Element-based tips
   switch (character.element) {
-    case "Fire":
+    case "Solar":
       tips.push("Fire pairs well with Ice for Melt reactions");
       break;
-    case "Ice":
+    case "Void":
       tips.push("Ice can freeze enemies, creating safe damage windows");
       break;
-    case "Lightning":
+    case "Arc":
       tips.push("Lightning excels at rapid damage and energy generation");
       break;
-    case "Dark":
+    case "Void":
       tips.push("Dark element has strong burst potential");
       break;
-    case "Wind":
+    case "Arc":
       tips.push("Wind provides excellent crowd control and swirl reactions");
       break;
   }

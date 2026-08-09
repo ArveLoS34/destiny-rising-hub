@@ -30,15 +30,15 @@ import {
 } from "lucide-react";
 
 export function CombatLabClient() {
-  const [characterId, setCharacterId] = useState("dr-char-001");
+  const [characterId, setCharacterId] = useState("dr-char-wolf");
   const [weaponId, setWeaponId] = useState("dr-weap-001");
   const [characterLevel, setCharacterLevel] = useState(90);
   const [weaponLevel, setWeaponLevel] = useState(90);
-  const [artifactSet2pc, setArtifactSet2pc] = useState("set-inferno");
-  const [artifactSet4pc, setArtifactSet4pc] = useState("set-inferno");
-  const [sandsMainStat, setSandsMainStat] = useState("ATK%");
-  const [gobletMainStat, setGobletMainStat] = useState("Fire Damage Bonus%");
-  const [crownMainStat, setCrownMainStat] = useState("Crit Rate%");
+  const [artifactSet2pc, setArtifactSet2pc] = useState("");
+  const [artifactSet4pc, setArtifactSet4pc] = useState("");
+  const [sandsMainStat, setSandsMainStat] = useState("");
+  const [gobletMainStat, setGobletMainStat] = useState("");
+  const [crownMainStat, setCrownMainStat] = useState("");
   const [critRateSub, setCritRateSub] = useState(20);
   const [critDamageSub, setCritDamageSub] = useState(40);
   const [atkPercentSub, setAtkPercentSub] = useState(30);
@@ -77,7 +77,7 @@ export function CombatLabClient() {
       enemyResistance: enemyResistance / 100,
       skillType,
       skillMultiplier,
-      skillElement: "Fire",
+      skillElement: "Solar",
     };
 
     return calculateDamage(input);
@@ -102,44 +102,35 @@ export function CombatLabClient() {
   ]);
 
   // Get artifact recommendations
+  // NOTE: DR artifact optimization not yet available. No verified DR optimization data exists.
   const artifactRecommendation = useMemo(() => {
-    const optimalSet = getOptimalArtifactSet(characterId, "damage");
-    const optimalSands = getOptimalMainStats(optimalSet, "sands", "damage");
-    const optimalGoblet = getOptimalMainStats(optimalSet, "goblet", "damage");
-    const optimalCrown = getOptimalMainStats(optimalSet, "crown", "damage");
-    const optimalSubs = getOptimalSubStats("damage");
-
     return {
-      set: optimalSet,
-      sands: optimalSands,
-      goblet: optimalGoblet,
-      crown: optimalCrown,
-      subs: optimalSubs,
+      set: "",
+      sands: "",
+      goblet: "",
+      crown: "",
+      subs: [] as string[],
     };
   }, [characterId]);
 
-  // Generate AI recommendations
+  // Generate recommendations
+  // NOTE: DR-specific recommendations require verified game data.
   const aiRecommendations = useMemo(() => {
     const recommendations: string[] = [];
 
-    if (damageResult.statBreakdown.critRate < 0.5) {
-      recommendations.push("Crit Rate is below 50%. Consider Crit Rate% artifacts or weapons.");
-    }
-
-    if (damageResult.statBreakdown.critDamage < 1.5) {
-      recommendations.push("Crit Damage is low. Aim for at least 150% crit damage.");
-    }
-
-    if (artifactSet2pc !== artifactRecommendation.set) {
-      recommendations.push(`Consider using ${artifactSets.find(s => s.id === artifactRecommendation.set)?.name || "optimal"} set for better performance.`);
-    }
-
-    if (sandsMainStat !== artifactRecommendation.sands) {
-      recommendations.push(`Change Sands main stat to ${artifactRecommendation.sands} for optimal damage.`);
+    // DR uses DPS-based combat, not crit-based Genshin formulas.
+    // Verified DR optimization data is not yet available.
+    const weapon = weapons.find((w) => w.id === weaponId);
+    if (weapon) {
+      if (weapon.dps) {
+        recommendations.push(`${weapon.name} has a verified DPS of ${weapon.dps}.`);
+      } else {
+        recommendations.push(`${weapon.name}: DPS data is unavailable.`);
+      }
     }
 
     if (recommendations.length === 0) {
-      recommendations.push("Your build is well optimized! Great job!");
+      recommendations.push("DR-specific build optimization is not yet available. Verified game data is needed.");
     }
 
     return recommendations;
@@ -432,39 +423,33 @@ export function CombatLabClient() {
               {/* Main Stats */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Typography variant="bodySm" weight="medium">Sands</Typography>
+                  <Typography variant="bodySm" weight="medium">Artifact Slot 1</Typography>
                   <select
                     value={sandsMainStat}
                     onChange={(e) => setSandsMainStat(e.target.value)}
                     className="w-full h-10 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 text-sm"
                   >
-                    <option value="ATK%">ATK%</option>
-                    <option value="HP%">HP%</option>
-                    <option value="DEF%">DEF%</option>
-                    <option value="Energy Recharge%">Energy Recharge%</option>
+                    <option value="">None</option>
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Typography variant="bodySm" weight="medium">Goblet</Typography>
+                  <Typography variant="bodySm" weight="medium">Artifact Slot 2</Typography>
                   <select
                     value={gobletMainStat}
                     onChange={(e) => setGobletMainStat(e.target.value)}
                     className="w-full h-10 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 text-sm"
                   >
-                    <option value="Fire Damage Bonus%">Fire Damage Bonus%</option>
-                    <option value="Ice Damage Bonus%">Ice Damage Bonus%</option>
-                    <option value="ATK%">ATK%</option>
+                    <option value="">None</option>
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Typography variant="bodySm" weight="medium">Crown</Typography>
+                  <Typography variant="bodySm" weight="medium">Artifact Slot 3</Typography>
                   <select
                     value={crownMainStat}
                     onChange={(e) => setCrownMainStat(e.target.value)}
                     className="w-full h-10 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 text-sm"
                   >
-                    <option value="Crit Rate%">Crit Rate%</option>
-                    <option value="Crit Damage%">Crit Damage%</option>
+                    <option value="">None</option>
                   </select>
                 </div>
               </div>

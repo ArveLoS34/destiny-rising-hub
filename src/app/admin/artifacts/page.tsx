@@ -211,12 +211,12 @@ export default function ArtifactEditorPage() {
                     <option value="HP">HP</option>
                     <option value="ATK">ATK</option>
                     <option value="DEF">DEF</option>
-                    <option value="HP%">HP%</option>
-                    <option value="ATK%">ATK%</option>
-                    <option value="DEF%">DEF%</option>
+                    <option value="">None</option>
+                    
+                    
                     <option value="Crit Rate">Crit Rate</option>
                     <option value="Crit Damage">Crit Damage</option>
-                    <option value="Elemental Mastery">Elemental Mastery</option>
+                    
                     <option value="Energy Recharge">Energy Recharge</option>
                     <option value="Fire Damage Bonus">Fire Damage Bonus</option>
                     <option value="Ice Damage Bonus">Ice Damage Bonus</option>

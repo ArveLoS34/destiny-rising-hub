@@ -42,7 +42,7 @@ const pendingReviews = [
     id: 'review-002',
     entityType: 'weapon',
     entityId: 'dr-weap-001',
-    entityName: 'Stellar Inferno',
+    entityName: 'Sweet Business',
     action: 'update',
     source: 'official-api',
     submittedBy: 'system',

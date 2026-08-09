@@ -99,8 +99,8 @@ class DashboardService {
         { id: 'guide-002', name: 'Farming Guide', views: 8930, likes: 567 },
       ],
       weapons: [
-        { id: 'dr-weap-001', name: 'Stellar Inferno', views: 28340, likes: 1450 },
-        { id: 'dr-weap-002', name: 'Void Reaper', views: 24560, likes: 1230 },
+        { id: 'dr-weap-001', name: 'Sweet Business', views: 28340, likes: 1450 },
+        { id: 'dr-weap-002', name: 'Furies III', views: 24560, likes: 1230 },
       ],
     };
     

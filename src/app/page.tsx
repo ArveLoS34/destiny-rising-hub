@@ -15,6 +15,10 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
+import { characters } from "@/data/games/destiny-rising/characters";
+import { weapons } from "@/data/games/destiny-rising/weapons";
+import { artifacts } from "@/data/games/destiny-rising/artifacts";
+import { materials } from "@/data/games/destiny-rising/materials";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -28,7 +32,7 @@ const featuredModules = [
     description: "Explore every hero, their skills, talents, and optimal builds.",
     icon: Users,
     href: "/destiny-rising/characters",
-    count: "40+",
+    count: String(characters.length),
     badgeVariant: "primary" as const,
   },
   {
@@ -44,7 +48,7 @@ const featuredModules = [
     description: "Detailed weapon stats, upgrade paths, and character synergies.",
     icon: Sword,
     href: "/destiny-rising/weapons",
-    count: "60+",
+    count: String(weapons.length),
     badgeVariant: "secondary" as const,
   },
   {
@@ -126,11 +130,11 @@ export default function HomePage() {
         <Container>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
             {[
-              { label: "Characters", value: "20", icon: Users },
-              { label: "Weapons", value: "25", icon: Sword },
-              { label: "Elements", value: "9", icon: FlaskConical },
-              { label: "Factions", value: "6", icon: Shield },
-              { label: "Manufacturers", value: "5", icon: Trophy },
+              { label: "Characters", value: String(characters.length), icon: Users },
+              { label: "Weapons", value: String(weapons.length), icon: Sword },
+              { label: "Artifacts", value: String(artifacts.length), icon: FlaskConical },
+              { label: "Materials", value: String(materials.length), icon: Shield },
+              { label: "Elements", value: "3", icon: Trophy },
             ].map((stat) => (
               <Card
                 key={stat.label}

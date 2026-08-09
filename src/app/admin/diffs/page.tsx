@@ -27,7 +27,7 @@ const mockDiffs = [
     id: 'diff-002',
     entityType: 'weapon',
     entityId: 'dr-weap-001',
-    entityName: 'Stellar Inferno',
+    entityName: 'Sweet Business',
     oldVersion: '1.3.0',
     newVersion: '1.4.0',
     submittedAt: '2026-08-04T09:15:00Z',

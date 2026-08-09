@@ -10,7 +10,7 @@ import { Save, ArrowLeft, History, Shield, CheckCircle, Star } from 'lucide-reac
 
 // Mock data - will be replaced with API call
 const mockBuild = {
-  id: 'build-nova-burst',
+  id: 'build-001',
   title: 'Nova Burst DPS Build',
   slug: 'nova-burst-dps',
   characterId: 'dr-char-001',
@@ -166,7 +166,7 @@ export default function BuildEditorPage() {
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Weapon</label>
                 <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option>Stellar Inferno (SSR)</option>
+                  <option>Sweet Business (Exotic)</option>
                   <option>Ember Blade (R)</option>
                 </select>
               </div>

@@ -48,9 +48,12 @@ export type PrimaryWeaponType =
   | "Auto Rifle"
   | "Pulse Rifle"
   | "Scout Rifle"
-  | "Hand Cannon"
+  | "Fusion Rifle"
   | "Submachine Gun"
-  | "Sidearm";
+  | "Sidearm"
+  | "Hand Cannon"
+  | "Light Grenade Launcher"
+  | "Bow";
 
 export type PowerWeaponType =
   | "Sword"
@@ -59,10 +62,8 @@ export type PowerWeaponType =
   | "Grenade Launcher"
   | "Rocket Launcher"
   | "Machine Gun"
-  | "Light Grenade Launcher"
   | "Linear Fusion Rifle"
-  | "Auto Crossbow"
-  | "Fusion Rifle";
+  | "Auto Crossbow";
 
 export type WeaponType = PrimaryWeaponType | PowerWeaponType;
 
@@ -151,10 +152,11 @@ export type LegacyWeaponType =
 export type LegacyFaction =
   | "Genesis" | "Eclipse" | "Nova" | "Stellar" | "Void" | "Independent";
 
-/** @deprecated — Destiny: Rising has no manufacturer system */
-export type LegacyManufacturer =
-  | "Genesis Forge" | "Void Industries" | "Stellar Armory"
-  | "Nova Dynamics" | "Eclipse Arms";
+/** @deprecated — Destiny: Rising foundry system is different from manufacturer.
+ *  Foundry mapping (weapon → foundry) is 0/139 verified in v7.3 baseline.
+ *  Known foundries: Black Armory, Heron, Jiangshi Steelworks, Riviks & Wright, Eclipse Monolith.
+ *  This type is kept only as an empty transition placeholder. */
+export type LegacyManufacturer = string;
 
 /** @deprecated — Generic RPG damage types */
 export type LegacyDamageType =

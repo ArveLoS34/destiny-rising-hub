@@ -14,7 +14,7 @@ export function getTeamBySlug(slug: string): TeamSummary | undefined {
 }
 
 export function getTeamsByCharacter(characterId: string): TeamSummary[] {
-  return teams.filter((t) => t.members.some((m) => m.characterId === characterId));
+  return teams.filter((t) => t.members.some((m: any) => m.characterId === characterId));
 }
 
 export function getTeamCount(): number {
@@ -44,7 +44,7 @@ export function filterTeams(
       (t) =>
         t.title.toLowerCase().includes(query) ||
         t.description.toLowerCase().includes(query) ||
-        t.members.some((m) => m.characterName.toLowerCase().includes(query)) ||
+        t.members.some((m: any) => m.characterName.toLowerCase().includes(query)) ||
         t.tags.some((tag) => tag.toLowerCase().includes(query))
     );
   }

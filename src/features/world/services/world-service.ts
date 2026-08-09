@@ -134,7 +134,7 @@ export class WorldService {
     // Material filter
     if (filters.materials.length > 0) {
       filtered = filtered.filter(n => 
-        n.drops?.some(d => filters.materials.includes(d.itemId))
+        n.drops?.some((d: any) => filters.materials.includes(d.itemId))
       );
     }
 
@@ -168,7 +168,7 @@ export class WorldService {
   static getNodeCountByType(): Record<NodeType, number> {
     const counts = {} as Record<NodeType, number>;
     mapNodes.forEach(node => {
-      counts[node.type] = (counts[node.type] || 0) + 1;
+      counts[node.type as keyof typeof counts] = (counts[node.type as keyof typeof counts] || 0) + 1;
     });
     return counts;
   }

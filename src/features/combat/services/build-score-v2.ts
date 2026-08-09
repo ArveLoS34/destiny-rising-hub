@@ -143,7 +143,7 @@ function calculateEnergyScore(character: Character, weapon: WeaponSummary, build
   let score = 60;
 
   // Weapon energy generation
-  if (weapon.element === "Lightning") score += 10;
+  if (weapon.element === "Arc") score += 10;
 
   // Build optimization
   if (build.tags?.includes("Energy")) score += 15;

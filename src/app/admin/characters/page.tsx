@@ -129,14 +129,14 @@ export default function CharacterEditorPage() {
                     onChange={(e) => setCharacter({ ...character, element: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="Fire">Fire</option>
+                    <option value="Solar">Solar</option>
                     <option value="Water">Water</option>
-                    <option value="Wind">Wind</option>
-                    <option value="Earth">Earth</option>
-                    <option value="Lightning">Lightning</option>
-                    <option value="Ice">Ice</option>
-                    <option value="Light">Light</option>
-                    <option value="Dark">Dark</option>
+                    
+                    
+                    <option value="Arc">Arc</option>
+                    <option value="Void">Void</option>
+                    
+                    
                   </select>
                 </div>
               </div>
