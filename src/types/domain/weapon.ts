@@ -1,9 +1,10 @@
 import {
   BaseEntity,
-  Rarity,
-  Element,
-  WeaponType,
-  DamageType,
+  // Transition types — accept both real and legacy values during migration
+  RarityValue as Rarity,
+  ElementValue as Element,
+  WeaponTypeValue as WeaponType,
+  DamageTypeValue as DamageType,
   MaterialPurpose,
   BuildDifficulty,
 } from "./game";

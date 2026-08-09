@@ -111,8 +111,8 @@ export function sortWeapons(
         comparison = a.name.localeCompare(b.name);
         break;
       case "rarity": {
-        const rarityOrder = { SSR: 4, SR: 3, R: 2, N: 1 };
-        comparison = rarityOrder[a.rarity] - rarityOrder[b.rarity];
+        const rarityOrder: Record<string, number> = { Mythic: 6, Legendary: 5, Exotic: 4, SSR: 4, SR: 3, R: 2, Rare: 2, N: 1 };
+        comparison = (rarityOrder[a.rarity] ?? 0) - (rarityOrder[b.rarity] ?? 0);
         break;
       }
       case "weaponType":

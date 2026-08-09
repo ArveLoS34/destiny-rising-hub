@@ -1,4 +1,4 @@
-import { BaseEntity, Rarity, BuildDifficulty } from "./game";
+import { BaseEntity, RarityValue as Rarity, BuildDifficulty } from "./game";
 
 /**
  * Build domain model.

@@ -1,4 +1,16 @@
-import { BaseEntity, Rarity, Element, Role, WeaponType, Faction, DamageType, WeaknessCategory, StrengthCategory } from "./game";
+import {
+  BaseEntity,
+  // Transition types — accept both real and legacy values during migration
+  ElementValue as Element,
+  RarityValue as Rarity,
+  RoleValue as Role,
+  WeaponTypeValue as WeaponType,
+  FactionValue as Faction,
+  DamageTypeValue as DamageType,
+  AbilityType,
+  WeaknessCategory,
+  StrengthCategory,
+} from "./game";
 
 /**
  * Character domain model.
