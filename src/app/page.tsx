@@ -13,7 +13,6 @@ import {
   Brain,
   Zap,
   ArrowRight,
-  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -28,7 +27,7 @@ const featuredModules = [
     title: "Characters",
     description: "Explore every hero, their skills, talents, and optimal builds.",
     icon: Users,
-    href: "/characters",
+    href: "/destiny-rising/characters",
     count: "40+",
     badgeVariant: "primary" as const,
   },
@@ -36,7 +35,7 @@ const featuredModules = [
     title: "Build Lab",
     description: "AI-powered build optimization for maximum efficiency.",
     icon: FlaskConical,
-    href: "/build-lab",
+    href: "/destiny-rising/build-lab",
     count: "New",
     badgeVariant: "accent" as const,
   },
@@ -44,7 +43,7 @@ const featuredModules = [
     title: "Weapons",
     description: "Detailed weapon stats, upgrade paths, and character synergies.",
     icon: Sword,
-    href: "/weapons",
+    href: "/destiny-rising/weapons",
     count: "60+",
     badgeVariant: "secondary" as const,
   },
@@ -52,15 +51,15 @@ const featuredModules = [
     title: "Team Builder",
     description: "Create synergistic teams with elemental combos.",
     icon: Shield,
-    href: "/teams",
+    href: "/destiny-rising/teams",
     count: "Beta",
     badgeVariant: "primary" as const,
   },
   {
-    title: "Tier List",
-    description: "Community and meta-driven character rankings.",
+    title: "Combat Lab",
+    description: "Simulate combat scenarios and optimize strategies.",
     icon: Trophy,
-    href: "/tier-list",
+    href: "/destiny-rising/combat-lab",
     count: "Updated",
     badgeVariant: "warning" as const,
   },
@@ -68,7 +67,7 @@ const featuredModules = [
     title: "AI Advisor",
     description: "Smart recommendations for builds, farming, and progression.",
     icon: Brain,
-    href: "/ai-advisor",
+    href: "/destiny-rising/ai-advisor",
     count: "Beta",
     badgeVariant: "accent" as const,
   },
@@ -164,12 +163,6 @@ export default function HomePage() {
                 Everything you need to master Destiny Rising
               </Typography>
             </div>
-            <Link href="/discover">
-              <Button variant="ghost" size="sm">
-                View All
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </Link>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

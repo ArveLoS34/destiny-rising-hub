@@ -5,29 +5,47 @@ import { Typography } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Globe, MessageCircle, ArrowRight, Shield } from "lucide-react";
+import { UserPlus, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signUp } = useAuth();
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
+    // Client-side password confirmation validation
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    // Password length validation
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const result = await signIn(email, password);
+      const result = await signUp(email, username, displayName, password);
       if (result.error) {
         setError(result.error);
       } else {
+        // Registration successful, session is created, redirect to profile
         router.push("/profile");
       }
     } catch (err) {
@@ -44,63 +62,20 @@ export default function LoginPage() {
         <div className="text-center space-y-2">
           <div className="flex justify-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[rgb(var(--color-primary))] to-[rgb(var(--color-accent))]">
-              <Shield className="h-6 w-6 text-white" />
+              <UserPlus className="h-6 w-6 text-white" />
             </div>
           </div>
-          <Typography variant="h2">Welcome Back</Typography>
+          <Typography variant="h2">Create Account</Typography>
           <Typography variant="body" textColor="secondary">
-            Sign in to your Destiny Rising Hub account
+            Join Destiny Rising Hub community
           </Typography>
         </div>
 
-        {/* Login Card */}
+        {/* Register Card */}
         <Card>
           <CardContent className="space-y-4">
-            {/* Social Login Buttons */}
-            <div className="grid grid-cols-3 gap-3">
-              <Button
-                variant="outline"
-                size="lg"
-                disabled={isLoading}
-                className="flex flex-col gap-1 h-auto py-3"
-              >
-                <Globe className="h-5 w-5" />
-                <span className="text-[10px]">Google</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                disabled={isLoading}
-                className="flex flex-col gap-1 h-auto py-3"
-              >
-                <Globe className="h-5 w-5" />
-                <span className="text-[10px]">GitHub</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                disabled={isLoading}
-                className="flex flex-col gap-1 h-auto py-3"
-              >
-                <MessageCircle className="h-5 w-5" />
-                <span className="text-[10px]">Discord</span>
-              </Button>
-            </div>
-
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[rgb(var(--color-border))]" />
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-[rgb(var(--color-surface))] px-2 text-[rgb(var(--color-text-tertiary))]">
-                  or continue with email
-                </span>
-              </div>
-            </div>
-
-            {/* Email Form */}
-            <form onSubmit={handleEmailLogin} className="space-y-3">
+            {/* Registration Form */}
+            <form onSubmit={handleRegister} className="space-y-3">
               <div className="space-y-1">
                 <Typography variant="bodySm" weight="medium">Email</Typography>
                 <Input
@@ -111,6 +86,29 @@ export default function LoginPage() {
                   required
                 />
               </div>
+
+              <div className="space-y-1">
+                <Typography variant="bodySm" weight="medium">Username</Typography>
+                <Input
+                  type="text"
+                  placeholder="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Typography variant="bodySm" weight="medium">Display Name</Typography>
+                <Input
+                  type="text"
+                  placeholder="Your Name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  required
+                />
+              </div>
+
               <div className="space-y-1">
                 <Typography variant="bodySm" weight="medium">Password</Typography>
                 <Input
@@ -119,6 +117,19 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  minLength={8}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Typography variant="bodySm" weight="medium">Confirm Password</Typography>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={8}
                 />
               </div>
 
@@ -129,17 +140,17 @@ export default function LoginPage() {
               )}
 
               <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
-                Sign In
+                Create Account
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </form>
 
-            {/* Register Link */}
+            {/* Login Link */}
             <div className="text-center pt-2">
               <Typography variant="bodySm" textColor="secondary">
-                Don&apos;t have an account?{" "}
-                <Link href="/register" className="text-[rgb(var(--color-primary))] hover:underline font-medium">
-                  Create one
+                Already have an account?{" "}
+                <Link href="/login" className="text-[rgb(var(--color-primary))] hover:underline font-medium">
+                  Sign in
                 </Link>
               </Typography>
             </div>

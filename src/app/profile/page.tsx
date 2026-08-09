@@ -251,7 +251,7 @@ export default function ProfilePage() {
                   <Typography variant="body" textColor="secondary" className="text-center py-8">
                     Your favorite characters, weapons, builds, and teams will appear here.
                     <br />
-                    <Link href="/characters" className="text-[rgb(var(--color-primary))] hover:underline text-sm mt-2 inline-block">
+                    <Link href="/destiny-rising/characters" className="text-[rgb(var(--color-primary))] hover:underline text-sm mt-2 inline-block">
                       Browse characters →
                     </Link>
                   </Typography>
@@ -284,7 +284,7 @@ export default function ProfilePage() {
                   <Typography variant="body" textColor="secondary" className="text-center py-8">
                     Your saved builds will appear here. Create your first build from any character page.
                     <br />
-                    <Link href="/build-lab" className="text-[rgb(var(--color-primary))] hover:underline text-sm mt-2 inline-block">
+                    <Link href="/destiny-rising/build-lab" className="text-[rgb(var(--color-primary))] hover:underline text-sm mt-2 inline-block">
                       Explore builds →
                     </Link>
                   </Typography>
