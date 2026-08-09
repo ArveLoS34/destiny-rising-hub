@@ -64,7 +64,7 @@ export function CharacterCard({ character, index = 0 }: CharacterCardProps) {
   const ElementIcon = elementIcons[character.element] || Crosshair;
 
   return (
-    <Link href={`/characters/${character.slug}`} className="group block">
+    <Link href={`/destiny-rising/characters/${character.slug}`} className="group block">
       <article
         className={cn(
           "relative overflow-hidden rounded-xl border bg-gradient-to-br transition-all duration-300",
