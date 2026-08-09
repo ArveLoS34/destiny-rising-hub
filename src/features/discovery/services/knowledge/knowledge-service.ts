@@ -109,7 +109,7 @@ class KnowledgeGraphService {
         url: `/destiny-rising/teams/${team.slug}`,
         metadata: {
           template: team.template,
-          members: team.members.map((m) => m.characterName),
+          members: team.members.map((m: any) => m.characterName),
           tier: team.tier,
         },
       });
@@ -128,7 +128,7 @@ class KnowledgeGraphService {
         metadata: {
           rarity: material.rarity,
           category: material.category,
-          sources: material.sources.map((s) => s.type),
+          sources: material.sources.map((s: any) => s.type),
         },
       });
     });
@@ -164,7 +164,7 @@ class KnowledgeGraphService {
 
   private buildTeamCharacterEdges() {
     teams.forEach((team) => {
-      team.members.forEach((member) => {
+      team.members.forEach((member: any) => {
         this.addEdge(team.id, member.characterId, 'contains', 1.0);
         this.addEdge(member.characterId, team.id, 'usedBy', 1.0);
       });

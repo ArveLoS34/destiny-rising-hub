@@ -2,15 +2,63 @@ import { BaseEntity } from "./game";
 
 /**
  * Artifact domain model.
- * Represents equippable artifacts that provide stats and set bonuses.
+ *
+ * TRANSITION STATE:
+ * Destiny: Rising artifacts have 4 slots per character with individual
+ * attributes. NO set bonuses. Artifacts are sourced from Realm of the IX.
+ *
+ * The current types below are LEGACY (Genshin-style) and marked @deprecated.
+ * They will be replaced with real Destiny: Rising artifact types in Phase 2
+ * when the artifact data is rebuilt from verified game sources.
  */
 
-// ─── Artifact Types ───
+// ═══════════════════════════════════════════════════════════════
+// REAL DESTINY: RISING ARTIFACT SYSTEM (for Phase 2)
+// ═══════════════════════════════════════════════════════════════
 
+// DRArtifactSlot is defined in game.ts — imported when needed for Phase 2 migration
+
+/**
+ * Destiny: Rising artifact attributes — these are the real attribute types
+ * found in-game. Sourced from Reddit artifact guides and playdestinyrising.com
+ */
+export type DRArtifactAttribute =
+  // Defensive
+  | "Health Boost"
+  | "Shield Boost"
+  | "Health Regen"
+  | "Damage Resistance"
+  | "Elemental Resistance"
+  | "Overshield Bonus"
+  | "Barrier Bonus"
+  // Offensive
+  | "Weapon Enhancement"
+  | "Weapon Damage"
+  | "Ability Strength"
+  | "Signature Boost"
+  | "Damage Bonus"
+  | "Solar Boost"
+  | "Arc Boost"
+  | "Void Boost"
+  | "Primary Weapon Damage"
+  | "Power Weapon Damage"
+  // Utility
+  | "Ability Cooldown"
+  | "Relic Ability"
+  | "Ammo Reserve"
+  | "Class Ability";
+
+// ═══════════════════════════════════════════════════════════════
+// LEGACY TYPES — @deprecated (Genshin-style, will be removed)
+// ═══════════════════════════════════════════════════════════════
+
+/** @deprecated — Destiny: Rising does not use flower/plume/sands/goblet/crown slots */
 export type ArtifactSlot = "flower" | "plume" | "sands" | "goblet" | "crown";
 
+/** @deprecated — Destiny: Rising uses Mythic/Legendary/Rare rarity, not star ratings */
 export type ArtifactRarity = "1star" | "2star" | "3star" | "4star" | "5star";
 
+/** @deprecated — Legacy stat names. Real DR attributes are different. */
 export type ArtifactMainStat =
   | "HP"
   | "HP%"
@@ -32,6 +80,7 @@ export type ArtifactMainStat =
   | "Healing Bonus%"
   | "Physical Damage Bonus%";
 
+/** @deprecated — Legacy sub-stat names */
 export type ArtifactSubStat =
   | "HP"
   | "HP%"
@@ -44,8 +93,14 @@ export type ArtifactSubStat =
   | "Crit Rate%"
   | "Crit Damage%";
 
-// ─── Artifact Set ───
+// ═══════════════════════════════════════════════════════════════
+// INTERFACES (legacy — will be redesigned in Phase 2)
+// ═══════════════════════════════════════════════════════════════
 
+/**
+ * @deprecated — Destiny: Rising has NO artifact set bonuses.
+ * Each artifact has individual attributes instead.
+ */
 export interface ArtifactSet {
   id: string;
   slug: string;
@@ -65,8 +120,7 @@ export interface ArtifactSet {
   };
 }
 
-// ─── Artifact ───
-
+/** @deprecated — Will be redesigned for real DR artifact system in Phase 2 */
 export interface Artifact {
   id: string;
   slug: string;
@@ -94,8 +148,8 @@ export interface Artifact {
   bossName?: string;
 
   // Relationships
-  recommendedFor: string[]; // Character IDs
-  usedInBuilds: string[]; // Build IDs
+  recommendedFor: string[];
+  usedInBuilds: string[];
 
   // Meta
   verification: {
@@ -110,10 +164,8 @@ export interface Artifact {
 export interface ArtifactSubStatInstance {
   stat: ArtifactSubStat;
   value: number;
-  rolls: number; // Number of times this sub-stat was upgraded
+  rolls: number;
 }
-
-// ─── Artifact Summary (for list views) ───
 
 export interface ArtifactSummary {
   id: string;
@@ -130,8 +182,6 @@ export interface ArtifactSummary {
     gameVersion: string;
   };
 }
-
-// ─── Artifact Filters ───
 
 export interface ArtifactFilters {
   sets: string[];

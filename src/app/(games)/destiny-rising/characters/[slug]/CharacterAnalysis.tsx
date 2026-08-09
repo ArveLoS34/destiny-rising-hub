@@ -95,7 +95,8 @@ export function CharacterAnalysis({ character }: CharacterAnalysisProps) {
         </div>
       </div>
 
-      {/* Faction */}
+      {/* Faction (deprecated — Destiny Rising has no faction system) */}
+      {character.factionRelation && (
       <div>
         <Typography variant="h3" className="mb-4">Faction</Typography>
         <Card variant="elevated" padding="md">
@@ -110,6 +111,7 @@ export function CharacterAnalysis({ character }: CharacterAnalysisProps) {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Data Verification */}
       <div className="rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">

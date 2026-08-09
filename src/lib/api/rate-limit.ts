@@ -1,70 +1,110 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createErrorResponse } from './errors';
+import { logger } from '@/lib/logger';
 
 /**
- * API Rate Limiting
- * Endpoint-based rate limiting
+ * API Rate Limiting with Diagnostic Logging
+ * Endpoint-based rate limiting with environment-based configuration
+ * 
+ * PERFORMANCE MODE:
+ * Set RATE_LIMIT_ENABLED=false or PERFORMANCE_MODE=true to disable rate limiting
+ * This is useful for performance testing where rate limits interfere with measurements
  */
 
 export interface RateLimitConfig {
-  windowMs: number; // Time window in milliseconds
-  maxRequests: number; // Maximum requests per window
-  message?: string; // Custom error message
+  windowMs: number;
+  maxRequests: number;
+  message?: string;
 }
 
 export interface RateLimitStore {
   [key: string]: {
     count: number;
     resetAt: number;
+    blocked: number;
   };
 }
 
-// In-memory store (use Redis in production)
 const store: RateLimitStore = {};
+
+/**
+ * Check if rate limiting is enabled
+ * Can be disabled via environment variables for performance testing
+ */
+function isRateLimitEnabled(): boolean {
+  // Disable if explicitly disabled
+  if (process.env.RATE_LIMIT_ENABLED === 'false') {
+    return false;
+  }
+  
+  // Disable in performance mode
+  if (process.env.PERFORMANCE_MODE === 'true') {
+    return false;
+  }
+  
+  return true;
+}
+
+/**
+ * Helper function to safely parse environment variables
+ */
+function getEnvNumber(key: string, defaultValue: number): number {
+  const value = process.env[key];
+  if (!value) return defaultValue;
+  const parsed = parseInt(value, 10);
+  return isNaN(parsed) ? defaultValue : parsed;
+}
 
 /**
  * Default rate limit configurations per endpoint type
  */
 export const RATE_LIMITS: Record<string, RateLimitConfig> = {
-  // Public endpoints
   'public': {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 60,
+    windowMs: getEnvNumber('RATE_LIMIT_PUBLIC_WINDOW_MS', 60000),
+    maxRequests: getEnvNumber(
+      'RATE_LIMIT_PUBLIC_MAX_REQUESTS',
+      process.env.NODE_ENV === 'test' ? 10000 : 60
+    ),
     message: 'Too many requests, please try again later',
   },
-  
-  // Authenticated endpoints
   'authenticated': {
-    windowMs: 60 * 1000,
-    maxRequests: 120,
+    windowMs: getEnvNumber('RATE_LIMIT_AUTHENTICATED_WINDOW_MS', 60000),
+    maxRequests: getEnvNumber(
+      'RATE_LIMIT_AUTHENTICATED_MAX_REQUESTS',
+      process.env.NODE_ENV === 'test' ? 20000 : 120
+    ),
     message: 'Rate limit exceeded',
   },
-  
-  // Authentication endpoints (stricter)
   'auth': {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 5,
+    windowMs: getEnvNumber('RATE_LIMIT_AUTH_WINDOW_MS', 900000),
+    maxRequests: getEnvNumber(
+      'RATE_LIMIT_AUTH_MAX_REQUESTS',
+      process.env.NODE_ENV === 'test' ? 1000 : 5
+    ),
     message: 'Too many authentication attempts, please try again later',
   },
-  
-  // Write operations
   'write': {
-    windowMs: 60 * 1000,
-    maxRequests: 30,
+    windowMs: getEnvNumber('RATE_LIMIT_WRITE_WINDOW_MS', 60000),
+    maxRequests: getEnvNumber(
+      'RATE_LIMIT_WRITE_MAX_REQUESTS',
+      process.env.NODE_ENV === 'test' ? 5000 : 30
+    ),
     message: 'Too many write operations',
   },
-  
-  // Search operations
   'search': {
-    windowMs: 60 * 1000,
-    maxRequests: 30,
+    windowMs: getEnvNumber('RATE_LIMIT_SEARCH_WINDOW_MS', 60000),
+    maxRequests: getEnvNumber(
+      'RATE_LIMIT_SEARCH_MAX_REQUESTS',
+      process.env.NODE_ENV === 'test' ? 5000 : 30
+    ),
     message: 'Too many search requests',
   },
-  
-  // Admin operations
   'admin': {
-    windowMs: 60 * 1000,
-    maxRequests: 100,
+    windowMs: getEnvNumber('RATE_LIMIT_ADMIN_WINDOW_MS', 60000),
+    maxRequests: getEnvNumber(
+      'RATE_LIMIT_ADMIN_MAX_REQUESTS',
+      process.env.NODE_ENV === 'test' ? 10000 : 100
+    ),
     message: 'Admin rate limit exceeded',
   },
 };
@@ -73,12 +113,10 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
  * Generate rate limit key from request
  */
 function getRateLimitKey(request: NextRequest, endpointType: string): string {
-  // Use IP address for public endpoints
   const ip = request.headers.get('x-forwarded-for') || 
              request.headers.get('x-real-ip') || 
              'unknown';
   
-  // Use user ID for authenticated endpoints
   const authHeader = request.headers.get('authorization');
   const userId = authHeader ? authHeader.substring(7, 20) : ip;
   
@@ -86,36 +124,69 @@ function getRateLimitKey(request: NextRequest, endpointType: string): string {
 }
 
 /**
- * Check rate limit
+ * Check rate limit with diagnostic logging
  */
 export function checkRateLimit(
   request: NextRequest,
   endpointType: string = 'public'
 ): { allowed: boolean; remaining: number; resetAt: number } {
+  // If rate limiting is disabled, always allow
+  if (!isRateLimitEnabled()) {
+    return {
+      allowed: true,
+      remaining: 999999,
+      resetAt: Date.now() + 60000,
+    };
+  }
+  
   const config = RATE_LIMITS[endpointType] || RATE_LIMITS.public;
   const key = getRateLimitKey(request, endpointType);
   const now = Date.now();
   
-  // Get or create entry
   if (!store[key]) {
     store[key] = {
       count: 0,
       resetAt: now + config.windowMs,
+      blocked: 0,
     };
   }
   
   const entry = store[key];
   
-  // Reset if window has passed
   if (now > entry.resetAt) {
+    if (entry.blocked > 0) {
+      logger.warn('RateLimit', `Rate limit diagnostics for ${key}: ${entry.blocked} requests blocked in last window`, {
+        endpointType,
+        blocked: entry.blocked,
+        allowed: entry.count,
+        limit: config.maxRequests,
+        windowMs: config.windowMs,
+      });
+    }
+    
     entry.count = 0;
     entry.resetAt = now + config.windowMs;
+    entry.blocked = 0;
   }
   
-  // Check limit
   entry.count++;
   const allowed = entry.count <= config.maxRequests;
   const remaining = Math.max(0, config.maxRequests - entry.count);
+  
+  if (!allowed) {
+    entry.blocked++;
+    
+    if (entry.blocked % 100 === 0) {
+      logger.warn('RateLimit', `Rate limit exceeded for ${key}`, {
+        endpointType,
+        blocked: entry.blocked,
+        current: entry.count,
+        limit: config.maxRequests,
+        remaining: 0,
+        resetAt: entry.resetAt,
+      });
+    }
+  }
   
   return {
     allowed,
@@ -125,13 +196,18 @@ export function checkRateLimit(
 }
 
 /**
- * Middleware to apply rate limiting
+ * Middleware to apply rate limiting with detailed error responses
  */
 export async function withRateLimit(
   request: NextRequest,
   endpointType: string,
   handler: (request: NextRequest) => Promise<NextResponse>
 ): Promise<NextResponse> {
+  // If rate limiting is disabled, skip directly to handler
+  if (!isRateLimitEnabled()) {
+    return handler(request);
+  }
+  
   const { allowed, remaining, resetAt } = checkRateLimit(request, endpointType);
   const config = RATE_LIMITS[endpointType] || RATE_LIMITS.public;
   
@@ -141,6 +217,8 @@ export async function withRateLimit(
       config.message || 'Rate limit exceeded',
       {
         retryAfter: Math.ceil((resetAt - Date.now()) / 1000),
+        limit: config.maxRequests,
+        endpointType,
       },
       request.headers.get('x-request-id') || `req_${Date.now()}`,
       request.nextUrl.pathname
@@ -159,7 +237,6 @@ export async function withRateLimit(
   
   const response = await handler(request);
   
-  // Add rate limit headers
   response.headers.set('X-RateLimit-Limit', String(config.maxRequests));
   response.headers.set('X-RateLimit-Remaining', String(remaining));
   response.headers.set('X-RateLimit-Reset', String(resetAt));
@@ -168,8 +245,30 @@ export async function withRateLimit(
 }
 
 /**
+ * Get current rate limit statistics (for diagnostics)
+ */
+export function getRateLimitStats(): {
+  totalKeys: number;
+  totalBlocked: number;
+  topBlocked: Array<{ key: string; blocked: number; count: number }>;
+} {
+  const entries = Object.entries(store);
+  const totalBlocked = entries.reduce((sum, [, entry]) => sum + entry.blocked, 0);
+  
+  const topBlocked = entries
+    .map(([key, entry]) => ({ key, blocked: entry.blocked, count: entry.count }))
+    .sort((a, b) => b.blocked - a.blocked)
+    .slice(0, 10);
+  
+  return {
+    totalKeys: entries.length,
+    totalBlocked,
+    topBlocked,
+  };
+}
+
+/**
  * Clean up old entries from store
- * Call this periodically in production
  */
 export function cleanupRateLimitStore(): void {
   const now = Date.now();
@@ -192,7 +291,6 @@ export function getRateLimitStatus(key: string): {
   const entry = store[key];
   if (!entry) return null;
   
-  // Determine endpoint type from key
   const endpointType = key.split(':')[0];
   const config = RATE_LIMITS[endpointType] || RATE_LIMITS.public;
   

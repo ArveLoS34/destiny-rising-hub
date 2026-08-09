@@ -27,6 +27,10 @@ yarn-error.log*
 # Local env files
 .env*.local
 .env
+.env.production
+
+# Netlify
+.netlify/
 
 # Vercel
 .vercel
@@ -45,3 +49,10 @@ next-env.d.ts
 # OS
 .DS_Store
 Thumbs.db
+# Playwright
+playwright-report/
+test-results/
+
+# Performance reports
+docs/validation/evidence/performance/*.json
+docs/validation/evidence/performance/*.html

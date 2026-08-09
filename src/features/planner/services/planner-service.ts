@@ -98,13 +98,13 @@ function calculateRequiredMaterials(goal: PlannerGoal): RequiredMaterial[] {
 
   if (goal.type === "character") {
     // Character ascension materials
-    const charMaterials = materials.filter((m) =>
-      m.usedBy.some((u) => u.type === "character" && u.id === goal.targetId)
+    const charMaterials = materials.filter((m: any) =>
+      m.usedBy.some((u: any) => u.type === "character" && u.id === goal.targetId)
     );
 
     charMaterials.forEach((mat) => {
       const usage = mat.usedBy.find(
-        (u) => u.type === "character" && u.id === goal.targetId
+        (u: any) => u.type === "character" && u.id === goal.targetId
       );
       if (!usage) return;
 
@@ -229,11 +229,11 @@ function generateWeeklyBossTasks(
   const tasks: WeeklyBossTask[] = [];
   const dayOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-  const weeklyMaterials = requiredMaterials.filter((m) => m.source === "weekly" || m.source === "boss");
+  const weeklyMaterials = requiredMaterials.filter((m: any) => m.source === "weekly" || m.source === "boss");
 
   weeklyMaterials.forEach((mat, index) => {
-    const materialData = materials.find((m) => m.id === mat.materialId);
-    const bossSource = materialData?.sources.find((s) => s.type === "boss" || s.type === "weekly");
+    const materialData = materials.find((m: any) => m.id === mat.materialId);
+    const bossSource = materialData?.sources.find((s: any) => s.type === "boss" || s.type === "weekly");
 
     tasks.push({
       bossName: bossSource?.bossName || "Weekly Boss",
@@ -297,8 +297,8 @@ function generateDailyTasks(requiredMaterials: RequiredMaterial[]): DailyTask[] 
   }
 
   // Gold farming
-  if (bySource.domain?.some((m) => m.materialId === "mat-gold")) {
-    const goldMat = bySource.domain.find((m) => m.materialId === "mat-gold");
+  if (bySource.domain?.some((m: any) => m.materialId === "mat-gold")) {
+    const goldMat = bySource.domain.find((m: any) => m.materialId === "mat-gold");
     if (goldMat) {
       tasks.push({
         id: `task_${taskId++}`,
@@ -336,7 +336,7 @@ function generateFarmRoute(requiredMaterials: RequiredMaterial[]): FarmRouteStep
   });
 
   sorted.forEach((mat) => {
-    const materialData = materials.find((m) => m.id === mat.materialId);
+    const materialData = materials.find((m: any) => m.id === mat.materialId);
     const primarySource = materialData?.sources[0];
 
     route.push({
@@ -365,7 +365,7 @@ export function generateDailyPlan(
   const calculations = goals.map((goal) => {
     const calc = calculatePlanner(goal);
     // Update owned materials
-    calc.materials.forEach((m) => {
+    calc.materials.forEach((m: any) => {
       m.owned = ownedMaterials[m.materialId] || 0;
       m.missing = Math.max(0, m.required - m.owned);
     });
@@ -380,10 +380,10 @@ export function generateDailyPlan(
   // Priority materials
   const priorityMaterials = calculations
     .flatMap((c) => c.materials)
-    .filter((m) => m.missing > 0)
+    .filter((m: any) => m.missing > 0)
     .sort((a, b) => b.missing - a.missing)
     .slice(0, 5)
-    .map((m) => m.materialName);
+    .map((m: any) => m.materialName);
 
   // AI Suggestions
   const aiSuggestions = generateAISuggestions(calculations, allTasks);
@@ -431,7 +431,7 @@ function generateAISuggestions(
   // Material bottleneck detection
   const bottleneck = calculations
     .flatMap((c) => c.materials)
-    .filter((m) => m.missing > 50)
+    .filter((m: any) => m.missing > 50)
     .sort((a, b) => b.missing - a.missing)[0];
 
   if (bottleneck) {

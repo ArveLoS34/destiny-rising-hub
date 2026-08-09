@@ -1,10 +1,16 @@
 import type { ComparisonResult, ComparisonInput } from "@/types/domain";
+import { characters } from "@/data/games/destiny-rising/characters";
+import { weapons } from "@/data/games/destiny-rising/weapons";
 
 /**
  * Compare Anything — Universal Comparison Engine
  * 
  * Compares characters, weapons, artifacts, builds, and teams.
- * Uses a unified comparison infrastructure.
+ * Uses real v7.3 baseline data for comparisons.
+ * 
+ * NOTE: Verified comparison stats (winRate, popularity, tier) are not
+ * available for most items. Only data present in the v7.3 baseline is used.
+ * No stats are estimated or fabricated.
  */
 
 interface ItemWithStats {
@@ -43,30 +49,42 @@ export function compareItems(input: ComparisonInput): ComparisonResult {
 }
 
 function getItemStats(item: { id: string; name: string; type: string }, comparisonType: string): ItemWithStats {
-  // In production, fetch actual data from services
-  // For now, return mock stats
-  const mockStats: Record<string, Record<string, Record<string, number>>> = {
-    character: {
-      "dr-char-001": { damage: 95, survivability: 70, utility: 85, popularity: 92, winRate: 58 },
-      "dr-char-002": { damage: 88, survivability: 65, utility: 80, popularity: 88, winRate: 56 },
-      "dr-char-003": { damage: 75, survivability: 90, utility: 95, popularity: 95, winRate: 61 },
-    },
-    weapon: {
-      "dr-weap-001": { atk: 674, critRate: 30, critDamage: 60, popularity: 94, winRate: 59 },
-      "dr-weap-002": { atk: 655, critRate: 25, critDamage: 55, popularity: 87, winRate: 57 },
-      "dr-weap-003": { atk: 590, critRate: 20, critDamage: 50, popularity: 91, winRate: 58 },
-    },
-    build: {
-      "build-nova-01": { damage: 93, survivability: 72, consistency: 88, accessibility: 65, synergy: 95 },
-      "build-nova-02": { damage: 72, survivability: 75, consistency: 80, accessibility: 98, synergy: 65 },
-      "build-nova-03": { damage: 97, survivability: 78, consistency: 95, accessibility: 15, synergy: 98 },
-    },
-  };
+  // Use real v7.3 baseline data
+  if (comparisonType === "character") {
+    const char = characters.find((c) => c.id === item.id);
+    if (char) {
+      return {
+        id: char.id,
+        name: char.name,
+        stats: {
+          // Only verified fields from v7.3 baseline
+          // popularity and winRate are 0 (unverified) for all characters
+        },
+      };
+    }
+  }
 
+  if (comparisonType === "weapon") {
+    const weapon = weapons.find((w) => w.id === item.id);
+    if (weapon) {
+      return {
+        id: weapon.id,
+        name: weapon.name,
+        stats: {
+          // DPS from v7.3 baseline (null → 0 for comparison purposes)
+          dps: weapon.dps ?? 0,
+          // popularity and winRate are 0 (unverified) for all weapons
+        },
+      };
+    }
+  }
+
+  // Builds: no verified build data in v7.3 baseline
+  // Return empty stats
   return {
     id: item.id,
     name: item.name,
-    stats: mockStats[comparisonType]?.[item.id] || {},
+    stats: {},
   };
 }
 
@@ -74,9 +92,9 @@ function determineWinner(items: ItemWithStats[], comparisonType: string): string
   if (items.length === 0) return "";
 
   // Determine winner based on comparison type
-  let winnerKey = "damage";
-  if (comparisonType === "character") winnerKey = "winRate";
-  else if (comparisonType === "weapon") winnerKey = "atk";
+  let winnerKey = "dps";
+  if (comparisonType === "character") winnerKey = "popularity";
+  else if (comparisonType === "weapon") winnerKey = "dps";
   else if (comparisonType === "build") winnerKey = "damage";
 
   let winner = items[0];
@@ -97,6 +115,8 @@ function calculateDifferences(items: ItemWithStats[], comparisonType: string): {
   if (items.length < 2) return [];
 
   const categories = Object.keys(items[0].stats);
+  if (categories.length === 0) return [];
+
   const differences: { category: string; values: Record<string, number>; winner: string }[] = [];
 
   categories.forEach((category) => {
@@ -124,21 +144,15 @@ function generateComparisonReasoning(items: ItemWithStats[], winner: string, com
 
   if (!winnerItem) return ["Unable to determine winner."];
 
-  reasoning.push(`${winnerItem.name} wins with overall superior stats.`);
-
-  // Add specific reasoning based on type
-  if (comparisonType === "character") {
-    if (winnerItem.stats.winRate > 55) {
-      reasoning.push("Higher win rate indicates better performance in current meta.");
-    }
-  } else if (comparisonType === "weapon") {
-    if (winnerItem.stats.atk > 650) {
-      reasoning.push("Higher base ATK provides better damage output.");
-    }
+  // Only generate reasoning based on verified data
+  if (comparisonType === "weapon" && winnerItem.stats.dps > 0) {
+    reasoning.push(`${winnerItem.name} has the highest verified DPS among compared weapons.`);
+  } else if (comparisonType === "character") {
+    reasoning.push(`${winnerItem.name} is included in the comparison. Verified meta stats are not yet available.`);
   } else if (comparisonType === "build") {
-    if (winnerItem.stats.damage > 90) {
-      reasoning.push("Optimized for maximum damage output.");
-    }
+    reasoning.push(`No verified build data available for comparison.`);
+  } else {
+    reasoning.push(`${winnerItem.name} leads in available comparison metrics.`);
   }
 
   return reasoning;

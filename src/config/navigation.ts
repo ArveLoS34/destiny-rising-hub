@@ -2,17 +2,11 @@ import {
   Users,
   Sword,
   Package,
-  Gem,
   FlaskConical,
   Shield,
   Map,
-  Trophy,
-  Newspaper,
-  Calendar,
-  BookOpen,
   Brain,
   MessageSquare,
-  Settings,
   type LucideIcon,
 } from "lucide-react";
 
@@ -36,27 +30,21 @@ export const mainNavigation: NavSection[] = [
     items: [
       {
         label: "Characters",
-        href: "/characters",
+        href: "/destiny-rising/characters",
         icon: Users,
         description: "Browse all characters",
       },
       {
         label: "Weapons",
-        href: "/weapons",
+        href: "/destiny-rising/weapons",
         icon: Sword,
         description: "Weapon database & stats",
       },
       {
         label: "Materials",
-        href: "/materials",
+        href: "/destiny-rising/materials",
         icon: Package,
         description: "Upgrade materials guide",
-      },
-      {
-        label: "Artifacts",
-        href: "/artifacts",
-        icon: Gem,
-        description: "Artifact sets & effects",
       },
     ],
   },
@@ -65,50 +53,21 @@ export const mainNavigation: NavSection[] = [
     items: [
       {
         label: "Build Lab",
-        href: "/build-lab",
+        href: "/destiny-rising/build-lab",
         icon: FlaskConical,
         description: "Optimize your builds",
       },
       {
         label: "Team Builder",
-        href: "/teams",
+        href: "/destiny-rising/teams",
         icon: Shield,
         description: "Create synergistic teams",
       },
       {
         label: "Mission Planner",
-        href: "/missions",
+        href: "/destiny-rising/planner",
         icon: Map,
         description: "Plan your missions",
-      },
-      {
-        label: "Tier List",
-        href: "/tier-list",
-        icon: Trophy,
-        description: "Character rankings",
-      },
-    ],
-  },
-  {
-    title: "Discover",
-    items: [
-      {
-        label: "News",
-        href: "/news",
-        icon: Newspaper,
-        description: "Latest updates",
-      },
-      {
-        label: "Events",
-        href: "/events",
-        icon: Calendar,
-        description: "Active & upcoming events",
-      },
-      {
-        label: "Codex",
-        href: "/codex",
-        icon: BookOpen,
-        description: "Game lore & guides",
       },
     ],
   },
@@ -117,22 +76,16 @@ export const mainNavigation: NavSection[] = [
     items: [
       {
         label: "AI Advisor",
-        href: "/ai-advisor",
+        href: "/destiny-rising/ai-advisor",
         icon: Brain,
         description: "AI-powered recommendations",
         badge: "Beta",
       },
       {
         label: "Community",
-        href: "/community",
+        href: "/destiny-rising/community",
         icon: MessageSquare,
         description: "Join the discussion",
-      },
-      {
-        label: "Settings",
-        href: "/settings",
-        icon: Settings,
-        description: "App preferences",
       },
     ],
   },
@@ -140,8 +93,8 @@ export const mainNavigation: NavSection[] = [
 
 export const mobileNavigation: NavItem[] = [
   { label: "Home", href: "/", icon: Users },
-  { label: "Characters", href: "/characters", icon: Users },
-  { label: "Build Lab", href: "/build-lab", icon: FlaskConical },
-  { label: "Tier List", href: "/tier-list", icon: Trophy },
-  { label: "More", href: "/discover", icon: BookOpen },
+  { label: "Characters", href: "/destiny-rising/characters", icon: Users },
+  { label: "Build Lab", href: "/destiny-rising/build-lab", icon: FlaskConical },
+  { label: "Teams", href: "/destiny-rising/teams", icon: Shield },
+  { label: "Community", href: "/destiny-rising/community", icon: MessageSquare },
 ];

@@ -13,7 +13,7 @@ interface GuideCardProps {
 
 export function GuideCard({ guide }: GuideCardProps) {
   return (
-    <Link href={`/community/guides/${guide.slug}`}>
+    <Link href={`/destiny-rising/community/guides/${guide.slug}`}>
       <Card variant="interactive" padding="md" className="h-full transition-all hover:shadow-lg">
         <CardContent className="flex flex-col gap-4 p-0">
           {/* Header */}

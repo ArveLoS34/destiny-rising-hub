@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Container } from "@/components/ui/Container";
 import { Typography } from "@/components/ui/Typography";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
@@ -9,13 +9,13 @@ import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
-import { authService } from "@/features/user/services/auth-service";
+import { useAuth } from "@/lib/auth/auth-context";
 import { favoritesService } from "@/features/user/services/favorites-service";
 import { savedBuildsService } from "@/features/user/services/saved-builds-service";
 import { savedTeamsService } from "@/features/user/services/saved-teams-service";
 import { collectionsService } from "@/features/user/services/collections-service";
 import { activityService } from "@/features/user/services/activity-service";
-import type { User, UserStats, Favorite, SavedBuild, SavedTeam, Collection, Activity } from "@/types/domain";
+import type { UserStats, Favorite, SavedBuild, SavedTeam, Collection, Activity } from "@/types/domain";
 import { 
   Heart, FlaskConical, Users, Folder, Activity as ActivityIcon,
   Settings, Calendar, LogOut
@@ -25,7 +25,7 @@ import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const { user, isLoading: isAuthLoading, signOut } = useAuth();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [builds, setBuilds] = useState<SavedBuild[]>([]);
@@ -34,81 +34,68 @@ export default function ProfilePage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadProfileData = async () => {
+  const loadProfileData = useCallback(async (userId: string) => {
     try {
-      const currentUser = await authService.getCurrentUser();
-      if (!currentUser) {
-        // Auto-login as demo user in development
-        const demoUser = await authService.loginAsDemo();
-        setUser(demoUser);
-        
-        // Load data for demo user
-        const [fav, bld, tm, col, act] = await Promise.all([
-          favoritesService.getUserFavorites(demoUser.id),
-          savedBuildsService.getUserBuilds(demoUser.id),
-          savedTeamsService.getUserTeams(demoUser.id),
-          collectionsService.getUserCollections(demoUser.id),
-          activityService.getUserActivities(demoUser.id),
-        ]);
-        
-        setFavorites(fav);
-        setBuilds(bld);
-        setTeams(tm);
-        setCollections(col);
-        setActivities(act);
-        setStats({
-          totalFavorites: fav.length,
-          totalSavedBuilds: bld.length,
-          totalSavedTeams: tm.length,
-          totalCollections: col.length,
-          memberSince: demoUser.createdAt,
-          lastActive: demoUser.lastLoginAt,
-        });
-      } else {
-        setUser(currentUser);
-        
-        const [fav, bld, tm, col, act] = await Promise.all([
-          favoritesService.getUserFavorites(currentUser.id),
-          savedBuildsService.getUserBuilds(currentUser.id),
-          savedTeamsService.getUserTeams(currentUser.id),
-          collectionsService.getUserCollections(currentUser.id),
-          activityService.getUserActivities(currentUser.id),
-        ]);
-        
-        setFavorites(fav);
-        setBuilds(bld);
-        setTeams(tm);
-        setCollections(col);
-        setActivities(act);
-        setStats({
-          totalFavorites: fav.length,
-          totalSavedBuilds: bld.length,
-          totalSavedTeams: tm.length,
-          totalCollections: col.length,
-          memberSince: currentUser.createdAt,
-          lastActive: currentUser.lastLoginAt,
-        });
-      }
+      const [fav, bld, tm, col, act] = await Promise.all([
+        favoritesService.getUserFavorites(userId),
+        savedBuildsService.getUserBuilds(userId),
+        savedTeamsService.getUserTeams(userId),
+        collectionsService.getUserCollections(userId),
+        activityService.getUserActivities(userId),
+      ]);
+      
+      setFavorites(fav);
+      setBuilds(bld);
+      setTeams(tm);
+      setCollections(col);
+      setActivities(act);
     } catch (error) {
-      console.error("Failed to load profile:", error);
-    } finally {
+      console.error("Failed to load profile data:", error);
+    }
+  }, []);
+
+  // Load data when user is available
+  useEffect(() => {
+    if (isAuthLoading) return;
+    
+    if (user) {
+      setStats({
+        totalFavorites: 0,
+        totalSavedBuilds: 0,
+        totalSavedTeams: 0,
+        totalCollections: 0,
+        memberSince: user.createdAt,
+        lastActive: user.lastLoginAt,
+      });
+      loadProfileData(user.id).finally(() => setIsLoading(false));
+    } else {
+      // Not authenticated — show sign-in prompt
       setIsLoading(false);
     }
-  };
+  }, [user, isAuthLoading, loadProfileData]);
+
+  // Reload data when user changes (e.g. after demo login)
+  useEffect(() => {
+    if (user) {
+      setIsLoading(true);
+      setStats({
+        totalFavorites: 0,
+        totalSavedBuilds: 0,
+        totalSavedTeams: 0,
+        totalCollections: 0,
+        memberSince: user.createdAt,
+        lastActive: user.lastLoginAt,
+      });
+      loadProfileData(user.id).finally(() => setIsLoading(false));
+    }
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSignOut = async () => {
-    await authService.signOut();
+    await signOut();
     router.push("/login");
   };
 
-  useEffect(() => {
-    const loadData = async () => {
-      await loadProfileData();
-    };
-    loadData();
-  }, []);
-
-  if (isLoading) {
+  if (isLoading || isAuthLoading) {
     return (
       <Container className="py-12">
         <Typography variant="body" textColor="secondary" className="text-center">
@@ -264,7 +251,7 @@ export default function ProfilePage() {
                   <Typography variant="body" textColor="secondary" className="text-center py-8">
                     Your favorite characters, weapons, builds, and teams will appear here.
                     <br />
-                    <Link href="/characters" className="text-[rgb(var(--color-primary))] hover:underline text-sm mt-2 inline-block">
+                    <Link href="/destiny-rising/characters" className="text-[rgb(var(--color-primary))] hover:underline text-sm mt-2 inline-block">
                       Browse characters →
                     </Link>
                   </Typography>
@@ -297,7 +284,7 @@ export default function ProfilePage() {
                   <Typography variant="body" textColor="secondary" className="text-center py-8">
                     Your saved builds will appear here. Create your first build from any character page.
                     <br />
-                    <Link href="/build-lab" className="text-[rgb(var(--color-primary))] hover:underline text-sm mt-2 inline-block">
+                    <Link href="/destiny-rising/build-lab" className="text-[rgb(var(--color-primary))] hover:underline text-sm mt-2 inline-block">
                       Explore builds →
                     </Link>
                   </Typography>

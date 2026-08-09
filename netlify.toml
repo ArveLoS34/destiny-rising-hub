@@ -1,0 +1,31 @@
+# Netlify Configuration
+# https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/overview/
+#
+# Netlify Next.js projelerini otomatik algılar ve OpenNext adapter ile
+# SSR, Route Handlers, Server Actions, Middleware ve ISR destekler.
+#
+# Deployment: $0/ay (Netlify Free + Neon Free + Upstash Free)
+
+[build]
+  # Prisma Client oluşturmadan Next.js build başarısız olabilir
+  command = "npx prisma generate && npm run build"
+  publish = ".next"
+
+# Next.js plugin — Netlify otomatik yükler, belgelendirme amaçlı
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Build environment
+[build.environment]
+  NODE_VERSION = "20"
+  # Prisma generate için dummy DATABASE_URL (gerçek değer runtime'da Netlify Dashboard'dan gelir)
+  DATABASE_URL = "postgresql://dummy:dummy@localhost:5432/dummy"
+
+# Redirect: www → non-www
+[[redirects]]
+  from = "https://www.destinyrisinghub.com/*"
+  to = "https://destinyrisinghub.com/:splat"
+  status = 301
+  force = true
+
+# Not: Security headers next.config.ts'de tanımlı — burada tekrarlanmadı

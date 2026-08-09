@@ -1,15 +1,33 @@
-import { BaseEntity, Rarity, Element, Role, WeaponType, Faction, DamageType, WeaknessCategory, StrengthCategory } from "./game";
+import {
+  BaseEntity,
+  // Transition types — accept both real and legacy values during migration
+  ElementValue as Element,
+  RarityValue as Rarity,
+  RoleValue as Role,
+  WeaponTypeValue as WeaponType,
+  DamageTypeValue as DamageType,
+  AbilityType,
+  WeaknessCategory,
+  StrengthCategory,
+} from "./game";
 
 /**
  * Character domain model.
- * Represents a playable character/hero in the game.
+ *
+ * TRANSITION STATE:
+ * Destiny: Rising characters are called "Lightbearers".
+ * Each has a fixed element (Solar/Arc/Void), rarity (Mythic/Legendary),
+ * role (Offense/Defense/Support), and preferred weapon types.
+ *
+ * Destiny: Rising does NOT have a faction system.
+ * The `faction` field is deprecated and will be removed.
  */
 
 export interface CharacterSkill {
   id: string;
   name: string;
   description: string;
-  type: "basic" | "skill" | "ultimate" | "passive" | "leader";
+  type: "basic" | "ability-1" | "ability-2" | "ultimate" | "passive" | "relic";
   element: Element;
   damageType: DamageType;
   cooldown?: number;
@@ -38,8 +56,8 @@ export interface CharacterStats {
   baseATK: number;
   baseDEF: number;
   baseSPD: number;
-  baseCR: number;    // Crit Rate
-  baseCD: number;    // Crit Damage
+  baseCR: number;
+  baseCD: number;
   growthHP: number;
   growthATK: number;
   growthDEF: number;
@@ -91,7 +109,8 @@ export interface Character extends BaseEntity {
   element: Element;
   role: Role;
   weaponType: WeaponType;
-  faction: Faction;
+  /** @deprecated — Destiny: Rising has no faction system. Will be removed. */
+  faction?: string;
   damageType: DamageType;
 
   // Visual
@@ -137,8 +156,8 @@ export interface Character extends BaseEntity {
     cn: string;
   };
 
-  // Faction
-  factionRelation: CharacterFactionRelation;
+  // Faction (deprecated)
+  factionRelation?: CharacterFactionRelation;
 
   // Meta
   releaseVersion: string;
@@ -168,8 +187,9 @@ export interface CharacterSummary {
   rarity: Rarity;
   element: Element;
   role: Role;
-  weaponType: WeaponType;
-  faction: Faction;
+  weaponType?: WeaponType;
+  /** @deprecated — Destiny: Rising has no faction system. Will be removed. */
+  faction?: string;
   icon: string;
   portrait: string;
   colorTheme: string;
@@ -190,7 +210,7 @@ export interface CharacterFilters {
   roles: Role[];
   rarities: Rarity[];
   weaponTypes: WeaponType[];
-  factions: Faction[];
+  factions: string[];
   damageTypes: DamageType[];
   search: string;
   sortBy: CharacterSortField;

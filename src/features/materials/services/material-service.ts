@@ -17,7 +17,7 @@ export function getAllMaterials(): Material[] {
 }
 
 export function getMaterialSummaries(): MaterialSummary[] {
-  return materials.map((m) => ({
+  return materials.map((m: any) => ({
     id: m.id,
     slug: m.slug,
     name: m.name,
@@ -35,15 +35,15 @@ export function getMaterialSummaries(): MaterialSummary[] {
 }
 
 export function getMaterialBySlug(slug: string): Material | undefined {
-  return materials.find((m) => m.slug === slug);
+  return materials.find((m: any) => m.slug === slug);
 }
 
 export function getMaterialById(id: string): Material | undefined {
-  return materials.find((m) => m.id === id);
+  return materials.find((m: any) => m.id === id);
 }
 
 export function getMaterialSlugs(): string[] {
-  return materials.map((m) => m.slug);
+  return materials.map((m: any) => m.slug);
 }
 
 export function getMaterialCount(): number {
@@ -61,24 +61,24 @@ export function filterMaterials(
   if (filters.search.trim()) {
     const query = filters.search.toLowerCase().trim();
     result = result.filter(
-      (m) =>
+      (m: any) =>
         m.name.toLowerCase().includes(query) ||
         m.description.toLowerCase().includes(query) ||
-        m.sources.some((s) => s.location.toLowerCase().includes(query))
+        m.sources.some((s: any) => s.location.toLowerCase().includes(query))
     );
   }
 
   if (filters.categories.length > 0) {
-    result = result.filter((m) => filters.categories.includes(m.category));
+    result = result.filter((m: any) => filters.categories.includes(m.category));
   }
 
   if (filters.rarities.length > 0) {
-    result = result.filter((m) => filters.rarities.includes(m.rarity));
+    result = result.filter((m: any) => filters.rarities.includes(m.rarity));
   }
 
   if (filters.sources.length > 0) {
-    result = result.filter((m) =>
-      m.sources.some((s) => filters.sources.includes(s.type))
+    result = result.filter((m: any) =>
+      m.sources.some((s: any) => filters.sources.includes(s.type))
     );
   }
 
@@ -94,23 +94,23 @@ export function filterMaterialSummaries(
   if (filters.search.trim()) {
     const query = filters.search.toLowerCase().trim();
     result = result.filter(
-      (m) =>
+      (m: any) =>
         m.name.toLowerCase().includes(query) ||
-        m.sources.some((s) => s.location.toLowerCase().includes(query))
+        m.sources.some((s: any) => s.location.toLowerCase().includes(query))
     );
   }
 
   if (filters.categories.length > 0) {
-    result = result.filter((m) => filters.categories.includes(m.category));
+    result = result.filter((m: any) => filters.categories.includes(m.category));
   }
 
   if (filters.rarities.length > 0) {
-    result = result.filter((m) => filters.rarities.includes(m.rarity));
+    result = result.filter((m: any) => filters.rarities.includes(m.rarity));
   }
 
   if (filters.sources.length > 0) {
-    result = result.filter((m) =>
-      m.sources.some((s) => filters.sources.includes(s.type))
+    result = result.filter((m: any) =>
+      m.sources.some((s: any) => filters.sources.includes(s.type))
     );
   }
 
@@ -120,39 +120,39 @@ export function filterMaterialSummaries(
 // ─── Relationship Queries ───
 
 export function getMaterialsForCharacter(characterId: string): Material[] {
-  return materials.filter((m) =>
-    m.usedBy.some((u) => u.type === "character" && u.id === characterId)
+  return materials.filter((m: any) =>
+    m.usedBy.some((u: any) => u.type === "character" && u.id === characterId)
   );
 }
 
 export function getMaterialsForWeapon(weaponId: string): Material[] {
-  return materials.filter((m) =>
-    m.usedBy.some((u) => u.type === "weapon" && u.id === weaponId)
+  return materials.filter((m: any) =>
+    m.usedBy.some((u: any) => u.type === "weapon" && u.id === weaponId)
   );
 }
 
 export function getCharactersUsingMaterial(materialId: string): string[] {
-  const material = materials.find((m) => m.id === materialId);
+  const material = materials.find((m: any) => m.id === materialId);
   if (!material) return [];
   return material.usedBy
-    .filter((u) => u.type === "character")
-    .map((u) => u.id);
+    .filter((u: any) => u.type === "character")
+    .map((u: any) => u.id);
 }
 
 export function getWeeklyMaterials(): Material[] {
-  return materials.filter((m) => m.isWeekly);
+  return materials.filter((m: any) => m.isWeekly);
 }
 
 export function getDailyMaterials(): Material[] {
-  return materials.filter((m) => m.isDaily);
+  return materials.filter((m: any) => m.isDaily);
 }
 
 // ─── Filter Options ───
 
 export function getMaterialFilterOptions() {
   return {
-    categories: [...new Set(materials.map((m) => m.category))],
-    rarities: [...new Set(materials.map((m) => m.rarity))],
-    sources: [...new Set(materials.flatMap((m) => m.sources.map((s) => s.type)))],
+    categories: [...new Set(materials.map((m: any) => m.category))],
+    rarities: [...new Set(materials.map((m: any) => m.rarity))],
+    sources: [...new Set(materials.flatMap((m: any) => m.sources.map((s: any) => s.type)))],
   };
 }

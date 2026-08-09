@@ -17,8 +17,19 @@ class DatabaseService {
   constructor() {
     const databaseUrl = process.env.DATABASE_URL || 'postgresql://localhost:5432/destiny_rising_hub';
 
+    // Configure connection pool size based on environment
+    // For performance testing, we need more connections
+    const isTestEnv = process.env.NODE_ENV === 'test';
+    const poolSize = isTestEnv ? 100 : 20; // 100 for testing, 20 for production
+    
     // Prisma 7.x: Use pg adapter for PostgreSQL connection
-    this.pool = new Pool({ connectionString: databaseUrl });
+    this.pool = new Pool({ 
+      connectionString: databaseUrl,
+      max: poolSize, // Maximum number of clients in the pool
+      idleTimeoutMillis: 30000, // How long a client is allowed to be idle
+      connectionTimeoutMillis: 5000, // Timeout for establishing a connection
+    });
+    
     const adapter = new PrismaPg(this.pool);
 
     this.prisma = new PrismaClient({

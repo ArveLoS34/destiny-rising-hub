@@ -147,7 +147,7 @@ export class RouteService {
     
     targetMaterials.forEach(target => {
       const nodes = mapNodes.filter(node => 
-        node.drops?.some(drop => drop.itemId === target.materialId)
+        node.drops?.some((drop: any) => drop.itemId === target.materialId)
       );
       candidateNodes.push(...nodes);
     });

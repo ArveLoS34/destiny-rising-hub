@@ -1,4 +1,4 @@
-import { BaseEntity, Element } from "./game";
+import { BaseEntity, ElementValue as Element } from "./game";
 
 /**
  * Team domain model.

@@ -13,9 +13,12 @@ import {
   Brain,
   Zap,
   ArrowRight,
-  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
+import { characters } from "@/data/games/destiny-rising/characters";
+import { weapons } from "@/data/games/destiny-rising/weapons";
+import { artifacts } from "@/data/games/destiny-rising/artifacts";
+import { materials } from "@/data/games/destiny-rising/materials";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -28,15 +31,15 @@ const featuredModules = [
     title: "Characters",
     description: "Explore every hero, their skills, talents, and optimal builds.",
     icon: Users,
-    href: "/characters",
-    count: "40+",
+    href: "/destiny-rising/characters",
+    count: String(characters.length),
     badgeVariant: "primary" as const,
   },
   {
     title: "Build Lab",
     description: "AI-powered build optimization for maximum efficiency.",
     icon: FlaskConical,
-    href: "/build-lab",
+    href: "/destiny-rising/build-lab",
     count: "New",
     badgeVariant: "accent" as const,
   },
@@ -44,23 +47,23 @@ const featuredModules = [
     title: "Weapons",
     description: "Detailed weapon stats, upgrade paths, and character synergies.",
     icon: Sword,
-    href: "/weapons",
-    count: "60+",
+    href: "/destiny-rising/weapons",
+    count: String(weapons.length),
     badgeVariant: "secondary" as const,
   },
   {
     title: "Team Builder",
     description: "Create synergistic teams with elemental combos.",
     icon: Shield,
-    href: "/teams",
+    href: "/destiny-rising/teams",
     count: "Beta",
     badgeVariant: "primary" as const,
   },
   {
-    title: "Tier List",
-    description: "Community and meta-driven character rankings.",
+    title: "Combat Lab",
+    description: "Simulate combat scenarios and optimize strategies.",
     icon: Trophy,
-    href: "/tier-list",
+    href: "/destiny-rising/combat-lab",
     count: "Updated",
     badgeVariant: "warning" as const,
   },
@@ -68,7 +71,7 @@ const featuredModules = [
     title: "AI Advisor",
     description: "Smart recommendations for builds, farming, and progression.",
     icon: Brain,
-    href: "/ai-advisor",
+    href: "/destiny-rising/ai-advisor",
     count: "Beta",
     badgeVariant: "accent" as const,
   },
@@ -127,11 +130,11 @@ export default function HomePage() {
         <Container>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
             {[
-              { label: "Characters", value: "20", icon: Users },
-              { label: "Weapons", value: "25", icon: Sword },
-              { label: "Elements", value: "9", icon: FlaskConical },
-              { label: "Factions", value: "6", icon: Shield },
-              { label: "Manufacturers", value: "5", icon: Trophy },
+              { label: "Characters", value: String(characters.length), icon: Users },
+              { label: "Weapons", value: String(weapons.length), icon: Sword },
+              { label: "Artifacts", value: String(artifacts.length), icon: FlaskConical },
+              { label: "Materials", value: String(materials.length), icon: Shield },
+              { label: "Elements", value: "3", icon: Trophy },
             ].map((stat) => (
               <Card
                 key={stat.label}
@@ -164,12 +167,6 @@ export default function HomePage() {
                 Everything you need to master Destiny Rising
               </Typography>
             </div>
-            <Link href="/discover">
-              <Button variant="ghost" size="sm">
-                View All
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </Link>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

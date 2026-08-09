@@ -73,12 +73,12 @@ export function filterCharacters(
 
   // Weapon type filter
   if (filters.weaponTypes.length > 0) {
-    result = result.filter((c) => filters.weaponTypes.includes(c.weaponType));
+    result = result.filter((c) => c.weaponType && filters.weaponTypes.includes(c.weaponType));
   }
 
-  // Faction filter
+  // Faction filter (deprecated — Destiny Rising has no faction system)
   if (filters.factions.length > 0) {
-    result = result.filter((c) => filters.factions.includes(c.faction));
+    result = result.filter((c) => c.faction && filters.factions.includes(c.faction));
   }
 
   // Sort
@@ -106,8 +106,11 @@ export function sortCharacters(
         comparison = a.name.localeCompare(b.name);
         break;
       case "rarity": {
-        const rarityOrder: Record<string, number> = { SSR: 4, SR: 3, R: 2, N: 1 };
-        comparison = rarityOrder[a.rarity] - rarityOrder[b.rarity];
+        const rarityOrder: Record<string, number> = {
+          Mythic: 5, Legendary: 4, Exotic: 4, Rare: 3,
+          SSR: 5, SR: 4, R: 3, N: 2,
+        };
+        comparison = (rarityOrder[a.rarity] ?? 0) - (rarityOrder[b.rarity] ?? 0);
         break;
       }
       case "element":
@@ -148,8 +151,8 @@ export function getFilterOptions() {
   const elements = [...new Set(characters.map((c) => c.element))] as import("@/types/domain").Element[];
   const roles = [...new Set(characters.map((c) => c.role))] as import("@/types/domain").Role[];
   const rarities = [...new Set(characters.map((c) => c.rarity))] as import("@/types/domain").Rarity[];
-  const weaponTypes = [...new Set(characters.map((c) => c.weaponType))] as import("@/types/domain").WeaponType[];
-  const factions = [...new Set(characters.map((c) => c.faction))] as import("@/types/domain").Faction[];
+  const weaponTypes = [...new Set(characters.map((c) => c.weaponType).filter(Boolean))] as import("@/types/domain").WeaponType[];
+  const factions = [...new Set(characters.map((c) => c.faction).filter(Boolean))] as string[];
 
   return {
     elements,
