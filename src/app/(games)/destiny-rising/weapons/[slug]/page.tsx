@@ -12,7 +12,7 @@ import { WeaponRelationships } from "./WeaponRelationships";
 import { WeaponMaterials } from "./WeaponMaterials";
 
 interface WeaponDetailPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
@@ -22,7 +22,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: WeaponDetailPageProps): Promise<Metadata> {
-  const weapon = getWeaponBySlug(params.slug);
+  const { slug } = await params;
+  const weapon = getWeaponBySlug(slug);
 
   if (!weapon) {
     return {
@@ -36,8 +37,9 @@ export async function generateMetadata({ params }: WeaponDetailPageProps): Promi
   };
 }
 
-export default function WeaponDetailPage({ params }: WeaponDetailPageProps) {
-  const weapon = getWeaponBySlug(params.slug);
+export default async function WeaponDetailPage({ params }: WeaponDetailPageProps) {
+  const { slug } = await params;
+  const weapon = getWeaponBySlug(slug);
 
   if (!weapon) {
     notFound();
