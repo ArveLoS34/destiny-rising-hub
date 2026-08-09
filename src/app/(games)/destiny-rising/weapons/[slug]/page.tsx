@@ -15,6 +15,12 @@ interface WeaponDetailPageProps {
   params: { slug: string };
 }
 
+export async function generateStaticParams() {
+  const { getWeaponSlugs } = await import("@/features/weapons/services/weapon-service");
+  const slugs = getWeaponSlugs();
+  return slugs.map((slug) => ({ slug }));
+}
+
 export async function generateMetadata({ params }: WeaponDetailPageProps): Promise<Metadata> {
   const weapon = getWeaponBySlug(params.slug);
 
