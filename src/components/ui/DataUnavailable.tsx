@@ -1,3 +1,5 @@
+"use client";
+
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ShieldAlert } from "lucide-react";
 

@@ -20,17 +20,9 @@ export function DatabaseCard({
   className?: string;
 }) {
   const accentColor = `rgb(var(--color-${accent}))`;
-  const Wrapper = href ? Link : "div";
 
-  return (
-    <Wrapper
-      href={href as string}
-      className={cn(
-        "glass card-interactive group relative block overflow-hidden rounded-xl p-5",
-        !href && "cursor-default",
-        className
-      )}
-    >
+  const cardBody = (
+    <>
       <div
         className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-40"
         style={{ backgroundColor: accentColor }}
@@ -56,6 +48,31 @@ export function DatabaseCard({
           </span>
         )}
       </div>
-    </Wrapper>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={cn(
+          "glass card-interactive group relative block overflow-hidden rounded-xl p-5",
+          className
+        )}
+      >
+        {cardBody}
+      </Link>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "glass card-interactive group relative block cursor-default overflow-hidden rounded-xl p-5",
+        className
+      )}
+    >
+      {cardBody}
+    </div>
   );
 }
