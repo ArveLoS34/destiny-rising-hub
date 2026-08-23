@@ -217,6 +217,88 @@ const characterOverrides: Record<string, Partial<Character>> = {
       pvp: "A",
     },
   },
+  gwynn: {
+    description:
+      "Gwynn is a Void close-range assassin who fights with a dual-wielded Sidearm and a Shotgun, backed by her relic scythe, Verdict. Her entire kit loops around Void Spirits — orbs dropped by her kills that she rushes in to collect for healing and bonus damage, turning aggressive play into her main source of sustain.",
+    faction: "",
+    stats: {
+      baseHP: 0,
+      baseATK: 0,
+      baseDEF: 0,
+      baseSPD: 0,
+      baseCR: 0,
+      baseCD: 0,
+      growthHP: 0,
+      growthATK: 0,
+      growthDEF: 0,
+      growthSPD: 0,
+    },
+    skills: [
+      {
+        id: "gwynn-signature-1",
+        name: "Void Dance",
+        description:
+          "Gwynn whirls with her scythe, dealing Void damage to combatants within about 6 meters and healing herself. Any Void Spirits within range, including ones already picked up, are pulled in and detonated for bonus damage.",
+        type: "ability-1",
+        element: "Void",
+        damageType: "AoE" as any,
+        scaling: [],
+        icon: "",
+      },
+      {
+        id: "gwynn-signature-2",
+        name: "Soul Assault",
+        description:
+          "After a brief delay, Gwynn blinks roughly 12 meters toward her target, gaining temporary damage resistance during the cast. On arrival she deals Void damage to nearby enemies and inflicts Confined, a short crowd-control effect — useful for both closing distance and escaping danger.",
+        type: "ability-2",
+        element: "Void",
+        damageType: "AoE" as any,
+        scaling: [],
+        icon: "",
+      },
+    ],
+    talents: [],
+    ultimate: {
+      id: "gwynn-ultimate",
+      name: "Soul Harvest",
+      description:
+        "Gwynn summons her relic, Verdict, and enters her Super with six Void Spirits instantly banked. While the Super is active, any further Void Spirits she generates are automatically drawn to her, letting Gwynn chain continuous scythe strikes without breaking to collect them manually.",
+      type: "ultimate",
+      element: "Void",
+      damageType: "AoE" as any,
+      scaling: [],
+      icon: "",
+    },
+    passive: {
+      id: "gwynn-passive",
+      name: "Energy Severance",
+      description:
+        "Final blows — from abilities, weapons, finishers, or melee — drop a Void Spirit at the target's location (1-second internal cooldown). Walking over a Void Spirit collects it and restores health, giving Gwynn a built-in sustain loop as long as she keeps landing kills.",
+      type: "passive",
+      element: "Void",
+      damageType: "Single Target" as any,
+      scaling: [],
+      icon: "",
+    },
+    recommendedWeapons: ["Octant Riot Disperser", "Concerto", "Eternal Retribution"],
+    recommendedArtifacts: [],
+    synergies: ["attal", "jolder", "ning-fei"],
+    strengths: [
+      { description: "Fully self-sufficient: kills generate her own healing and damage amplification", category: "sustain" as any },
+      { description: "Strong solo and aggressive-clear character even at a single copy", category: "damage" as any },
+    ],
+    weaknesses: [
+      { description: "Was a limited-banner-only character at release, making her hard for free-to-play accounts to acquire", category: "acquisition" as any },
+      { description: "Close-range kit forces risky positioning against ranged or high-burst enemies", category: "playstyle" as any },
+    ],
+    tierListPlacement: {
+      overall: "S",
+      dps: "S",
+      support: "",
+      pve: "S",
+      pvp: "S",
+    },
+  },
 };
 
 /**
