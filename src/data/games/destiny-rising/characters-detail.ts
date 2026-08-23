@@ -135,6 +135,88 @@ const characterOverrides: Record<string, Partial<Character>> = {
       pvp: "A",
     },
   },
+  "tan-2": {
+    description:
+      "Tan-2 is the game's only five-star Solar Support, a long-range Lightbearer who wields a Scout Rifle and a Sniper Rifle. He splits his kit between two stances — Duskstar for damage and Dawnstar for healing — and swaps freely between them to cover whatever his team needs.",
+    faction: "",
+    stats: {
+      baseHP: 0,
+      baseATK: 0,
+      baseDEF: 0,
+      baseSPD: 0,
+      baseCR: 0,
+      baseCD: 0,
+      growthHP: 0,
+      growthATK: 0,
+      growthDEF: 0,
+      growthSPD: 0,
+    },
+    skills: [
+      {
+        id: "tan2-sunset",
+        name: "Sunset",
+        description:
+          "Duskstar-mode ability. Tan-2 launches a fireball that damages enemies on impact and applies Sunset Scorch, a Solar damage-over-time burn, along with Corrupt, which weakens the target and increases the damage they take.",
+        type: "ability-1",
+        element: "Solar",
+        damageType: "AoE" as any,
+        scaling: [],
+        icon: "",
+      },
+      {
+        id: "tan2-sunrise",
+        name: "Sunrise",
+        description:
+          "Dawnstar-mode ability. Tan-2 launches a healing orb that quickly restores health to nearby teammates. Tan-2 can swap between Sunset and Sunrise (Twilight Shift) on a short cooldown to move between damage and support as the fight demands.",
+        type: "ability-2",
+        element: "Solar",
+        damageType: "Support" as any,
+        scaling: [],
+        icon: "",
+      },
+    ],
+    talents: [],
+    ultimate: {
+      id: "tan2-ultimate",
+      name: "Blessing of Dusk / Blessing of Dawn",
+      description:
+        "Tan-2's Super, its effect depending on his current stance. He leaps into the air and plunges his relic, Parhelion Wing, into the ground to create a blessed zone. In Duskstar (Blessing of Dusk), the zone grants allies a large outgoing damage bonus — a core reason Tan-2 is considered near-essential for raid teams. In Dawnstar (Blessing of Dawn), the zone instead provides strong team healing.",
+      type: "ultimate",
+      element: "Solar",
+      damageType: "Support" as any,
+      scaling: [],
+      icon: "",
+    },
+    passive: {
+      id: "tan2-passive",
+      name: "Flare",
+      description:
+        "Dealing weapon damage builds Flare, a meter separate for each stance — Scout Rifle hits build it faster per-shot than Sniper Rifle hits, but sniper precision hits build more per hit. Once Flare is full, Tan-2's next Sunset or Sunrise is enhanced and instantly recharged; casting the enhanced version grants Tan-2 Phosphorus, a short buff that boosts his weapon damage.",
+      type: "passive",
+      element: "Solar",
+      damageType: "Single Target" as any,
+      scaling: [],
+      icon: "",
+    },
+    recommendedWeapons: ["Polaris Lance", "Borealis", "Izanagi's Burden"],
+    recommendedArtifacts: [],
+    synergies: [],
+    strengths: [
+      { description: "Only 5-star Support in the game; near-mandatory for fast raid clears thanks to his team damage buff", category: "utility" as any },
+      { description: "Flexible — can fully swap between healing and high single-target sniper damage mid-fight", category: "versatility" as any },
+    ],
+    weaknesses: [
+      { description: "Sniper-reliant damage output requires consistent precision hits, which is punishing for less accurate players", category: "skill-floor" as any },
+      { description: "Low mobility makes him an easy target if caught alone in PvP", category: "survivability" as any },
+    ],
+    tierListPlacement: {
+      overall: "S",
+      dps: "A",
+      support: "S",
+      pve: "S",
+      pvp: "A",
+    },
+  },
 };
 
 /**
