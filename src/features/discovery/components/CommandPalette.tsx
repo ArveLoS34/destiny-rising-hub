@@ -400,15 +400,33 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   );
 }
 
+// Shared store so any component (header search, ⌘K shortcut, etc.)
+// opens the same command palette instance instead of an isolated local one.
+type Listener = (open: boolean) => void;
+let paletteOpen = false;
+const listeners = new Set<Listener>();
+function setPaletteOpen(next: boolean) {
+  paletteOpen = next;
+  listeners.forEach((l) => l(paletteOpen));
+}
+
 // Hook to use command palette
 export function useCommandPalette() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(paletteOpen);
+
+  useEffect(() => {
+    const listener: Listener = (next) => setIsOpen(next);
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        setIsOpen((prev) => !prev);
+        setPaletteOpen(!paletteOpen);
       }
     };
 
@@ -418,8 +436,8 @@ export function useCommandPalette() {
 
   return {
     isOpen,
-    open: () => setIsOpen(true),
-    close: () => setIsOpen(false),
-    toggle: () => setIsOpen((prev) => !prev),
+    open: () => setPaletteOpen(true),
+    close: () => setPaletteOpen(false),
+    toggle: () => setPaletteOpen(!paletteOpen),
   };
 }

@@ -8,7 +8,7 @@ export function Footer({ className, ...props }: FooterProps) {
   return (
     <footer
       className={cn(
-        "border-t border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] py-6",
+        "border-t border-[rgb(var(--color-border))] bg-[rgb(var(--color-background-alt))] py-6",
         className
       )}
       {...props}

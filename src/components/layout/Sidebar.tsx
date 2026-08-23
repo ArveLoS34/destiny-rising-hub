@@ -24,12 +24,22 @@ export function Sidebar({ className, isCollapsed = false }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] transition-[width] duration-200",
+        "flex flex-col border-r border-[rgb(var(--color-border))] bg-[rgb(var(--color-background)/0.95)] backdrop-blur-xl transition-[width] duration-200",
         isCollapsed ? "w-[var(--sidebar-collapsed-width)]" : "w-[var(--sidebar-width)]",
         className
       )}
     >
-      <div className="flex-1 overflow-y-auto overflow-x-hidden py-4">
+      {!isCollapsed && (
+        <Link href="/" className="flex items-center gap-2.5 px-4 py-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[rgb(var(--color-primary))] to-[rgb(var(--color-accent))] shadow-[0_0_16px_rgb(var(--color-primary)/0.35)]">
+            <span className="text-sm font-bold text-white">DR</span>
+          </div>
+          <span className="text-sm font-bold tracking-tight text-[rgb(var(--color-text-primary))]">
+            DESTINY <span className="text-[rgb(var(--color-primary-bright))]">RISING HUB</span>
+          </span>
+        </Link>
+      )}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
         {mainNavigation.map((section, index) => (
           <SidebarSection
             key={section.title}
@@ -109,19 +119,22 @@ function SidebarNavItem({ item, pathname, isCollapsed }: SidebarNavItemProps) {
     <Link
       href={item.href}
       className={cn(
-        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+        "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
         isActive
-          ? "bg-[rgb(var(--color-primary)/0.1)] text-[rgb(var(--color-primary))]"
-          : "text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-surface-elevated))] hover:text-[rgb(var(--color-text-primary))]",
+          ? "bg-gradient-to-r from-[rgb(var(--color-primary)/0.18)] to-[rgb(var(--color-primary)/0.02)] text-[rgb(var(--color-text-primary))] shadow-[0_0_16px_rgb(var(--color-primary)/0.15)]"
+          : "text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-surface-elevated)/0.6)] hover:text-[rgb(var(--color-text-primary))]",
         isCollapsed && "justify-center px-2"
       )}
       aria-current={isActive ? "page" : undefined}
     >
+      {isActive && (
+        <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[rgb(var(--color-primary-bright))]" />
+      )}
       <Icon
         className={cn(
           "h-4 w-4 shrink-0 transition-colors",
           isActive
-            ? "text-[rgb(var(--color-primary))]"
+            ? "text-[rgb(var(--color-primary-bright))]"
             : "text-[rgb(var(--color-text-tertiary))] group-hover:text-[rgb(var(--color-text-secondary))]"
         )}
       />

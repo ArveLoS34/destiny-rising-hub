@@ -1,4 +1,5 @@
 import {
+  Home as HomeIcon,
   Users,
   Sword,
   Package,
@@ -26,6 +27,17 @@ export interface NavSection {
 
 export const mainNavigation: NavSection[] = [
   {
+    title: "Home",
+    items: [
+      {
+        label: "Home",
+        href: "/",
+        icon: HomeIcon,
+        description: "Dashboard overview",
+      },
+    ],
+  },
+  {
     title: "Database",
     items: [
       {
@@ -52,6 +64,13 @@ export const mainNavigation: NavSection[] = [
     title: "Tools",
     items: [
       {
+        label: "AI Advisor",
+        href: "/destiny-rising/ai-advisor",
+        icon: Brain,
+        description: "AI-powered recommendations",
+        badge: "Beta",
+      },
+      {
         label: "Build Lab",
         href: "/destiny-rising/build-lab",
         icon: FlaskConical,
@@ -72,15 +91,8 @@ export const mainNavigation: NavSection[] = [
     ],
   },
   {
-    title: "Advanced",
+    title: "Community",
     items: [
-      {
-        label: "AI Advisor",
-        href: "/destiny-rising/ai-advisor",
-        icon: Brain,
-        description: "AI-powered recommendations",
-        badge: "Beta",
-      },
       {
         label: "Community",
         href: "/destiny-rising/community",
@@ -92,7 +104,7 @@ export const mainNavigation: NavSection[] = [
 ];
 
 export const mobileNavigation: NavItem[] = [
-  { label: "Home", href: "/", icon: Users },
+  { label: "Home", href: "/", icon: HomeIcon },
   { label: "Characters", href: "/destiny-rising/characters", icon: Users },
   { label: "Build Lab", href: "/destiny-rising/build-lab", icon: FlaskConical },
   { label: "Teams", href: "/destiny-rising/teams", icon: Shield },
