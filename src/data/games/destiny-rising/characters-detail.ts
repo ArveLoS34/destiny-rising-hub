@@ -48,10 +48,102 @@ const defaultTalent: CharacterTalent = {
 };
 
 /**
+ * Verified deep-detail overrides, keyed by character slug.
+ * Only characters with real, source-verified data go here.
+ * Sources: destinypedia.com, game8.co, sportskeeda.com (cross-checked 2026-08-23).
+ * Everything not listed here still falls back to the "unverified" defaults above.
+ */
+const characterOverrides: Record<string, Partial<Character>> = {
+  wolf: {
+    description:
+      "Wolf is the player's starting Lightbearer and the protagonist of Destiny: Rising's campaign. A Solar close-range fighter, Wolf pairs an Auto Rifle with a Grenade Launcher and leans on a stacking passive resource, Lupine Nature, to power up his strikes and keep himself alive with self-generated overshields.",
+    faction: "",
+    stats: {
+      baseHP: 0,
+      baseATK: 0,
+      baseDEF: 0,
+      baseSPD: 0,
+      baseCR: 0,
+      baseCD: 0,
+      growthHP: 0,
+      growthATK: 0,
+      growthDEF: 0,
+      growthSPD: 0,
+    },
+    skills: [
+      {
+        id: "wolf-signature-1",
+        name: "Wolf's Strike",
+        description:
+          "A short-range melee strike dealt to combatants directly ahead of Wolf. Landing a final blow with this ability immediately recharges it, letting Wolf chain kills without waiting on cooldown.",
+        type: "ability-1",
+        element: "Solar",
+        damageType: "Single Target" as any,
+        scaling: [],
+        icon: "",
+      },
+      {
+        id: "wolf-signature-2",
+        name: "Wolf's Flames",
+        description:
+          "Wolf fires a projectile up to 50m that explodes on impact, dealing area Solar damage and applying Wolf's Ignition (a damage-over-time burn) plus Corrupt, which reduces the target's healing and increases damage they take. Using this ability also grants Wolf a short burst of movement speed (Wolf's Dash). Once Lupine Nature is full, the cooldown resets and the ability is enhanced — firing twice with a larger blast radius and granting Wolf a temporary overshield.",
+        type: "ability-2",
+        element: "Solar",
+        damageType: "AoE" as any,
+        scaling: [],
+        icon: "",
+      },
+    ],
+    talents: [],
+    ultimate: {
+      id: "wolf-ultimate",
+      name: "Wolf's Butchery",
+      description:
+        "Wolf's Super. He wields his Solar blade two-handed for a three-hit AoE combo against nearby combatants. Repeatedly hitting the same target within a short window increases the damage of each successive strike, stacking up to a large total bonus. Using this Super instantly maxes out Lupine Nature and shares a movement-speed buff (Wolf's Dash) with nearby allies; Wolf also gains bonus movement speed and damage resistance for the Super's duration.",
+      type: "ultimate",
+      element: "Solar",
+      damageType: "AoE" as any,
+      scaling: [],
+      icon: "",
+    },
+    passive: {
+      id: "wolf-passive",
+      name: "Lupine Nature",
+      description:
+        "Wolf passively builds a resource called Lupine Nature (LN) — 3 per second in combat, 4 per second out of combat — and gains bonus LN for finishing off enemies (more for elites and other Lightbearers). At 120 LN, Wolf's Strike is enhanced with greatly increased range and damage, grants Wolf a temporary overshield, and resets the LN counter.",
+      type: "passive",
+      element: "Solar",
+      damageType: "Single Target" as any,
+      scaling: [],
+      icon: "",
+    },
+    recommendedWeapons: ["Satiyaaliksni Smart Bomb"],
+    recommendedArtifacts: ["Ring of Abundance", "Nimble Veil", "Healing Radiation"],
+    synergies: ["finnala", "ikora"],
+    strengths: [
+      { description: "Strong, self-sufficient sustained damage with a stacking combo multiplier", category: "damage" as any },
+      { description: "Generates its own overshields through Lupine Nature, giving good solo survivability", category: "survivability" as any },
+    ],
+    weaknesses: [
+      { description: "Kit is melee/close-range focused, which is harder to land consistently against skilled PvP opponents", category: "playstyle" as any },
+    ],
+    tierListPlacement: {
+      overall: "S",
+      dps: "S",
+      support: "",
+      pve: "S",
+      pvp: "A",
+    },
+  },
+};
+
+/**
  * Convert CharacterSummary to full Character object
- * Unverified fields are set to null/empty/default values
+ * Unverified fields are set to null/empty/default values,
+ * except where a verified override exists in characterOverrides.
  */
 function toFullCharacter(summary: any): Character {
+  const override = characterOverrides[summary.slug] || {};
   return {
     // From CharacterSummary (verified)
     id: summary.id,
@@ -110,6 +202,7 @@ function toFullCharacter(summary: any): Character {
     pickRate: 0,
     banRate: 0,
     winRate: summary.winRate || 0,
+    ...override,
   };
 }
 
